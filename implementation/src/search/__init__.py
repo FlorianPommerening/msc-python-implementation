@@ -1,9 +1,9 @@
 from RelaxedProblem import RelaxedProblem 
 from BranchAndBoundSearch import BranchAndBoundSearch 
-from SASProblem import SASProblem
+from SASParser import SASParser
 
-sasproblem = SASProblem()
-sasproblem.parse(open("/home/flogo/downward/src/output.sas"))
+parser = SASParser(open("/home/flogo/downward/src/output.sas"))
+sas_problem = parser.parse()
 problem = RelaxedProblem()
 search = BranchAndBoundSearch(problem)
 print "Best solution has cost %d" % search.run()

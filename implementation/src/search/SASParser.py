@@ -1,70 +1,103 @@
+from SASTask import *
+
 class ParseError(BaseException):
     pass
 
-class SASProblem:
-    def __init__(self):
-        self.variables = []
-        self.initial_state = []
-        self.operators = []
-        self.goal = []
-        self.metric = 0
-        
-    def expect(self, inputstream, expected_value):
-        actual_value = inputstream.next().strip()
-        if (actual_value != expected_value):
-            raise ParseError("Expected '%s' Got: '%s'" % (expected_value, actual_value))
+class SASParser:
+    def __init__(self, input):
+        self._inputstream = (line for line in input)
+    
+    def _read_value(self, expected_value=None):
+        try:
+            value = self._inputstream.next().strip()
+            if expected_value is not None and (value != expected_value):
+                raise ParseError("Expected '%s' but got: '%s'" % (expected_value, value))
+            return value
+        except StopIteration:
+            raise ParseError("Expected %s but stream ended." % (expected_value or 'a value'))
 
-    def parse_list(self, inputstream, name=None):
-        if name:
-            self.expect(inputstream, "begin_%s" % name)
-        count = int(inputstream.next().strip())
-        for _ in xrange(count):
-            yield inputstream.next().strip()
-        if name:
-            self.expect(inputstream, "end_%s" % name)
-        
+    def _read_number(self):
+        try:
+            value = self._read_value()
+            return int(value)
+        except:
+            raise ParseError("Expected number but got: '%s'" % (value))
 
-    def parse_metric(self, inputstream):
-        """
-        Metric is ignored for now
-        """
-        self.expect(inputstream, "begin_metric")
-        self.metric = int(inputstream.next().strip())
-        self.expect(inputstream, "end_metric")
-    
-    def parse_variables(self, inputstream):
-        for entry in self.parse_list(inputstream, "variables"):
-            (name, size, axiom_layer) = entry.split()
-            axiom_layer = int(axiom_layer)
-            size = int(size)
-            if axiom_layer != -1:
-                raise ParseError("Axioms not supported")
-            self.variables.append((name, size))    
-    
-    def parse_state(self, inputstream):
-        self.expect(inputstream, "begin_state")
-        for _ in xrange(len(self.variables)):
-            self.initial_state.append(int(inputstream.next().strip()))
-        self.expect(inputstream, "end_state")
-    
-    
-    def parse_goal(self, inputstream):
-        for entry in self.parse_list(inputstream, "goal"):
-            (variable, value) = entry.split()
-            self.goal.append((variable, value))    
-    
-    def parse_operators(self, inputstream):
-        count = int(inputstream.next().strip())
+    def _read_list(self, name=None, count=None):
+        if name:
+            self._read_value("begin_%s" % name)
+        if count is None:
+            count = self._read_number()
         for _ in xrange(count):
-            self.expect(inputstream, "begin_operator")
-            name = inputstream.next().strip()
-            prevail = []
-            for entry in self.parse_list(inputstream):
-                prevail.append(tuple(entry.split()))
-            pre_post = []
-            for effect in self.parse_list(inputstream):
-                effectstream = (int(entry) for entry in effect.split())
-                cond = []
+            yield self._read_value()
+        if name:
+            self._read_value("end_%s" % name)
+
+    def _parse_metric(self):
+        # TODO check format of metric
+        self._read_value("begin_metric")
+        metric = self._read_number()
+        self._read_value("end_metric")
+        return metric
+    
+    def _parse_variables(self):
+        ranges = []
+        axiom_layers = []
+        variable_id = 0
+        for entry in self._read_list("variables"):
+            try:
+                (name, size, axiom_layer) = entry.split()
+                if name != "var%d" % variable_id:
+                    raise ParseError()
+                axiom_layers.append(int(axiom_layer))
+                ranges.append(int(size))
+                variable_id +=1
+            except:
+                raise ParseError("Invalid variable entry for var%d: '%s'" % (variable_id, entry))
+        return SASVariables(ranges, axiom_layers)
+    
+    def _parse_state(self, variable_count):
+        values = []
+        for value in self._read_list("state", variable_count):
+            try:
+                values.append(int(value))
+            except:
+                raise ParseError("Invalid state entry: '%s'" % value)
+        return SASInit(values)
+    
+    
+    def _parse_goal(self):
+        pairs = []
+        for entry in self._read_list("goal"):
+            try:
+                (variable, value) = entry.split()
+                pairs.append((int(variable), int(value)))
+            except:
+                raise ParseError("Invalid goal entry: '%s'" % entry)
+        return SASGoal(pairs)
+    
+    def _parse_operators(self):
+        operators = []
+        count = self._read_number()
+        for _ in xrange(count):
+            operators.append(self._parse_operator())
+        return operators
+
+    def _parse_operator(self):
+        self._read_value("begin_operator")
+        name = self._read_value()
+        prevail = []
+        for entry in self._read_list():
+            try:
+                (var, val) = entry.split()
+                prevail.append((int(var), int(val)))
+            except:
+                raise ParseError("Invalid prevail entry in operator '%s': '%s'" % (name, entry))
+        pre_post = []
+        for effect in self._read_list():
+            effectstream = (int(entry) for entry in effect.split())
+            cond = []
+            try:
                 cond_count = effectstream.next()
                 for _ in xrange(cond_count):
                     (cvar, cval) = (effectstream.next(),
@@ -74,27 +107,45 @@ class SASProblem:
                                     effectstream.next(),
                                     effectstream.next())
                 pre_post.append((var, pre, post, cond))
-            cost = int(inputstream.next().strip())
-            self.operators.append((name, prevail, pre_post, cost))
-            self.expect(inputstream, "end_operator")
-    
-    def parse_axioms(self, inputstream):
-        """
-        Axioms ignored for now
-        """
-        count = int(inputstream.next().strip())
+            except:
+                raise ParseError("Invalid effect entry in operator '%s': '%s'" % (name, effect))
+        cost = self._read_number()
+        self._read_value("end_operator")
+        return SASOperator(name, prevail, pre_post, cost)
+
+    def _parse_axioms(self, inputstream):
+        axioms = []
+        count = self._read_number()
         for _ in xrange(count):
-            self.expect(inputstream, "begin_rule")
-            for condition in self.parse_list(inputstream):
-                pass
-            inputstream.next().strip()
-            self.expect(inputstream, "end_rule")
+            axioms.append(self._parse_axiom())
+        return axioms
     
-    def parse(self, input):
-        inputstream = (line for line in input)
-        self.parse_metric(inputstream)
-        self.parse_variables(inputstream)
-        self.parse_state(inputstream)
-        self.parse_goal(inputstream)
-        self.parse_operators(inputstream)
-        self.parse_axioms(inputstream)
+    def _parse_axiom(self):
+        condition = []
+        self._read_value("begin_rule")
+        for entry in self._read_list():
+            try:
+                (variable, value) = entry.split()
+                condition.append((int(variable), int(value)))
+            except:
+                raise ParseError("Invalid condition entry in axiom: '%s'" % entry)
+        try:
+            effectline = self._read_value()
+            (variable, old_value, new_value) = effectline.split()
+            # only binary domains supported
+            if 1 - int(old_value) != int(new_value):
+                raise ParseError()
+            effect = (variable, new_value)
+        except:
+            raise ParseError("Invalid effect in axiom: '%s'" % effectline)
+        self._read_value("end_rule")
+        return SASAxiom(condition, effect)
+
+    def parse(self):
+        metric = self._parse_metric()
+        variables = self._parse_variables()
+        init = self._parse_state()
+        goal = self._parse_goal()
+        operators = self._parse_operators()
+        axioms = self._parse_axioms()
+        return SASTask(variables, init, goal, operators, axioms, metric)
