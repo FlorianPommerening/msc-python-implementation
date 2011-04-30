@@ -1,0 +1,5 @@
+def delete_relaxation(sastask, translation_key):
+    '''
+    Converts a SASTask into a RelaxedProblem (SAS to delete-relaxed STRIPS)
+    '''
+    pass
