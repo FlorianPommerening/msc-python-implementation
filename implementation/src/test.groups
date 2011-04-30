@@ -1,0 +1,98 @@
+var0:
+  0: Atom incell(diamond2)
+  1: Atom clear(diamond2)
+  2: Atom on(cluba, diamond2)
+  3: Atom on(club2, diamond2)
+  4: Atom home(diamond2)
+  5: Atom on(spadea, diamond2)
+var1:
+  0: Atom on(diamonda, spade2)
+  1: Atom on(diamonda, club2)
+  2: Atom incell(diamonda)
+  3: Atom bottomcol(diamonda)
+  4: Atom on(diamonda, hearta)
+  5: Atom home(diamonda)
+  6: <none of those>
+var2:
+  0: Atom clear(spade2)
+  1: Atom incell(spade2)
+  2: Atom on(spadea, spade2)
+  3: Atom on(hearta, spade2)
+  4: Atom home(spade2)
+  5: <none of those>
+var3:
+  0: Atom colspace(n3)
+  1: Atom colspace(n4)
+  2: Atom colspace(n1)
+  3: Atom colspace(n2)
+  4: Atom colspace(n0)
+var4:
+  0: Atom home(heart2)
+  1: Atom on(cluba, heart2)
+  2: Atom incell(heart2)
+  3: Atom on(spadea, heart2)
+  4: Atom clear(heart2)
+var5:
+  0: Atom cellspace(n2)
+  1: Atom cellspace(n0)
+  2: Atom cellspace(n3)
+  3: Atom cellspace(n1)
+  4: Atom cellspace(n4)
+var6:
+  0: Atom incell(hearta)
+  1: Atom bottomcol(hearta)
+  2: Atom home(hearta)
+  3: Atom on(hearta, club2)
+  4: <none of those>
+var7:
+  0: Atom home(cluba)
+  1: Atom on(heart2, cluba)
+  2: Atom incell(cluba)
+  3: Atom clear(cluba)
+  4: <none of those>
+var8:
+  0: Atom incell(club2)
+  1: Atom bottomcol(club2)
+  2: Atom home(club2)
+  3: <none of those>
+var9:
+  0: Atom bottomcol(spadea)
+  1: Atom incell(spadea)
+  2: Atom home(spadea)
+  3: <none of those>
+var10:
+  0: Atom home(diamond0)
+  1: <none of those>
+var11:
+  0: Atom home(spade0)
+  1: <none of those>
+var12:
+  0: Atom home(heart0)
+  1: <none of those>
+var13:
+  0: Atom home(club0)
+  1: <none of those>
+var14:
+  0: Atom clear(diamonda)
+  1: <none of those>
+var15:
+  0: Atom clear(spadea)
+  1: <none of those>
+var16:
+  0: Atom bottomcol(diamond2)
+  1: <none of those>
+var17:
+  0: Atom bottomcol(cluba)
+  1: <none of those>
+var18:
+  0: Atom bottomcol(spade2)
+  1: <none of those>
+var19:
+  0: Atom bottomcol(heart2)
+  1: <none of those>
+var20:
+  0: Atom clear(hearta)
+  1: <none of those>
+var21:
+  0: Atom clear(club2)
+  1: <none of those>
