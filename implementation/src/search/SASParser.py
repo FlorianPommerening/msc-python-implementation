@@ -113,7 +113,7 @@ class SASParser:
         self._read_value("end_operator")
         return SASOperator(name, prevail, pre_post, cost)
 
-    def _parse_axioms(self, inputstream):
+    def _parse_axioms(self):
         axioms = []
         count = self._read_number()
         for _ in xrange(count):
@@ -144,7 +144,7 @@ class SASParser:
     def parse(self):
         metric = self._parse_metric()
         variables = self._parse_variables()
-        init = self._parse_state()
+        init = self._parse_state(len(variables.ranges))
         goal = self._parse_goal()
         operators = self._parse_operators()
         axioms = self._parse_axioms()

@@ -2,7 +2,7 @@ from RelaxedProblem import RelaxedProblem
 from BranchAndBoundSearch import BranchAndBoundSearch 
 from SASParser import SASParser
 
-parser = SASParser(open("/home/flogo/downward/src/output.sas"))
+parser = SASParser(open("../output.sas"))
 sas_problem = parser.parse()
 problem = RelaxedProblem()
 search = BranchAndBoundSearch(problem)
