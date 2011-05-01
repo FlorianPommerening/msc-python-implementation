@@ -1,11 +1,39 @@
 from SASTask import *
+import re
 
 class ParseError(BaseException):
     pass
 
 class SASParser:
-    def __init__(self, input):
+    def parse_task(self, input):
         self._inputstream = (line for line in input)
+        metric = self._parse_metric()
+        variables = self._parse_variables()
+        init = self._parse_state(len(variables.ranges))
+        goal = self._parse_goal()
+        operators = self._parse_operators()
+        axioms = self._parse_axioms()
+        return SASTask(variables, init, goal, operators, axioms, metric)
+
+    def parse_translationkey(self, input):
+        variable_line_exp = re.compile(r'^var(\d+):$')
+        value_line_exp = re.compile(r'^\s*(\d+):\s*(.+)$')
+        translationkey = {}
+        variable = None
+        for line in input:
+            match = variable_line_exp.match(line)
+            if match:
+                variable = int(match.group(1))
+                translationkey[variable] = {}
+            else:
+                match = value_line_exp.match(line)
+                if match and variable is not None:
+                    value = int(match.group(1))
+                    name = match.group(2)
+                    translationkey[variable][value] = name
+                else:
+                    raise ParseError("Invalid line in translation key: '%s'" % line)
+        return translationkey
     
     def _read_value(self, expected_value=None):
         try:
@@ -64,8 +92,7 @@ class SASParser:
             except:
                 raise ParseError("Invalid state entry: '%s'" % value)
         return SASInit(values)
-    
-    
+
     def _parse_goal(self):
         pairs = []
         for entry in self._read_list("goal"):
@@ -140,12 +167,3 @@ class SASParser:
             raise ParseError("Invalid effect in axiom: '%s'" % effectline)
         self._read_value("end_rule")
         return SASAxiom(condition, effect)
-
-    def parse(self):
-        metric = self._parse_metric()
-        variables = self._parse_variables()
-        init = self._parse_state(len(variables.ranges))
-        goal = self._parse_goal()
-        operators = self._parse_operators()
-        axioms = self._parse_axioms()
-        return SASTask(variables, init, goal, operators, axioms, metric)
