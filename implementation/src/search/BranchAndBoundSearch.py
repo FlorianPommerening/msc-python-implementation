@@ -1,6 +1,19 @@
 from SearchNode import SearchNode 
 from OperatorSelector import OperatorSelector
-from sys import maxint
+from sys import maxint, stdout
+
+DEBUGSTREAM = stdout
+DEBUGLEVEL = 2 
+# 0 everything
+# 1 regular events (i.e. backtracking)
+# 2 rare events (i.e. found better solution)
+# 3 warnings
+# 4 errors
+# 5 nothing
+
+def debug_message(msg, level=0):
+    if DEBUGSTREAM and level >= DEBUGLEVEL:
+        print >> DEBUGSTREAM, msg
 
 class BranchAndBoundSearch(object):
     '''
@@ -25,19 +38,19 @@ class BranchAndBoundSearch(object):
         using only operators from searchnode.available_operator_ids.
         Returns -1 if no plan exists or the shortest plan is not smaller than self._cost_upper_bound. 
         '''
-        print searchnode
+        debug_message(searchnode)
         
         if searchnode.cost_lower_bound >= self._cost_upper_bound:
-            print "Exceeded bound => backtracking"
+            debug_message("Exceeded bound (%d) => backtracking" % self._cost_upper_bound, 1)
             return -1
         if self._problem.is_goal_state(searchnode.current_state):
-            print "Found solution with cost %d => Updating upper bound" % searchnode.current_cost
+            debug_message("Found solution with cost %d => Updating upper bound" % searchnode.current_cost, 2)
             self._cost_upper_bound = searchnode.current_cost
             return searchnode.current_cost
         next_operator_id = self._operatorSelector.most_promising_operator_id(
                                        searchnode, self._problem, self._cost_upper_bound)
         if next_operator_id == -1:
-            print "No more operators => backtracking"
+            debug_message("No more operators => backtracking", 1)
             return -1
 
         better_plan_found = False
