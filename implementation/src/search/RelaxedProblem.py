@@ -1,3 +1,4 @@
+# TODO use bitmaps instead of sets
 class RelaxedProblem:
     def __init__(self, variables, initial_state, operators, goal):
         self.variables = variables

@@ -1,4 +1,5 @@
 from RelaxedProblem import RelaxedProblem, RelaxedOperator
+from bitstring import ConstBitArray
 
 def delete_relaxation(sastask, translationkey=None):
     '''
