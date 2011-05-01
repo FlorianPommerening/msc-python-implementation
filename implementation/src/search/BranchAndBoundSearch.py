@@ -35,15 +35,19 @@ class BranchAndBoundSearch(object):
             debug_message("Found solution with cost %d => Updating upper bound" % searchnode.current_cost, 2)
             self._cost_upper_bound = searchnode.current_cost
             return searchnode.current_cost
+        operators_to_remove = []
         next_operator_id = self._operatorSelector.most_promising_operator_id(
-                                       searchnode, self._problem, self._cost_upper_bound)
+                                       searchnode, self._problem, self._cost_upper_bound, operators_to_remove)
         if next_operator_id == -1:
             debug_message("No more operators => backtracking", 1)
             return -1
+        if operators_to_remove:
+            debug_message("Found %d redundant operators" % len(operators_to_remove), 1)
+            searchnode.remove_operators(operators_to_remove)
 
         better_plan_found = False
-        for next_node in [searchnode.use_operator(next_operator_id, self._problem),
-                          searchnode.forbid_operator(next_operator_id, self._problem)]:
+        for next_node in [searchnode.successor_with_operator(next_operator_id, self._problem),
+                          searchnode.successor_without_operator(next_operator_id, self._problem)]:
             plan_cost = self.recursive_branch_and_bound_search(next_node)
             if plan_cost != -1:
                 better_plan_found = True

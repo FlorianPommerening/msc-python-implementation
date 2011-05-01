@@ -29,6 +29,10 @@ class SearchNode(object):
         self.cost_lower_bound = self.current_cost + self.heuristic_value
         return self
     
+    def remove_operators(self, operators_to_remove):
+        for id in operators_to_remove:
+            self.available_operator_ids.remove(id)
+    
     def _copy(self):
         '''
         Returns a copy of this node
@@ -44,13 +48,13 @@ class SearchNode(object):
         copy.cost_lower_bound = self.cost_lower_bound
         return copy        
     
-    def use_operator(self, operator_id, problem):
+    def successor_with_operator(self, operator_id, problem):
         '''
         Generates a successor state in which the operator with operator_id was applied.
         '''
         successor = self._copy()
         successor.current_state = problem.apply_operator(operator_id, self.current_state)
-        successor.available_operator_ids.remove(operator_id)
+        successor.remove_operators([operator_id])
         successor.partial_plan.append(operator_id)
         successor.current_cost += problem.operator_cost(operator_id)
         successor.heuristic_value = incremental_lmcut(problem, 
@@ -61,12 +65,12 @@ class SearchNode(object):
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
     
-    def forbid_operator(self, operator_id, problem):
+    def successor_without_operator(self, operator_id, problem):
         '''
         Generates a successor state in which the operator with operator_id will not be used in any plan.
         '''
         successor = self._copy()
-        successor.available_operator_ids.remove(operator_id)
+        successor.remove_operators([operator_id])
         successor.heuristic_value = incremental_lmcut(problem, 
                                                       successor.current_state, 
                                                       successor.landmarks, 
