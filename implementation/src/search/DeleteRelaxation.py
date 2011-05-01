@@ -1,71 +1,69 @@
 from RelaxedProblem import RelaxedProblem, RelaxedOperator
 from bitstring import ConstBitArray
 
+class VariableTranslator:
+    def __init__(self, sas_variables, translationkey=None): 
+        self._translationkey = translationkey
+        # contains the tuple (var, val) at position i that corresponds to the variable names[i]
+        # i.e. the meaning of sas_tuples[1] == (2,3) is that variable 1 (with the name: names[1]) represents
+        # that the SAS variable 2 has the value 3 
+        self.sas_tuples = []
+        self.names = []
+        for (var, range) in enumerate(sas_variables.ranges):
+            # can ignore second value of binary variable
+            if range == 2:
+                range = 1 
+            for val in xrange(range):
+                self.names.append(self._variable_name(var, val))
+                self.sas_tuples.append((var, val))
+
+    def _variable_name(self, sas_variable, sas_value):
+        translation = ""
+        if self._translationkey:
+            translation = " " + self._translationkey[sas_variable][sas_value]
+        return "var%d#%d%s" % (sas_variable, sas_value, translation)
+
 def delete_relaxation(sastask, translationkey=None):
     '''
     Converts a SASTask into a RelaxedProblem (SAS to delete-relaxed STRIPS)
     '''
-    variables, is_binary = _convert_variables(sastask.variables, translationkey)
-    initial_state = _convert_state(sastask.variables, sastask.init, translationkey, is_binary)
-    operators = tuple( _convert_operator(op, translationkey, is_binary) for op in sastask.operators )
+    variable_translator = VariableTranslator(sastask.variables, translationkey)
+    initial_state_tuples = list(enumerate(sastask.init.values))
+    initial_state = _sas_assignment_to_bitstring(initial_state_tuples, variable_translator)
+    operators = tuple( _convert_operator(op, variable_translator) for op in sastask.operators )
+    goal = _sas_assignment_to_bitstring(sastask.goal.pairs, variable_translator)
+    if sastask.axioms:
+        raise Exception("Cannot deal with axioms right now")
+    # TODO what about the metric?
+
     # Don't allow 0 cost
     if all(op.cost == 0 for op in operators):
         for op in operators:
             op.cost = 1
-    goal = _convert_goal(sastask.goal, translationkey, is_binary)
-    if sastask.axioms:
-        raise Exception("Cannot deal with axioms right now")
-    # TODO what about the metric?
-    return RelaxedProblem(variables, initial_state, operators, goal)
+    return RelaxedProblem(variable_translator.names, initial_state, operators, goal)
 
-def _variable_name(variable, value, translationkey):
-    translation = ""
-    if translationkey:
-        translation = " " + translationkey[variable][value]
-    return "var%d#%d%s" % (variable, value, translation)
-
-def _convert_variables(variables, translationkey):
+def _sas_assignment_to_bitstring(var_val_pairs, variable_translator):
+    """
+    Turns a (partial) variable assignment of a SAS task (i.e. a state, partial state or condition)
+    into a bitstring representing the translated assignment in the delete relaxation.
+    Binary SAS variables that are set to their "negative" assignment are ignored (delete relaxation)
+    automatically, as their delete effect is not contained in variable_translator.sas_tuples 
+    """
     result = []
-    is_binary = []
-    for (var, range) in enumerate(variables.ranges):
-        is_binary.append(range == 2)
-        if is_binary[var]:
-            result.append(_variable_name(var, 0, translationkey))
-        else:
-            for val in xrange(range):
-                result.append(_variable_name(var, val, translationkey))
-    return result, is_binary
+    for (var, val) in variable_translator.sas_tuples:
+        result.append((var, val) in var_val_pairs)
+    return ConstBitArray(result)
 
-def _convert_state(variables, state, translationkey, is_binary):
-    result = []
-    for var in xrange(len(variables.ranges)):
-        # ignore binary variables set to false
-        if not(is_binary[var] and state.values[var] == 1):
-            result.append(_variable_name(var, state.values[var], translationkey))
-    return frozenset(result)
-
-def _convert_operator(operator, translationkey, is_binary):
-    precondition = []
-    for (var, val) in operator.prevail:
-        # ignore binary variables set to false
-        if not(is_binary[var] and val == 1):
-            precondition.append(_variable_name(var, val, translationkey))
-    effect = []
+def _convert_operator(operator, variable_translator):
+    precondition_pairs = operator.prevail
+    effect_pairs = []
     for (var, pre, post, cond) in operator.pre_post:
         if cond:
             raise Exception("Cannot deal with conditional effects right now")
-        # ignore don't care values (-1) and binary variables set to false
-        if pre != -1 and not (is_binary[var] and pre == 1): 
-            precondition.append(_variable_name(var, pre, translationkey))
-        # ignore binary variables set to false
-        if not (is_binary[var] and post == 1):
-            effect.append(_variable_name(var, post, translationkey))
-    return RelaxedOperator(operator.name, frozenset(precondition), frozenset(effect), operator.cost)
-
-def _convert_goal(goal, translationkey, is_binary):
-    result = []
-    for (var, val) in goal.pairs:
-        # ignore binary variables set to false
-        if not(is_binary[var] and val == 1):
-            result.append(_variable_name(var, val, translationkey))
-    return frozenset(result)
+        # ignore don't care values (-1)
+        if pre != -1: 
+            precondition_pairs.append((var, pre))
+        effect_pairs.append((var, post))
+    precondition = _sas_assignment_to_bitstring(precondition_pairs, variable_translator)
+    effect = _sas_assignment_to_bitstring(effect_pairs, variable_translator)
+    return RelaxedOperator(operator.name, precondition, effect, operator.cost)

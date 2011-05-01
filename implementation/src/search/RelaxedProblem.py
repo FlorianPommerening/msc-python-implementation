@@ -8,14 +8,17 @@ class RelaxedProblem:
         
     def operator_applicable(self, operator_id, state):
         operator = self.operators[operator_id]
-        return operator.precondition.issubset(state)
+        # precondition is subset of state
+        return (operator.precondition & ~state).all(False)
     
     def apply_operator(self, operator_id, state):
         operator = self.operators[operator_id]
-        return state.union(operator.effect)
+        # union of state and effect
+        return state | operator.effect
     
     def is_goal_state(self, state):
-        return self.goal.issubset(state)
+        # goal is subset of state
+        return (self.goal & ~state).all(False)
     
     def operator_cost(self, operator_id):
         return self.operators[operator_id].cost
@@ -26,12 +29,16 @@ class RelaxedProblem:
             print var
         print
         print "Initial state"
-        for var in self.initial_state:
-            print var
+        print self.initial_state.bin
+        for (var, val) in zip(self.variables, self.initial_state):
+            if val:
+                print var
         print
         print "Goal"
-        for var in self.goal:
-            print var
+        print self.goal.bin
+        for (var, val) in zip(self.variables, self.goal):
+            if val:
+                print var
         print
         print "Operators"
         print len(self.operators)
@@ -48,10 +55,5 @@ class RelaxedOperator:
 
     def dump(self):
         print "%s (%d)" % (self.name, self.cost)
-        print "  Precondition"
-        for var in self.precondition:
-            print "  ", var
-        print "  Effect"
-        for var in self.effect:
-            print "  ", var
-        
+        print "  Precondition:", self.precondition.bin
+        print "  Effect:", self.effect.bin 
