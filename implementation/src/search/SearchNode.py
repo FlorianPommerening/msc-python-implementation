@@ -1,4 +1,4 @@
-from lmcut import incremental_lmcut
+from .lmcut import incremental_lmcut
 
 class SearchNode(object):
     '''

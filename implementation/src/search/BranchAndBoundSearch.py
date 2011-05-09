@@ -1,6 +1,6 @@
-from SearchNode import SearchNode 
-from OperatorSelector import OperatorSelector
-from Debug import debug_message
+from .SearchNode import SearchNode 
+from .OperatorSelector import OperatorSelector
+from .Debug import debug_message
 from sys import maxint
 
 class BranchAndBoundSearch(object):

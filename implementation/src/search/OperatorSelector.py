@@ -1,4 +1,4 @@
-from Debug import debug_message
+from .Debug import debug_message
 
 class OperatorSelector(object):
     '''

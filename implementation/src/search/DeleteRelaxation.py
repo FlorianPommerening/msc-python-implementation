@@ -1,4 +1,4 @@
-from RelaxedProblem import RelaxedProblem, RelaxedOperator
+from .RelaxedProblem import RelaxedProblem, RelaxedOperator
 from bitstring import ConstBitArray
 
 class VariableTranslator:

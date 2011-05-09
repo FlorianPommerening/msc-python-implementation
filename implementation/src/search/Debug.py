@@ -1,6 +1,6 @@
 from sys import stdout
 
-DEBUGSTREAM = open('../debug.out', 'w')# stdout
+DEBUGSTREAM = open('debug.out', 'w')# stdout
 DEBUGLEVEL = 1 
 # 0 everything
 # 1 regular events (i.e. backtracking)

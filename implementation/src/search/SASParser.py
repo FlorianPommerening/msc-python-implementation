@@ -1,4 +1,4 @@
-from SASTask import *
+from .SASTask import *
 import re
 
 class ParseError(BaseException):
@@ -21,12 +21,12 @@ class SASParser:
         translationkey = {}
         variable = None
         for line in input:
-            match = variable_line_exp.match(line)
+            match = variable_line_exp.match(line.strip())
             if match:
                 variable = int(match.group(1))
                 translationkey[variable] = {}
             else:
-                match = value_line_exp.match(line)
+                match = value_line_exp.match(line.strip())
                 if match and variable is not None:
                     value = int(match.group(1))
                     name = match.group(2)
