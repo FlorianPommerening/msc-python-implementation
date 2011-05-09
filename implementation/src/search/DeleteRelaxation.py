@@ -34,10 +34,8 @@ def delete_relaxation(sastask, translationkey=None):
     goal = _sas_assignment_to_bitstring(sastask.goal.pairs, variable_translator)
     if sastask.axioms:
         raise Exception("Cannot deal with axioms right now")
-    # TODO what about the metric?
-
     # Don't allow 0 cost
-    if all(op.cost == 0 for op in operators):
+    if sastask.metric == 0:
         for op in operators:
             op.cost = 1
     return RelaxedProblem(variable_translator.names, initial_state, operators, goal)

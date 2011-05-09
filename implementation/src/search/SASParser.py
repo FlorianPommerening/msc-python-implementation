@@ -62,7 +62,6 @@ class SASParser:
             self._read_value("end_%s" % name)
 
     def _parse_metric(self):
-        # TODO check format of metric
         self._read_value("begin_metric")
         metric = self._read_number()
         self._read_value("end_metric")
