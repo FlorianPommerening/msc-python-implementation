@@ -43,9 +43,9 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
         '''
         best = None
         most = 0
-        missing_goals = problem.goal & ~searchnode.current_state
+        missing_goals = problem.goal - searchnode.current_state
         for operator_id in applicable_operators:
-            goals = (problem.operators[operator_id].effect & missing_goals).count(True)
+            goals = len(problem.operators[operator_id].effect & missing_goals)
             if goals > most:
                 most = goals
                 best = operator_id
