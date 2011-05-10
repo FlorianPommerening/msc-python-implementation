@@ -2,7 +2,7 @@ from sys import stdout
 from hmax import hmax
 
 DEBUGSTREAM = stdout#open('debug.out', 'w')# stdout
-DEBUGLEVEL = 2 
+DEBUGLEVEL = 2
 # 0 everything
 # 1 regular events (i.e. backtracking)
 # 2 rare events (i.e. found better solution)

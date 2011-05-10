@@ -7,7 +7,7 @@ class OperatorSelector(object):
 
     def most_promising_operator_id(self, searchnode, problem, upper_bound, operators_to_remove):
         '''
-        Returns index of most promising operator in searchnode.current_state or -1 if no operator is applicable
+        Returns index of most promising operator in searchnode.current_state or None if no operator is applicable
         This method handles a bit of basic filtering and turns to _select() for the actual selection.
         To implement an OperatorSelector derive from this calls and override _select()
 
@@ -23,7 +23,7 @@ class OperatorSelector(object):
             if problem.operator_applicable(operator_id, searchnode.current_state):
                 applicable_operators.append(operator_id)
         if not applicable_operators:
-            return -1
+            return None
         return self._select(searchnode, problem, applicable_operators, upper_bound, operators_to_remove)
 
     def _select(self, searchnode, problem, applicable_operators, upper_bound, operators_to_remove):
@@ -61,4 +61,4 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
                 good_operators.append(operator_id)
         if good_operators:
             return good_operators[0]
-        return -1
+        return None

@@ -14,7 +14,8 @@ plot_justification_graph(problem, problem.initial_state, "justificationgraph.dot
 plot_explanation_graph(problem, problem.initial_state, "explanationgraph.dot", problem.goal)
 search = BranchAndBoundSearch(problem, AchieveTargetsRemoveRedundantOperatorSelector())
 print "starting search"
-print "Best solution has cost %d" % search.run()
+heuristic = search.run()
+print "Best solution has cost %s" % str(heuristic) 
 
 
 

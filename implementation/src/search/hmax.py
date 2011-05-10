@@ -1,8 +1,10 @@
 from collections import defaultdict
 from heapq import heappush, heappop
 
-def hmax(task, state):
-
+def hmax(task, state, operator_costs=None):
+    if operator_costs is None:
+        operator_costs = {op:op.cost for op in task.operators}
+        
     hmax, closed, operators_with_precondition, precondition_choice_function = {}, {}, defaultdict(list), {}
     for v in task.variables:
         hmax[v] = float("infinity")
@@ -18,8 +20,6 @@ def hmax(task, state):
     for v in state:
         hmax[v] = 0
         heappush(heap, (0,v))
-        for op in operators_with_precondition[v]:
-            op.unsatisfied_preconditions -= 1
 
     while heap:
         (key, u) = heappop(heap)
@@ -41,7 +41,7 @@ def hmax(task, state):
                 for v in op.effect:
                     if closed[v]:
                         continue
-                    successor_cost = hmax[u] + op.cost
+                    successor_cost = hmax[u] + operator_costs[op]
                     if successor_cost < hmax[v]:
                         hmax[v] = successor_cost
                         heappush(heap, (successor_cost, v))
