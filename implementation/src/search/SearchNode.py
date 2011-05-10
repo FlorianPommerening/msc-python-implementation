@@ -88,7 +88,7 @@ Estimated cost: %s + %s = %s
 Landmarks: %s
 Operator_id -> Landmark: %s
 
-""" % ( self.current_state.bin,
+""" % ( ", ".join(self.current_state),
         self.available_operator_ids,
         self.partial_plan,
         self.current_cost, 

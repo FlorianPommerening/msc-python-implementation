@@ -1,4 +1,8 @@
-def incremental_lmcut(problem, state, landmarks, operator_to_landmark, added_operator=-1, removed_operator=-1):
+from .hmax import hmax
+from .Debug import debug_message
+
+
+def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operator=-1, removed_operator=-1):
     '''
     landmarks can contain previously discovered landmarks and will be changed in place.
 
@@ -15,7 +19,9 @@ def incremental_lmcut(problem, state, landmarks, operator_to_landmark, added_ope
 
     Returns heuristic value of state
     '''
-    return 0
+    hmax_value, hmax_function, precondition_choice_function = hmax(task, state)
+    debug_message("hmax(state) = %s" % str(hmax_value), 0)
+    return hmax_value
 
 #        for landmark in self.landmarks:
 #            for operator in landmark:
