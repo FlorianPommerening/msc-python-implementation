@@ -16,13 +16,15 @@ def hmax(task, state, operator_costs=None):
         for e in op.precondition:
             operators_with_precondition[e].append(op)
 
+    # nodes are stored with the key (hmax, depth) to use depth for tie-breaking
+    # this gives better (more) landmarks
     heap = []
     for v in state:
         hmax[v] = 0
-        heappush(heap, (0,v))
+        heappush(heap, ((0,0),v))
 
     while heap:
-        (key, u) = heappop(heap)
+        ((key, depth), u) = heappop(heap)
         if hmax[u] > key:
             # the hmax value of this key was decreased after inserting it
             # this could be done with the min-heap operation decrease-key,
@@ -44,7 +46,7 @@ def hmax(task, state, operator_costs=None):
                     successor_cost = hmax[u] + operator_costs[op]
                     if successor_cost < hmax[v]:
                         hmax[v] = successor_cost
-                        heappush(heap, (successor_cost, v))
+                        heappush(heap, ((successor_cost, depth+1), v))
     result = 0
     for g in task.goal:
         if hmax[g] > result:

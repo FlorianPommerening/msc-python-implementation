@@ -1,233 +1,1067 @@
 begin_groups
-42
-group
-1
-11 0 home 1 spade0 
-group
-3
-1 2 incell 1 diamonda 
-1 5 home 1 diamonda 
-14 0 clear 1 diamonda 
-group
-3
-7 1 on 2 heart2 cluba 
-7 3 clear 1 cluba 
-7 2 incell 1 cluba 
-group
-4
-6 0 incell 1 hearta 
-6 2 home 1 hearta 
-20 0 clear 1 hearta 
-1 4 on 2 diamonda hearta 
+154
 group
 6
-2 1 incell 1 spade2 
-2 4 home 1 spade2 
-2 0 clear 1 spade2 
-2 2 on 2 spadea spade2 
-1 0 on 2 diamonda spade2 
-2 3 on 2 hearta spade2 
-group
-1
-13 0 home 1 club0 
-group
-5
-5 1 cellspace 1 n0 
-5 3 cellspace 1 n1 
-5 0 cellspace 1 n2 
-5 2 cellspace 1 n3 
-5 4 cellspace 1 n4 
+12 1 incell 1 spade2 
+12 2 home 1 spade2 
+75 0 clear 1 spade2 
+20 2 on 2 diamonda spade2 
+26 2 on 2 hearta spade2 
+8 5 on 2 club4 spade2 
 group
 3
-8 0 incell 1 club2 
-8 1 bottomcol 1 club2 
-0 3 on 2 club2 diamond2 
-group
-2
-15 0 clear 1 spadea 
-9 1 incell 1 spadea 
-group
-3
-0 0 incell 1 diamond2 
-16 0 bottomcol 1 diamond2 
-0 4 home 1 diamond2 
+19 0 incell 1 club9 
+66 0 bottomcol 1 club9 
+33 1 on 2 club9 heart4 
 group
 5
-9 1 incell 1 spadea 
-9 0 bottomcol 1 spadea 
-4 3 on 2 spadea heart2 
-2 2 on 2 spadea spade2 
-0 5 on 2 spadea diamond2 
+22 2 on 2 spade6 heart7 
+4 1 on 2 heart2 heart7 
+22 1 on 2 club6 heart7 
+22 3 clear 1 heart7 
+22 0 incell 1 heart7 
 group
 4
-1 1 on 2 diamonda club2 
-6 3 on 2 hearta club2 
-21 0 clear 1 club2 
-8 0 incell 1 club2 
+15 2 incell 1 diamond9 
+44 0 bottomcol 1 diamond9 
+15 4 home 1 diamond9 
+44 1 on 2 diamond9 club3 
 group
 5
-2 2 on 2 spadea spade2 
-1 0 on 2 diamonda spade2 
-2 3 on 2 hearta spade2 
-2 0 clear 1 spade2 
-2 1 incell 1 spade2 
+17 3 incell 1 spade4 
+17 2 bottomcol 1 spade4 
+17 5 on 2 spade4 diamond5 
+17 4 on 2 spade4 heart5 
+17 0 on 2 spade4 hearta 
 group
 5
-7 2 incell 1 cluba 
-17 0 bottomcol 1 cluba 
-7 0 home 1 cluba 
-4 1 on 2 cluba heart2 
-0 2 on 2 cluba diamond2 
-group
-1
-13 0 home 1 club0 
-group
-1
-12 0 home 1 heart0 
+7 3 incell 1 diamond6 
+58 0 bottomcol 1 diamond6 
+36 2 on 2 diamond6 club7 
+10 4 on 2 diamond6 heart9 
+39 1 on 2 diamond6 spade7 
 group
 5
-6 0 incell 1 hearta 
-6 1 bottomcol 1 hearta 
-6 2 home 1 hearta 
-6 3 on 2 hearta club2 
-2 3 on 2 hearta spade2 
-group
-5
-0 5 on 2 spadea diamond2 
-0 3 on 2 club2 diamond2 
-0 2 on 2 cluba diamond2 
-0 1 clear 1 diamond2 
-0 0 incell 1 diamond2 
+28 3 incell 1 heart3 
+28 2 bottomcol 1 heart3 
+28 4 on 2 heart3 spade4 
+15 1 on 2 heart3 diamond9 
+28 0 on 2 heart3 club4 
 group
 6
-9 1 incell 1 spadea 
-9 0 bottomcol 1 spadea 
-9 2 home 1 spadea 
-4 3 on 2 spadea heart2 
-2 2 on 2 spadea spade2 
-0 5 on 2 spadea diamond2 
-group
-3
-9 1 incell 1 spadea 
-9 2 home 1 spadea 
-15 0 clear 1 spadea 
+17 3 incell 1 spade4 
+17 1 home 1 spade4 
+68 0 clear 1 spade4 
+18 5 on 2 diamond2 spade4 
+5 2 on 2 diamond3 spade4 
+28 4 on 2 heart3 spade4 
 group
 4
-4 3 on 2 spadea heart2 
-4 1 on 2 cluba heart2 
-4 4 clear 1 heart2 
-4 2 incell 1 heart2 
-group
-4
-6 0 incell 1 hearta 
-6 1 bottomcol 1 hearta 
-6 3 on 2 hearta club2 
-2 3 on 2 hearta spade2 
-group
-3
-1 4 on 2 diamonda hearta 
-20 0 clear 1 hearta 
-6 0 incell 1 hearta 
-group
-1
-12 0 home 1 heart0 
-group
-4
-7 2 incell 1 cluba 
-7 0 home 1 cluba 
-7 3 clear 1 cluba 
-7 1 on 2 heart2 cluba 
+17 4 on 2 spade4 heart5 
+8 1 on 2 club4 heart5 
+69 0 clear 1 heart5 
+37 0 incell 1 heart5 
 group
 5
-1 2 incell 1 diamonda 
-1 3 bottomcol 1 diamonda 
-1 1 on 2 diamonda club2 
-1 0 on 2 diamonda spade2 
-1 4 on 2 diamonda hearta 
+19 1 on 2 heart9 club9 
+19 4 on 2 heart8 club9 
+19 5 on 2 diamond8 club9 
+19 3 clear 1 club9 
+19 0 incell 1 club9 
 group
 6
-1 2 incell 1 diamonda 
-1 3 bottomcol 1 diamonda 
-1 5 home 1 diamonda 
-1 1 on 2 diamonda club2 
-1 0 on 2 diamonda spade2 
-1 4 on 2 diamonda hearta 
-group
-4
-8 0 incell 1 club2 
-8 1 bottomcol 1 club2 
-8 2 home 1 club2 
-0 3 on 2 club2 diamond2 
-group
-1
-11 0 home 1 spade0 
-group
-5
-4 2 incell 1 heart2 
-4 0 home 1 heart2 
-4 4 clear 1 heart2 
-4 3 on 2 spadea heart2 
-4 1 on 2 cluba heart2 
-group
-2
-14 0 clear 1 diamonda 
-1 2 incell 1 diamonda 
-group
-4
-7 2 incell 1 cluba 
-17 0 bottomcol 1 cluba 
-4 1 on 2 cluba heart2 
-0 2 on 2 cluba diamond2 
-group
-3
-4 2 incell 1 heart2 
-19 0 bottomcol 1 heart2 
-7 1 on 2 heart2 cluba 
-group
-2
-2 1 incell 1 spade2 
-18 0 bottomcol 1 spade2 
-group
-5
-8 0 incell 1 club2 
-8 2 home 1 club2 
-21 0 clear 1 club2 
-1 1 on 2 diamonda club2 
-6 3 on 2 hearta club2 
-group
-1
-10 0 home 1 diamond0 
-group
-3
-2 1 incell 1 spade2 
-18 0 bottomcol 1 spade2 
-2 4 home 1 spade2 
-group
-2
-0 0 incell 1 diamond2 
-16 0 bottomcol 1 diamond2 
-group
-5
-3 4 colspace 1 n0 
-3 2 colspace 1 n1 
-3 3 colspace 1 n2 
-3 0 colspace 1 n3 
-3 1 colspace 1 n4 
+35 2 incell 1 diamond8 
+35 3 home 1 diamond8 
+35 1 clear 1 diamond8 
+2 3 on 2 club7 diamond8 
+35 0 on 2 spade9 diamond8 
+16 5 on 2 spade7 diamond8 
 group
 6
-0 0 incell 1 diamond2 
-0 4 home 1 diamond2 
-0 1 clear 1 diamond2 
-0 5 on 2 spadea diamond2 
-0 3 on 2 club2 diamond2 
-0 2 on 2 cluba diamond2 
+21 2 incell 1 cluba 
+21 3 bottomcol 1 cluba 
+21 4 home 1 cluba 
+21 0 on 2 cluba diamond2 
+21 5 on 2 cluba spadea 
+21 1 on 2 cluba heart2 
+group
+5
+27 0 on 2 diamond5 club6 
+34 3 on 2 heart5 club6 
+3 4 on 2 club2 club6 
+34 0 clear 1 club6 
+34 2 incell 1 club6 
+group
+6
+22 0 incell 1 heart7 
+22 4 home 1 heart7 
+22 3 clear 1 heart7 
+22 2 on 2 spade6 heart7 
+4 1 on 2 heart2 heart7 
+22 1 on 2 club6 heart7 
+group
+5
+25 2 incell 1 club5 
+72 0 bottomcol 1 club5 
+7 1 on 2 club5 diamond6 
+45 1 on 2 club5 cluba 
+24 0 on 2 club5 heart6 
 group
 4
-4 2 incell 1 heart2 
-19 0 bottomcol 1 heart2 
-4 0 home 1 heart2 
-7 1 on 2 heart2 cluba 
+10 1 incell 1 heart9 
+64 0 bottomcol 1 heart9 
+10 0 home 1 heart9 
+19 1 on 2 heart9 club9 
+group
+4
+23 1 incell 1 club8 
+62 0 bottomcol 1 club8 
+15 5 on 2 club8 diamond9 
+10 2 on 2 club8 heart9 
+group
+3
+15 2 incell 1 diamond9 
+44 0 bottomcol 1 diamond9 
+44 1 on 2 diamond9 club3 
+group
+5
+31 3 incell 1 diamond7 
+51 0 bottomcol 1 diamond7 
+46 1 on 2 diamond7 diamonda 
+9 2 on 2 diamond7 spade8 
+23 0 on 2 diamond7 club8 
+group
+5
+35 2 incell 1 diamond8 
+70 0 bottomcol 1 diamond8 
+6 5 on 2 diamond8 spade9 
+19 5 on 2 diamond8 club9 
+9 4 on 2 diamond8 spade8 
+group
+5
+18 0 incell 1 diamond2 
+18 2 home 1 diamond2 
+50 0 clear 1 diamond2 
+21 0 on 2 cluba diamond2 
+30 4 on 2 spadea diamond2 
+group
+5
+24 0 on 2 club5 heart6 
+14 4 on 2 spade3 heart6 
+24 2 on 2 spade5 heart6 
+24 1 clear 1 heart6 
+24 3 incell 1 heart6 
+group
+5
+6 0 on 2 hearta spade9 
+6 1 on 2 heart8 spade9 
+6 5 on 2 diamond8 spade9 
+6 4 clear 1 spade9 
+6 3 incell 1 spade9 
+group
+5
+31 3 incell 1 diamond7 
+31 1 home 1 diamond7 
+31 0 clear 1 diamond7 
+31 2 on 2 spade6 diamond7 
+31 4 on 2 club6 diamond7 
 group
 1
-10 0 home 1 diamond0 
+43 0 home 1 heart0 
+group
+6
+23 1 incell 1 club8 
+23 4 home 1 club8 
+23 2 clear 1 club8 
+23 0 on 2 diamond7 club8 
+16 1 on 2 spade7 club8 
+23 3 on 2 heart7 club8 
+group
+5
+20 0 incell 1 diamonda 
+20 4 bottomcol 1 diamonda 
+20 5 on 2 diamonda club4 
+20 2 on 2 diamonda spade2 
+20 3 on 2 diamonda club2 
+group
+6
+20 0 incell 1 diamonda 
+20 4 bottomcol 1 diamonda 
+20 1 home 1 diamonda 
+20 5 on 2 diamonda club4 
+20 2 on 2 diamonda spade2 
+20 3 on 2 diamonda club2 
+group
+6
+8 3 incell 1 club4 
+8 4 home 1 club4 
+48 0 clear 1 club4 
+5 0 on 2 diamond3 club4 
+28 0 on 2 heart3 club4 
+20 5 on 2 diamonda club4 
+group
+5
+5 0 on 2 diamond3 club4 
+28 0 on 2 heart3 club4 
+20 5 on 2 diamonda club4 
+48 0 clear 1 club4 
+8 3 incell 1 club4 
+group
+5
+2 5 incell 1 club7 
+2 4 home 1 club7 
+36 1 clear 1 club7 
+36 2 on 2 diamond6 club7 
+36 0 on 2 heart6 club7 
+group
+6
+24 3 incell 1 heart6 
+24 4 home 1 heart6 
+24 1 clear 1 heart6 
+24 0 on 2 club5 heart6 
+14 4 on 2 spade3 heart6 
+24 2 on 2 spade5 heart6 
+group
+4
+9 0 incell 1 spade8 
+76 0 bottomcol 1 spade8 
+15 0 on 2 spade8 diamond9 
+10 3 on 2 spade8 heart9 
+group
+5
+9 0 incell 1 spade8 
+76 0 bottomcol 1 spade8 
+9 1 home 1 spade8 
+15 0 on 2 spade8 diamond9 
+10 3 on 2 spade8 heart9 
+group
+6
+3 2 incell 1 club2 
+3 0 home 1 club2 
+77 0 clear 1 club2 
+20 3 on 2 diamonda club2 
+26 1 on 2 hearta club2 
+47 1 on 2 heart8 club2 
+group
+6
+28 3 incell 1 heart3 
+28 1 home 1 heart3 
+52 0 clear 1 heart3 
+27 3 on 2 diamond5 heart3 
+12 4 on 2 spade2 heart3 
+3 1 on 2 club2 heart3 
+group
+4
+6 3 incell 1 spade9 
+73 0 bottomcol 1 spade9 
+6 2 home 1 spade9 
+35 0 on 2 spade9 diamond8 
+group
+5
+24 3 incell 1 heart6 
+71 0 bottomcol 1 heart6 
+24 4 home 1 heart6 
+36 0 on 2 heart6 club7 
+39 2 on 2 heart6 spade7 
+group
+5
+11 5 on 2 club3 heart4 
+33 1 on 2 club9 heart4 
+14 3 on 2 spade3 heart4 
+33 0 clear 1 heart4 
+33 3 incell 1 heart4 
+group
+5
+2 3 on 2 club7 diamond8 
+35 0 on 2 spade9 diamond8 
+16 5 on 2 spade7 diamond8 
+35 1 clear 1 diamond8 
+35 2 incell 1 diamond8 
+group
+5
+23 0 on 2 diamond7 club8 
+16 1 on 2 spade7 club8 
+23 3 on 2 heart7 club8 
+23 2 clear 1 club8 
+23 1 incell 1 club8 
+group
+6
+25 2 incell 1 club5 
+25 3 home 1 club5 
+25 0 clear 1 club5 
+5 1 on 2 diamond3 club5 
+25 1 on 2 diamond4 club5 
+25 4 on 2 heart4 club5 
+group
+4
+26 0 incell 1 hearta 
+26 3 home 1 hearta 
+61 0 clear 1 hearta 
+17 0 on 2 spade4 hearta 
+group
+6
+13 3 incell 1 spade6 
+63 0 bottomcol 1 spade6 
+13 4 home 1 spade6 
+31 2 on 2 spade6 diamond7 
+32 1 on 2 spade6 heart8 
+22 2 on 2 spade6 heart7 
+group
+3
+45 1 on 2 club5 cluba 
+45 0 clear 1 cluba 
+21 2 incell 1 cluba 
+group
+4
+19 0 incell 1 club9 
+66 0 bottomcol 1 club9 
+19 2 home 1 club9 
+33 1 on 2 club9 heart4 
+group
+5
+20 2 on 2 diamonda spade2 
+26 2 on 2 hearta spade2 
+8 5 on 2 club4 spade2 
+75 0 clear 1 spade2 
+12 1 incell 1 spade2 
+group
+6
+35 2 incell 1 diamond8 
+70 0 bottomcol 1 diamond8 
+35 3 home 1 diamond8 
+6 5 on 2 diamond8 spade9 
+19 5 on 2 diamond8 club9 
+9 4 on 2 diamond8 spade8 
+group
+5
+33 3 incell 1 heart4 
+54 0 bottomcol 1 heart4 
+33 2 home 1 heart4 
+25 4 on 2 heart4 club5 
+29 1 on 2 heart4 spade5 
+group
+1
+43 0 home 1 heart0 
+group
+6
+26 0 incell 1 hearta 
+26 4 bottomcol 1 hearta 
+26 3 home 1 hearta 
+6 0 on 2 hearta spade9 
+26 2 on 2 hearta spade2 
+26 1 on 2 hearta club2 
+group
+6
+16 2 incell 1 spade7 
+16 4 home 1 spade7 
+39 0 clear 1 spade7 
+39 1 on 2 diamond6 spade7 
+12 0 on 2 spade2 spade7 
+39 2 on 2 heart6 spade7 
+group
+6
+19 0 incell 1 club9 
+19 2 home 1 club9 
+19 3 clear 1 club9 
+19 1 on 2 heart9 club9 
+19 4 on 2 heart8 club9 
+19 5 on 2 diamond8 club9 
+group
+6
+18 0 incell 1 diamond2 
+18 1 bottomcol 1 diamond2 
+18 2 home 1 diamond2 
+18 5 on 2 diamond2 spade4 
+18 3 on 2 diamond2 club3 
+18 4 on 2 diamond2 spade3 
+group
+4
+36 2 on 2 diamond6 club7 
+36 0 on 2 heart6 club7 
+36 1 clear 1 club7 
+2 5 incell 1 club7 
+group
+6
+17 3 incell 1 spade4 
+17 2 bottomcol 1 spade4 
+17 1 home 1 spade4 
+17 5 on 2 spade4 diamond5 
+17 4 on 2 spade4 heart5 
+17 0 on 2 spade4 hearta 
+group
+6
+16 2 incell 1 spade7 
+16 3 bottomcol 1 spade7 
+16 4 home 1 spade7 
+16 0 on 2 spade7 heart8 
+16 5 on 2 spade7 diamond8 
+16 1 on 2 spade7 club8 
+group
+6
+27 4 incell 1 diamond5 
+27 2 bottomcol 1 diamond5 
+27 1 home 1 diamond5 
+27 3 on 2 diamond5 heart3 
+13 0 on 2 diamond5 spade6 
+27 0 on 2 diamond5 club6 
+group
+4
+24 3 incell 1 heart6 
+71 0 bottomcol 1 heart6 
+36 0 on 2 heart6 club7 
+39 2 on 2 heart6 spade7 
+group
+5
+32 2 incell 1 heart8 
+47 0 bottomcol 1 heart8 
+6 1 on 2 heart8 spade9 
+19 4 on 2 heart8 club9 
+47 1 on 2 heart8 club2 
+group
+6
+28 3 incell 1 heart3 
+28 2 bottomcol 1 heart3 
+28 1 home 1 heart3 
+28 4 on 2 heart3 spade4 
+15 1 on 2 heart3 diamond9 
+28 0 on 2 heart3 club4 
+group
+4
+21 2 incell 1 cluba 
+21 4 home 1 cluba 
+45 0 clear 1 cluba 
+45 1 on 2 club5 cluba 
+group
+6
+11 3 incell 1 club3 
+11 2 home 1 club3 
+55 0 clear 1 club3 
+18 3 on 2 diamond2 club3 
+44 1 on 2 diamond9 club3 
+4 2 on 2 heart2 club3 
+group
+1
+42 0 home 1 spade0 
+group
+6
+38 0 incell 1 diamond4 
+38 2 home 1 diamond4 
+49 0 clear 1 diamond4 
+2 0 on 2 club7 diamond4 
+11 4 on 2 club3 diamond4 
+14 2 on 2 spade3 diamond4 
+group
+5
+2 5 incell 1 club7 
+2 2 bottomcol 1 club7 
+2 0 on 2 club7 diamond4 
+2 1 on 2 club7 heart8 
+2 3 on 2 club7 diamond8 
+group
+1
+41 0 home 1 club0 
+group
+6
+15 2 incell 1 diamond9 
+15 4 home 1 diamond9 
+15 3 clear 1 diamond9 
+15 1 on 2 heart3 diamond9 
+15 0 on 2 spade8 diamond9 
+15 5 on 2 club8 diamond9 
+group
+5
+11 3 incell 1 club3 
+11 0 bottomcol 1 club3 
+11 4 on 2 club3 diamond4 
+11 1 on 2 club3 spade3 
+11 5 on 2 club3 heart4 
+group
+5
+18 0 incell 1 diamond2 
+18 1 bottomcol 1 diamond2 
+18 5 on 2 diamond2 spade4 
+18 3 on 2 diamond2 club3 
+18 4 on 2 diamond2 spade3 
+group
+5
+27 3 on 2 diamond5 heart3 
+12 4 on 2 spade2 heart3 
+3 1 on 2 club2 heart3 
+52 0 clear 1 heart3 
+28 3 incell 1 heart3 
+group
+10
+1 8 colspace 1 n0 
+1 2 colspace 1 n1 
+1 5 colspace 1 n2 
+1 9 colspace 1 n3 
+1 3 colspace 1 n4 
+1 6 colspace 1 n5 
+1 0 colspace 1 n6 
+1 4 colspace 1 n7 
+1 7 colspace 1 n8 
+1 1 colspace 1 n9 
+group
+5
+29 4 incell 1 spade5 
+65 0 bottomcol 1 spade5 
+29 2 home 1 spade5 
+7 5 on 2 spade5 diamond6 
+24 2 on 2 spade5 heart6 
+group
+6
+31 3 incell 1 diamond7 
+51 0 bottomcol 1 diamond7 
+31 1 home 1 diamond7 
+46 1 on 2 diamond7 diamonda 
+9 2 on 2 diamond7 spade8 
+23 0 on 2 diamond7 club8 
+group
+6
+38 0 incell 1 diamond4 
+38 1 bottomcol 1 diamond4 
+38 2 home 1 diamond4 
+25 1 on 2 diamond4 club5 
+13 1 on 2 diamond4 spade6 
+29 0 on 2 diamond4 spade5 
+group
+3
+6 3 incell 1 spade9 
+73 0 bottomcol 1 spade9 
+35 0 on 2 spade9 diamond8 
+group
+4
+22 0 incell 1 heart7 
+59 0 bottomcol 1 heart7 
+9 3 on 2 heart7 spade8 
+23 3 on 2 heart7 club8 
+group
+3
+10 1 incell 1 heart9 
+64 0 bottomcol 1 heart9 
+19 1 on 2 heart9 club9 
+group
+5
+37 0 incell 1 heart5 
+37 1 home 1 heart5 
+69 0 clear 1 heart5 
+17 4 on 2 spade4 heart5 
+8 1 on 2 club4 heart5 
+group
+4
+31 2 on 2 spade6 diamond7 
+31 4 on 2 club6 diamond7 
+31 0 clear 1 diamond7 
+31 3 incell 1 diamond7 
+group
+4
+20 0 incell 1 diamonda 
+20 1 home 1 diamonda 
+46 0 clear 1 diamonda 
+46 1 on 2 diamond7 diamonda 
+group
+5
+5 4 incell 1 diamond3 
+5 5 home 1 diamond3 
+57 0 clear 1 diamond3 
+12 5 on 2 spade2 diamond3 
+3 3 on 2 club2 diamond3 
+group
+4
+12 5 on 2 spade2 diamond3 
+3 3 on 2 club2 diamond3 
+57 0 clear 1 diamond3 
+5 4 incell 1 diamond3 
+group
+5
+5 1 on 2 diamond3 club5 
+25 1 on 2 diamond4 club5 
+25 4 on 2 heart4 club5 
+25 0 clear 1 club5 
+25 2 incell 1 club5 
+group
+6
+37 0 incell 1 heart5 
+37 2 bottomcol 1 heart5 
+37 1 home 1 heart5 
+7 4 on 2 heart5 diamond6 
+13 5 on 2 heart5 spade6 
+34 3 on 2 heart5 club6 
+group
+10
+0 8 cellspace 1 n0 
+0 3 cellspace 1 n1 
+0 4 cellspace 1 n2 
+0 1 cellspace 1 n3 
+0 9 cellspace 1 n4 
+0 0 cellspace 1 n5 
+0 6 cellspace 1 n6 
+0 7 cellspace 1 n7 
+0 5 cellspace 1 n8 
+0 2 cellspace 1 n9 
+group
+5
+3 2 incell 1 club2 
+3 5 bottomcol 1 club2 
+3 3 on 2 club2 diamond3 
+3 1 on 2 club2 heart3 
+3 4 on 2 club2 club6 
+group
+5
+5 4 incell 1 diamond3 
+5 3 bottomcol 1 diamond3 
+5 2 on 2 diamond3 spade4 
+5 1 on 2 diamond3 club5 
+5 0 on 2 diamond3 club4 
+group
+6
+14 1 incell 1 spade3 
+14 5 bottomcol 1 spade3 
+14 0 home 1 spade3 
+14 2 on 2 spade3 diamond4 
+14 3 on 2 spade3 heart4 
+14 4 on 2 spade3 heart6 
+group
+5
+14 1 incell 1 spade3 
+14 5 bottomcol 1 spade3 
+14 2 on 2 spade3 diamond4 
+14 3 on 2 spade3 heart4 
+14 4 on 2 spade3 heart6 
+group
+6
+7 3 incell 1 diamond6 
+58 0 bottomcol 1 diamond6 
+7 0 home 1 diamond6 
+36 2 on 2 diamond6 club7 
+10 4 on 2 diamond6 heart9 
+39 1 on 2 diamond6 spade7 
+group
+6
+34 2 incell 1 club6 
+34 1 home 1 club6 
+34 0 clear 1 club6 
+27 0 on 2 diamond5 club6 
+34 3 on 2 heart5 club6 
+3 4 on 2 club2 club6 
+group
+4
+33 3 incell 1 heart4 
+54 0 bottomcol 1 heart4 
+25 4 on 2 heart4 club5 
+29 1 on 2 heart4 spade5 
+group
+4
+17 5 on 2 spade4 diamond5 
+8 2 on 2 club4 diamond5 
+74 0 clear 1 diamond5 
+27 4 incell 1 diamond5 
+group
+5
+18 5 on 2 diamond2 spade4 
+5 2 on 2 diamond3 spade4 
+28 4 on 2 heart3 spade4 
+68 0 clear 1 spade4 
+17 3 incell 1 spade4 
+group
+6
+33 3 incell 1 heart4 
+33 2 home 1 heart4 
+33 0 clear 1 heart4 
+11 5 on 2 club3 heart4 
+33 1 on 2 club9 heart4 
+14 3 on 2 spade3 heart4 
+group
+5
+18 3 on 2 diamond2 club3 
+44 1 on 2 diamond9 club3 
+4 2 on 2 heart2 club3 
+55 0 clear 1 club3 
+11 3 incell 1 club3 
+group
+6
+14 1 incell 1 spade3 
+14 0 home 1 spade3 
+60 0 clear 1 spade3 
+18 4 on 2 diamond2 spade3 
+11 1 on 2 club3 spade3 
+4 3 on 2 heart2 spade3 
+group
+4
+30 2 incell 1 spadea 
+30 0 home 1 spadea 
+56 0 clear 1 spadea 
+21 5 on 2 cluba spadea 
+group
+6
+13 3 incell 1 spade6 
+13 4 home 1 spade6 
+13 2 clear 1 spade6 
+13 0 on 2 diamond5 spade6 
+13 5 on 2 heart5 spade6 
+13 1 on 2 diamond4 spade6 
+group
+3
+17 0 on 2 spade4 hearta 
+61 0 clear 1 hearta 
+26 0 incell 1 hearta 
+group
+5
+12 1 incell 1 spade2 
+12 3 bottomcol 1 spade2 
+12 5 on 2 spade2 diamond3 
+12 4 on 2 spade2 heart3 
+12 0 on 2 spade2 spade7 
+group
+6
+12 1 incell 1 spade2 
+12 3 bottomcol 1 spade2 
+12 2 home 1 spade2 
+12 5 on 2 spade2 diamond3 
+12 4 on 2 spade2 heart3 
+12 0 on 2 spade2 spade7 
+group
+5
+37 0 incell 1 heart5 
+37 2 bottomcol 1 heart5 
+7 4 on 2 heart5 diamond6 
+13 5 on 2 heart5 spade6 
+34 3 on 2 heart5 club6 
+group
+5
+2 1 on 2 club7 heart8 
+32 1 on 2 spade6 heart8 
+16 0 on 2 spade7 heart8 
+32 3 clear 1 heart8 
+32 2 incell 1 heart8 
+group
+5
+21 2 incell 1 cluba 
+21 3 bottomcol 1 cluba 
+21 0 on 2 cluba diamond2 
+21 5 on 2 cluba spadea 
+21 1 on 2 cluba heart2 
+group
+5
+13 0 on 2 diamond5 spade6 
+13 5 on 2 heart5 spade6 
+13 1 on 2 diamond4 spade6 
+13 2 clear 1 spade6 
+13 3 incell 1 spade6 
+group
+6
+32 2 incell 1 heart8 
+47 0 bottomcol 1 heart8 
+32 0 home 1 heart8 
+6 1 on 2 heart8 spade9 
+19 4 on 2 heart8 club9 
+47 1 on 2 heart8 club2 
+group
+5
+30 2 incell 1 spadea 
+30 3 bottomcol 1 spadea 
+30 0 home 1 spadea 
+30 4 on 2 spadea diamond2 
+30 1 on 2 spadea heart2 
+group
+1
+40 0 home 1 diamond0 
+group
+5
+23 1 incell 1 club8 
+62 0 bottomcol 1 club8 
+23 4 home 1 club8 
+15 5 on 2 club8 diamond9 
+10 2 on 2 club8 heart9 
+group
+5
+27 4 incell 1 diamond5 
+27 1 home 1 diamond5 
+74 0 clear 1 diamond5 
+17 5 on 2 spade4 diamond5 
+8 2 on 2 club4 diamond5 
+group
+5
+16 2 incell 1 spade7 
+16 3 bottomcol 1 spade7 
+16 0 on 2 spade7 heart8 
+16 5 on 2 spade7 diamond8 
+16 1 on 2 spade7 club8 
+group
+1
+42 0 home 1 spade0 
+group
+5
+29 4 incell 1 spade5 
+29 2 home 1 spade5 
+29 3 clear 1 spade5 
+29 0 on 2 diamond4 spade5 
+29 1 on 2 heart4 spade5 
+group
+6
+11 3 incell 1 club3 
+11 0 bottomcol 1 club3 
+11 2 home 1 club3 
+11 4 on 2 club3 diamond4 
+11 1 on 2 club3 spade3 
+11 5 on 2 club3 heart4 
+group
+6
+10 1 incell 1 heart9 
+10 0 home 1 heart9 
+10 5 clear 1 heart9 
+10 4 on 2 diamond6 heart9 
+10 3 on 2 spade8 heart9 
+10 2 on 2 club8 heart9 
+group
+6
+9 0 incell 1 spade8 
+9 1 home 1 spade8 
+9 5 clear 1 spade8 
+9 2 on 2 diamond7 spade8 
+9 4 on 2 diamond8 spade8 
+9 3 on 2 heart7 spade8 
+group
+5
+9 2 on 2 diamond7 spade8 
+9 4 on 2 diamond8 spade8 
+9 3 on 2 heart7 spade8 
+9 5 clear 1 spade8 
+9 0 incell 1 spade8 
+group
+1
+41 0 home 1 club0 
+group
+5
+7 4 on 2 heart5 diamond6 
+7 1 on 2 club5 diamond6 
+7 5 on 2 spade5 diamond6 
+7 2 clear 1 diamond6 
+7 3 incell 1 diamond6 
+group
+5
+18 4 on 2 diamond2 spade3 
+11 1 on 2 club3 spade3 
+4 3 on 2 heart2 spade3 
+60 0 clear 1 spade3 
+14 1 incell 1 spade3 
+group
+4
+21 0 on 2 cluba diamond2 
+30 4 on 2 spadea diamond2 
+50 0 clear 1 diamond2 
+18 0 incell 1 diamond2 
+group
+5
+8 3 incell 1 club4 
+8 0 bottomcol 1 club4 
+8 2 on 2 club4 diamond5 
+8 1 on 2 club4 heart5 
+8 5 on 2 club4 spade2 
+group
+6
+8 3 incell 1 club4 
+8 0 bottomcol 1 club4 
+8 4 home 1 club4 
+8 2 on 2 club4 diamond5 
+8 1 on 2 club4 heart5 
+8 5 on 2 club4 spade2 
+group
+3
+46 1 on 2 diamond7 diamonda 
+46 0 clear 1 diamonda 
+20 0 incell 1 diamonda 
+group
+5
+13 3 incell 1 spade6 
+63 0 bottomcol 1 spade6 
+31 2 on 2 spade6 diamond7 
+32 1 on 2 spade6 heart8 
+22 2 on 2 spade6 heart7 
+group
+5
+38 0 incell 1 diamond4 
+38 1 bottomcol 1 diamond4 
+25 1 on 2 diamond4 club5 
+13 1 on 2 diamond4 spade6 
+29 0 on 2 diamond4 spade5 
+group
+3
+21 5 on 2 cluba spadea 
+56 0 clear 1 spadea 
+30 2 incell 1 spadea 
+group
+6
+25 2 incell 1 club5 
+72 0 bottomcol 1 club5 
+25 3 home 1 club5 
+7 1 on 2 club5 diamond6 
+45 1 on 2 club5 cluba 
+24 0 on 2 club5 heart6 
+group
+6
+7 3 incell 1 diamond6 
+7 0 home 1 diamond6 
+7 2 clear 1 diamond6 
+7 4 on 2 heart5 diamond6 
+7 1 on 2 club5 diamond6 
+7 5 on 2 spade5 diamond6 
+group
+5
+22 0 incell 1 heart7 
+59 0 bottomcol 1 heart7 
+22 4 home 1 heart7 
+9 3 on 2 heart7 spade8 
+23 3 on 2 heart7 club8 
+group
+4
+21 1 on 2 cluba heart2 
+30 1 on 2 spadea heart2 
+67 0 clear 1 heart2 
+4 0 incell 1 heart2 
+group
+5
+10 4 on 2 diamond6 heart9 
+10 3 on 2 spade8 heart9 
+10 2 on 2 club8 heart9 
+10 5 clear 1 heart9 
+10 1 incell 1 heart9 
+group
+5
+26 0 incell 1 hearta 
+26 4 bottomcol 1 hearta 
+6 0 on 2 hearta spade9 
+26 2 on 2 hearta spade2 
+26 1 on 2 hearta club2 
+group
+6
+6 3 incell 1 spade9 
+6 2 home 1 spade9 
+6 4 clear 1 spade9 
+6 0 on 2 hearta spade9 
+6 1 on 2 heart8 spade9 
+6 5 on 2 diamond8 spade9 
+group
+5
+2 0 on 2 club7 diamond4 
+11 4 on 2 club3 diamond4 
+14 2 on 2 spade3 diamond4 
+49 0 clear 1 diamond4 
+38 0 incell 1 diamond4 
+group
+4
+29 0 on 2 diamond4 spade5 
+29 1 on 2 heart4 spade5 
+29 3 clear 1 spade5 
+29 4 incell 1 spade5 
+group
+6
+5 4 incell 1 diamond3 
+5 3 bottomcol 1 diamond3 
+5 5 home 1 diamond3 
+5 2 on 2 diamond3 spade4 
+5 1 on 2 diamond3 club5 
+5 0 on 2 diamond3 club4 
+group
+5
+34 2 incell 1 club6 
+53 0 bottomcol 1 club6 
+34 1 home 1 club6 
+31 4 on 2 club6 diamond7 
+22 1 on 2 club6 heart7 
+group
+5
+4 0 incell 1 heart2 
+4 5 home 1 heart2 
+67 0 clear 1 heart2 
+21 1 on 2 cluba heart2 
+30 1 on 2 spadea heart2 
+group
+4
+29 4 incell 1 spade5 
+65 0 bottomcol 1 spade5 
+7 5 on 2 spade5 diamond6 
+24 2 on 2 spade5 heart6 
+group
+5
+27 4 incell 1 diamond5 
+27 2 bottomcol 1 diamond5 
+27 3 on 2 diamond5 heart3 
+13 0 on 2 diamond5 spade6 
+27 0 on 2 diamond5 club6 
+group
+5
+20 3 on 2 diamonda club2 
+26 1 on 2 hearta club2 
+47 1 on 2 heart8 club2 
+77 0 clear 1 club2 
+3 2 incell 1 club2 
+group
+5
+4 0 incell 1 heart2 
+4 4 bottomcol 1 heart2 
+4 2 on 2 heart2 club3 
+4 3 on 2 heart2 spade3 
+4 1 on 2 heart2 heart7 
+group
+1
+40 0 home 1 diamond0 
+group
+5
+15 1 on 2 heart3 diamond9 
+15 0 on 2 spade8 diamond9 
+15 5 on 2 club8 diamond9 
+15 3 clear 1 diamond9 
+15 2 incell 1 diamond9 
+group
+6
+4 0 incell 1 heart2 
+4 4 bottomcol 1 heart2 
+4 5 home 1 heart2 
+4 2 on 2 heart2 club3 
+4 3 on 2 heart2 spade3 
+4 1 on 2 heart2 heart7 
+group
+4
+30 2 incell 1 spadea 
+30 3 bottomcol 1 spadea 
+30 4 on 2 spadea diamond2 
+30 1 on 2 spadea heart2 
+group
+6
+32 2 incell 1 heart8 
+32 0 home 1 heart8 
+32 3 clear 1 heart8 
+2 1 on 2 club7 heart8 
+32 1 on 2 spade6 heart8 
+16 0 on 2 spade7 heart8 
+group
+5
+39 1 on 2 diamond6 spade7 
+12 0 on 2 spade2 spade7 
+39 2 on 2 heart6 spade7 
+39 0 clear 1 spade7 
+16 2 incell 1 spade7 
+group
+6
+3 2 incell 1 club2 
+3 5 bottomcol 1 club2 
+3 0 home 1 club2 
+3 3 on 2 club2 diamond3 
+3 1 on 2 club2 heart3 
+3 4 on 2 club2 club6 
+group
+6
+2 5 incell 1 club7 
+2 2 bottomcol 1 club7 
+2 4 home 1 club7 
+2 0 on 2 club7 diamond4 
+2 1 on 2 club7 heart8 
+2 3 on 2 club7 diamond8 
+group
+4
+34 2 incell 1 club6 
+53 0 bottomcol 1 club6 
+31 4 on 2 club6 diamond7 
+22 1 on 2 club6 heart7 
 end_groups
