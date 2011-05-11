@@ -10,7 +10,7 @@ import re
 import os
 
 translatepath = "../../../downward/src/translate/translate.py"
-additivehmaxpath = "./translate/additive-hmax.py"
+additivehmaxpath = "../../../downward/src/translate/additive-hmax.py"
 
 def myLMCut(problemfile, domainfile):
     p = Popen([translatepath, domainfile, problemfile], stdout=PIPE)
@@ -69,7 +69,7 @@ def benchmark():
                      'zenotravel']
                   ]
     results = {}
-    for domain_id, (domainname, filepaths) in enumerate(lmcut_suite[3:]):
+    for domain_id, (domainname, filepaths) in enumerate(lmcut_suite[:1]):
         results[domainname] = {}
         for problem_id, (problemfile, domainfile) in enumerate(filepaths[:10]):
             print "Comparing domain %d/%d problem %d/%d" % (domain_id +1, len(lmcut_suite), 
@@ -89,18 +89,18 @@ def benchmark():
             if problemfile not in results[domainname]:
                 continue
             (my_t, malte_t, my_h, malte_h) = results[domainname][problemfile]
-            aggregatedtimedifference = malte_t - my_t
-            aggregatedheuristicdifference  = malte_h - my_h
+            aggregatedtimedifference += malte_t - my_t
+            aggregatedheuristicdifference  += malte_h - my_h
             maxheuristicdifference = max(maxheuristicdifference, malte_h - my_h)
             minheuristicdifference = min(minheuristicdifference, malte_h - my_h)
-            aggregatedspeedup = malte_t / my_t
-        results[domainname]["averagedtimedifference"] = aggregatedtimedifference / len(filepaths)
+            aggregatedspeedup += malte_t / my_t
+        results[domainname]["averagetimedifference"] = aggregatedtimedifference / len(filepaths)
         results[domainname]["averagespeedup"] = aggregatedspeedup / len(filepaths)
         results[domainname]["averageheuristicdifference"] = aggregatedheuristicdifference / len(filepaths)
         results[domainname]["maxheuristicdifference"] = maxheuristicdifference
         results[domainname]["minheuristicdifference"] = minheuristicdifference
         print domainname, " (td: %s, su: %s, hd: %s [%s - %s])" % (
-                                               str(results[domainname]["averagedtimedifference"]) * 1000,
+                                               str(results[domainname]["averagetimedifference"] * 1000),
                                                str(results[domainname]["averagespeedup"]),
                                                str(results[domainname]["averageheuristicdifference"]),
                                                str(results[domainname]["minheuristicdifference"]),
