@@ -37,7 +37,7 @@ def delete_relaxation(sastask, translationkey=None):
     variable_translator = VariableTranslator(sastask.variables, translationkey)
     initial_state_tuples = list(enumerate(sastask.init.values))
     initial_state = variable_translator.sas_assignment_to_variable_set(initial_state_tuples)
-    operators = tuple( _convert_operator(op, variable_translator) for op in sastask.operators )
+    operators = [_convert_operator(op, variable_translator) for op in sastask.operators]
     goal = variable_translator.sas_assignment_to_variable_set(sastask.goal.pairs)
     if sastask.axioms:
         raise Exception("Cannot deal with axioms right now")

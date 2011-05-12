@@ -21,7 +21,7 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
     '''
 #TODO: for now this is only regular lmcut (not incremental)
 # clear landmarks, as they are recomputed in each step
-    landmarks = []
+    landmarks[:] = []
     operator_to_landmark = {}
 
     operator_costs = {op:op.cost for op in task.operators}
@@ -29,7 +29,7 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
     debug_message("hmax(state) = %s" % str(hmax_value), 0)
     if hmax_value == float("infinity"):
         return hmax_value
-    additive_costs = [hmax_value]
+    additive_costs = []
     while hmax_value != 0:
         cut = find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function)
         landmarks.append(cut)
@@ -43,7 +43,7 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
     debug_message("hlmcut(state) = %s" % str(hmax_value + sum(additive_costs)), 0)
     return sum(additive_costs)
 
-def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function):
+def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, near_goal_area=None):
     zero_cost_operators_with_effect = defaultdict(list)
     operators_with_pcf_choice = defaultdict(list)
     for op in task.operators:
@@ -65,6 +65,11 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
         goal_zone.add(v)
         for op in zero_cost_operators_with_effect[v]:
             stack.append(precondition_choice_function[op])
+
+    # DEBUG
+    if near_goal_area is not None:
+        near_goal_area.extend(goal_zone)
+
     
     stack = list(state)
     closed = []

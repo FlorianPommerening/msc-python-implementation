@@ -80,11 +80,14 @@ class SearchNode(object):
         return successor
     
     def __str__(self):
+        landmarks_str = "    " + "\n    ".join(", ".join(op.name for op in lm) for lm in self.landmarks)
         return """Node
 State: %s
 Available operators: %s
 Partial plan: %s
 Estimated cost: %s + %s = %s
+Landmarks: 
+%s
 
 """ % ( ", ".join(self.current_state),
         self.available_operator_ids,
@@ -92,4 +95,5 @@ Estimated cost: %s + %s = %s
         self.current_cost, 
         self.heuristic_value,
         self.cost_lower_bound,
+        landmarks_str
         )

@@ -20,6 +20,29 @@ class RelaxedProblem:
     def operator_cost(self, operator_id):
         return self.operators[operator_id].cost
     
+    def convert_to_canonical_form(self):
+        """
+        Guarantees that initial state and goal contain exactly one variable and that
+        each operator has at least one precondition
+        """
+        needs_dummy_var = False
+        for op in self.operators:
+            if len(op.precondition) == 0:
+                needs_dummy_var = True
+                op.precondition.add("@@dummy")
+        if needs_dummy_var:
+            self.initial_state.add("@@dummy")
+        if len(self.goal) != 1:
+            goal_op = RelaxedOperator("@@goal-operator", self.goal, frozenset(["@@goal"]), 0)
+            self.operators.append(goal_op)
+            self.variables.append("@@goal")
+            self.goal = frozenset(["@@goal"])
+        if len(self.initial_state) != 1:
+            init_op = RelaxedOperator("@@init-operator", frozenset(["@@init"]), self.initial_state, 0)
+            self.operators.append(init_op)
+            self.variables.append("@@init")
+            self.initial_state = frozenset(["@@init"])
+    
     def dump(self):
         print "Variables"
         for var in self.variables:

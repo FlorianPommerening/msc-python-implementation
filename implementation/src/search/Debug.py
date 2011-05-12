@@ -1,8 +1,8 @@
 from sys import stdout
 from hmax import hmax
 
-DEBUGSTREAM = stdout#open('debug.out', 'w')# stdout
-DEBUGLEVEL = 3
+DEBUGSTREAM = open('debug.out', 'w')# stdout
+DEBUGLEVEL = 0
 # 0 everything
 # 1 regular events (i.e. backtracking)
 # 2 rare events (i.e. found better solution)
@@ -15,15 +15,22 @@ def debug_message(msg, level=0):
         print >> DEBUGSTREAM, msg
 
 
-def plot_justification_graph(task, state, filename):
-    def dotvarname(var):
+def dotvarname(var):
+    if len(var.split()) < 3:
         result = var.split()[0]
-        result = result.replace("#", "_")
-        return result
-    def dotopname(op):
-        result = op.name.replace(" ", "_")
-        result = result.replace("-", "_")
-        return result
+    else:
+        result = "_".join(var.split()[2:])
+    result = result.replace("#", "_")
+    result = result.replace("(", "_")
+    result = result.replace(")", "")
+    result = result.replace(",", "")
+    return result
+def dotopname(op):
+    result = op.name.replace(" ", "_")
+    result = result.replace("-", "_")
+    return result
+
+def plot_justification_graph(task, state, filename):
     _, _, pcf = hmax(task, state)
     file = open(filename, 'w')
     file.write("digraph justificationgraph {\n")
@@ -47,16 +54,6 @@ def plot_justification_graph(task, state, filename):
 
 
 def plot_explanation_graph(task, state, filename, target_vars):
-    def dotvarname(var):
-        result = var.split()[0]
-        result = result.replace("#", "_")
-        return result
-    def dotopname(op):
-        result = op.name.replace(" ", "_")
-        result = result.replace("-", "_")
-        return result
-    
-    
     edges = []
     variables = set()
     _, hmax_value, pcf = hmax(task, state)
@@ -105,18 +102,30 @@ def plot_explanation_graph(task, state, filename, target_vars):
     
     file = open(filename, 'w')
     file.write("digraph justificationgraph {\n")
-    for var in variables:
-        if var in state:
-            color = "[color=green]"
-        elif var in task.goal:
-            color = "[color=red]"
-        else:
-            color = ""        
+    for var in state:
+        if var not in variables:
+            continue
         if var in target_vars:
-            color += "[fillcolor=red][style=filled]"            
+            fillcolor = "[fillcolor=red][style=filled]"            
+        elif hmax_value[var] < float("infinity"):
+            fillcolor = "[fillcolor=green][style=filled][label=%s_h%d]" % (dotvarname(var), hmax_value[var])            
+        file.write("    %s[shape=box][color=green]%s\n" % (dotvarname(var), fillcolor))
+    for var in variables:
+        if var in state or var in task.goal:
+            continue
+        if var in target_vars:
+            fillcolor = "[fillcolor=red][style=filled]"            
+        elif hmax_value[var] < float("infinity"):
+            fillcolor = "[fillcolor=green][style=filled][label=%s_h%d]" % (dotvarname(var), hmax_value[var])            
+        file.write("    %s[shape=box]%s\n" % (dotvarname(var), fillcolor))
+    for var in task.goal:
+        if var in state:
+            continue
+        if var in target_vars:
+            fillcolor = "[fillcolor=red][style=filled]"            
         if hmax_value[var] < float("infinity"):
-            color += "[fillcolor=green][style=filled][label=%s_h%d]" % (dotvarname(var), hmax_value[var])            
-        file.write("    %s[shape=box]%s\n" % (dotvarname(var), color))
+            fillcolor = "[fillcolor=green][style=filled][label=%s_h%d]" % (dotvarname(var), hmax_value[var])            
+        file.write("    %s[shape=box][color=red]%s\n" % (dotvarname(var), fillcolor))
     file.writelines(edges)
     file.write("}\n")
     file.close()
