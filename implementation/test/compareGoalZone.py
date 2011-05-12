@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
 
-def compareGoalZone(problemfile, domainfile):
+def compareGoalZone(problemfile, domainfile,silent=False):
     p = Popen([translatepath, domainfile, problemfile], stdout=PIPE)
     p.wait()
     parser = SASParser()
@@ -38,12 +38,12 @@ def compareGoalZone(problemfile, domainfile):
 
     malte_near_goal_area = set(map(str, malte_near_goal_area))
     my_near_goal_area = set(map(varname, my_near_goal_area))
-    if my_near_goal_area - malte_near_goal_area:
+    if my_near_goal_area - malte_near_goal_area and not silent:
         print
         print "Additional atoms in my goal zone:"
         for var in sorted(my_near_goal_area - malte_near_goal_area):
             print var
-    if malte_near_goal_area - my_near_goal_area:
+    if malte_near_goal_area - my_near_goal_area and not silent:
         print
         print "Additional atoms in malte's goal zone:"
         for var in sorted(malte_near_goal_area - my_near_goal_area):

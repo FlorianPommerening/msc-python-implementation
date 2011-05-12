@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
 
-def compareHmax(problemfile, domainfile):
+def compareHmax(problemfile, domainfile, silent=False):
     p = Popen([translatepath, domainfile, problemfile], stdout=PIPE)
     p.wait()
     parser = SASParser()
@@ -30,11 +30,18 @@ def compareHmax(problemfile, domainfile):
     maltetask.convert_to_canonical_form()
     crossreference_task(maltetask)
     additive_hmax(maltetask, hmax_function=malte_hmax)
-
+    
+    failed = False
     for var in map(str, mytask.variables):
-        assert malte_hmax[varname(var)] == my_hmax[var], "Different hmax value for %s: (malte: %d, flo: %d)" % (var, malte_hmax[varname(var)], my_hmax[var])
-    assert my_result == malte_hmax["@@goal"], "Different hmax value for goal: (malte: %d, flo: %d)" % (malte_hmax["@@goal"], my_result)
-    return True
+        if malte_hmax[varname(var)] != my_hmax[var]:
+            failed = True
+            if not silent:
+                assert False, "Different hmax value for %s: (malte: %d, flo: %d)" % (var, malte_hmax[varname(var)], my_hmax[var])
+    if my_result == malte_hmax["@@goal"]:
+        failed = True
+        if not silent:
+            assert False, "Different hmax value for goal: (malte: %d, flo: %d)" % (malte_hmax["@@goal"], my_result)
+    return failed
 
 if __name__ == "__main__":
     if compareHmax("../../../downward/benchmarks/blocks/probBLOCKS-10-0.pddl", "../../../downward/benchmarks/blocks/domain.pddl"):

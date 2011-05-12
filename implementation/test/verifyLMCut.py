@@ -89,13 +89,19 @@ def benchmark(domains=None, problems=None, compare=['heristic', 'hmax', 'goalzon
             print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domains),
                                                                  domainname, 
                                                                  problems_done +1, len(problems))
-            if 'hmax' in compare:
-                compareHmax(problemfile, domainfile)
-            if 'goalzone' in compare:
-                compareGoalZone(problemfile, domainfile)
+            resultsfile.write("problem: %s\n" % problemfile)
+            resultsfile.flush()
             if 'heuristic' in compare:
                 my_t, malte_t, my_h, malte_h = compareTask(problemfile, domainfile)
-                resultsfile.write("%s %s %s %s %s\n" % (problemfile, my_t, malte_t, my_h, malte_h))
+                resultsfile.write("%s %s %s %s\n" % (my_t, malte_t, my_h, malte_h))
+                resultsfile.flush()
+            if 'hmax' in compare:
+                samehmax = compareHmax(problemfile, domainfile, silent=True)
+                resultsfile.write("hmax %s\n" % samehmax)
+                resultsfile.flush()
+            if 'goalzone' in compare:
+                samegoalzone = compareGoalZone(problemfile, domainfile, silent=True)
+                resultsfile.write("goalzone %s\n" % samegoalzone)
                 resultsfile.flush()
             problems_done += 1
         domains_done += 1
@@ -110,15 +116,40 @@ class DomainResults:
         aggregatedheuristicdifference = 0
         self.maxheuristicdifference = 0
         self.minheuristicdifference = 0
-        for (my_t, malte_t, my_h, malte_h) in problemresults.values():
-            aggregatedtimedifference += malte_t - my_t
-            aggregatedheuristicdifference  += malte_h - my_h
-            self.maxheuristicdifference = max(self.maxheuristicdifference, malte_h - my_h)
-            self.minheuristicdifference = min(self.minheuristicdifference, malte_h - my_h)
-            aggregatedspeedup += malte_t / my_t
-        self.averagetimedifference = aggregatedtimedifference / len(problemresults)
-        self.averagespeedup = aggregatedspeedup / len(problemresults)
-        self.averageheuristicdifference = aggregatedheuristicdifference / len(problemresults)
+        count = 0
+        for res in problemresults.values():
+            if not res.hasTimes:
+                continue
+            count += 1
+            dt = res.malte_t - res.my_t
+            dh = res.malte_h - res.my_h
+            aggregatedtimedifference += dt
+            aggregatedheuristicdifference  += dh
+            self.maxheuristicdifference = max(self.maxheuristicdifference, dh)
+            self.minheuristicdifference = min(self.minheuristicdifference, dh)
+            aggregatedspeedup += res.malte_t / res.my_t
+        self.hasTimes = False
+        if count > 1:
+            self.hastTimes = True
+            self.averagetimedifference = aggregatedtimedifference / count
+            self.averagespeedup = aggregatedspeedup / count
+            self.averageheuristicdifference = aggregatedheuristicdifference / count
+        
+class ProblemResults:
+    def __init__(self, name, times=None, hmax=None, goalzone=None):
+        self.name = name
+        self.hasTimes = False
+        if times is not None:
+            self.hasTimes = True
+            (my_t, malte_t, my_h, malte_h) = times
+            self.my_t = float(my_t)
+            self.malte_t = float(malte_t)
+            self.my_h = int(my_h)
+            self.malte_h = int(malte_h)
+        if hmax is not None:
+            self.hmax = bool(hmax)
+        if goalzone is not None:
+            self.goalzone = bool(goalzone)
         
 
 
@@ -126,26 +157,43 @@ def parse_results(filename):
     results = []
     problemresults = {}
     domainname = None
+    problemfile = None
+    times = None
+    hmax = None
+    goalzone = None
     for line in open(filename):
-        if line.startswith("domain: "):
+        tokens = line.strip().split()
+        if tokens[0] == "domain:":
             if domainname is not None:
                 results.append(DomainResults(domainname, problemresults))
-            domainname = line[7:]
+            domainname = " ".join(tokens[1:])
             problemresults = {}
+        elif tokens[0] == "problem:":
+            if problemfile is not None:
+                problemresults[problemfile] = ProblemResults(problemfile, times, hmax, goalzone)
+            problemfile = " ".join(tokens[1:])
+            times = None
+            hmax = None
+            goalzone = None
+        elif tokens[0] == "hmax" and len(tokens) == 2:
+            hmax = tokens[1]
+        elif tokens[0] == "goalzone" and len(tokens) == 2:
+            goalzone = tokens[1]
+        elif len(tokens) == 4:
+            times = tokens 
         else:
-            tokens = line.strip().split() 
-            if len(tokens) != 5:
-                print "cannot parse result line", line
-                continue
-            (problemfile, my_t, malte_t, my_h, malte_h) = tokens 
-            problemresults[problemfile] = (float(my_t), float(malte_t), int(my_h), int(malte_h))
+            print "cannot parse result line", line
+            continue
+    if problemfile is not None:
+        problemresults[problemfile] = ProblemResults(problemfile, times, hmax, goalzone)
     if domainname is not None:
         results.append(DomainResults(domainname, problemresults))
     return results
 
 def print_results(results):
     for domainresults in results: 
-        print domainresults.name, " (td: %s, su: %s, hd: %s [%s - %s])" % (
+        if domainresults.hasTimes:
+            print domainresults.name, " (td: %s, su: %s, hd: %s [%s - %s])" % (
                                str(domainresults.averagetimedifference * 1000),
                                str(domainresults.averagespeedup),
                                str(domainresults.averageheuristicdifference),
@@ -155,5 +203,5 @@ def print_results(results):
 
 
 if __name__ == "__main__":
-    benchmark(domains=range(0, 20), problems=range(0,20), compare=['heuristic'])
+    benchmark(domains=range(0, 20), problems=range(0,20), compare=['heuristic', 'hmax', 'goalzone']) 
     print_results(parse_results("results.txt"))
