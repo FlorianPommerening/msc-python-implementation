@@ -87,9 +87,3 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
             else:
                 stack.extend(op.effect)
     return cut
-                
-            
-            
-        
-
-

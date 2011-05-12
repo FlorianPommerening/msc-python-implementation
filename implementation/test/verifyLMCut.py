@@ -155,5 +155,5 @@ def print_results(results):
 
 
 if __name__ == "__main__":
-    #benchmark(domains=range(3, 20), problems=range(0,20), compare=['heuristic'])
+    benchmark(domains=range(0, 20), problems=range(0,20), compare=['heuristic'])
     print_results(parse_results("results.txt"))
