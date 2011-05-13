@@ -89,7 +89,7 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
     cut = set()
     while stack:
         v = stack.pop()
-        if v in closed or hmax_function[v] >= hmax_value:
+        if v in closed: # or hmax_function[v] >= hmax_value:
             continue
         closed.append(v)
         for op in operators_with_pcf_choice[v]:

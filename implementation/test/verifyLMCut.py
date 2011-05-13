@@ -6,7 +6,7 @@ from search.lmcut import incremental_lmcut
 from translate.additivehmax import crossreference_task, additive_hmax
 
 from relaxedtasktranslator import translate_relaxed_task
-from compare import compareHmax, compareGoalZone
+from compare import compareHmax, compareGoalZone, validateCut
 from Results import *
 
 from time import time
@@ -14,9 +14,13 @@ from glob import glob
 from subprocess import Popen, PIPE
 import re
 import os
+import signal
 
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
+
+class TimeoutException(Exception):
+    pass
 
 class DebugValueList:
     def __init__(self):
@@ -64,7 +68,9 @@ def compareTask(problemfile, domainfile, what_to_compare):
         samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True)
     if 'goalzone' in what_to_compare:
         samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=True)
-    return ProblemResults(problemfile, times, samehmax, samegoalzone)
+    if 'cut' in what_to_compare:
+        valid_cut = validateCut(my_debug_value_list, task)
+    return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
 
 def listproblems(basedir):
     result = []
@@ -86,7 +92,7 @@ def listproblems(basedir):
     sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]
     return [name for (_, name) in sorted(sortlist)]
 
-def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone']):
+def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone'], timeout=None):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
                     for domainname in
                     ['airport', 'blocks', 'depot', 'driverlog', 'freecell', 'gripper',
@@ -114,7 +120,16 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
             print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domains),
                                                                  domainname, 
                                                                  problems_done +1, len(problems))
-            results = compareTask(problemfile, domainfile, what_to_compare)
+            if timeout:
+                def raiseTimeout(signum, frame): 
+                    raise TimeoutException()
+                signal.signal(signal.SIGALRM, raiseTimeout)
+                signal.alarm(timeout)
+            try:
+                results = compareTask(problemfile, domainfile, what_to_compare)
+            except TimeoutException:
+                print "  Timed out"
+                results = ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
             resultsfile.write(str(results))
             resultsfile.flush()
             problems_done += 1
@@ -123,5 +138,5 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
 
 
 if __name__ == "__main__":
-    #benchmark(domains=[0], problems=range(0,20)) 
+    benchmark(domains=[3], problems=range(0,20), what_to_compare=["cut"], timeout=60) 
     print_results(parse_results("results.txt"))

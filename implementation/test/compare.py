@@ -3,7 +3,19 @@ from relaxedtasktranslator import varname
 
 def validateCut(debug_value_list, task):
     cut = debug_value_list.steps[0].cut
-    
+    operators = [op for op in task.operators if op not in cut]
+    state = task.initial_state
+    old_state = None
+    while state != old_state:
+        old_state = state
+        for op in operators:
+            if op.precondition.issubset(state):
+                state = state.union(op.effect)
+    valid = not task.goal.issubset(state)
+    # DEBUG
+    assert valid, "Found invalid cut"
+    return valid
+        
 
 
 def compareHmax(my_debug_value_list, malte_debug_value_list, silent=False):
