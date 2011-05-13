@@ -2,7 +2,7 @@ from collections import defaultdict
 from .hmax import hmax
 from .Debug import debug_message
 
-def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operator=None, removed_operator=None):
+def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operator=None, removed_operator=None, debug_value_list=None):
     '''
     landmarks can contain previously discovered landmarks and will be changed in place.
 
@@ -26,12 +26,24 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
 
     operator_costs = {op:op.cost for op in task.operators}
     hmax_value, hmax_function, precondition_choice_function = hmax(task, state, operator_costs)
+
     debug_message("hmax(state) = %s" % str(hmax_value), 0)
+
     if hmax_value == float("infinity"):
         return hmax_value
     additive_costs = []
     while hmax_value != 0:
-        cut = find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function)
+        if debug_value_list is not None:
+            debug_values = debug_value_list.newEntry()
+
+        cut = find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values)
+
+        if debug_values is not None:
+            debug_values.hmax_function = hmax_function
+            debug_values.pcf = precondition_choice_function
+            debug_values.hmax_value = hmax_value
+            debug_values.cut = list(cut)
+
         landmarks.append(cut)
         for op in cut:
             operator_to_landmark[op] = cut
@@ -40,10 +52,11 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
         for op in cut:
             operator_costs[op] -= landmark_cost
         hmax_value, hmax_function, precondition_choice_function = hmax(task, state, operator_costs)
+
     debug_message("hlmcut(state) = %s" % str(hmax_value + sum(additive_costs)), 0)
     return sum(additive_costs)
 
-def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, near_goal_area=None):
+def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values=None):
     zero_cost_operators_with_effect = defaultdict(list)
     operators_with_pcf_choice = defaultdict(list)
     for op in task.operators:
@@ -67,8 +80,8 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
             stack.append(precondition_choice_function[op])
 
     # DEBUG
-    if near_goal_area is not None:
-        near_goal_area.extend(goal_zone)
+    if debug_values is not None:
+        debug_values.near_goal_area = list(goal_zone)
 
     
     stack = list(state)

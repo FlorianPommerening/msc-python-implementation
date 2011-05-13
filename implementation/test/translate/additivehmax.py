@@ -22,7 +22,7 @@ def crossreference_task(task):
             eff.effect_of.append(action)
 
 
-def hmax(task, goal_cut_facts=(), hmax_function=None):
+def hmax(task, goal_cut_facts=(), debug_values=None):
     # hmax costs are pairs of the form (cost, depth), where "depth" is
     # the length (as opposed to cost sum) of the supporting chain. We
     # use the depth for tie-breaking; this is not strictly necessary,
@@ -47,9 +47,9 @@ def hmax(task, goal_cut_facts=(), hmax_function=None):
         # to compute hmax supporters for all actions.
         if hmax == fact.hmax:
 
-            # added by flo:
-            if hmax_function is not None:
-                hmax_function[str(fact)] = hmax[0]
+            # added by flo for debug:
+            if debug_values is not None:
+                debug_values.hmax_function[str(fact)] = hmax[0]
 
             for action in fact.precondition_of:
                 action.unsatisfied_conditions -= 1
@@ -115,10 +115,14 @@ def hmax(task, goal_cut_facts=(), hmax_function=None):
                         elif action_hmax < effect.hmax:
                             effect.hmax = action_hmax
                             heappush(heap, (action_hmax, effect))
+    if debug_values is not None:
+        debug_values.hmax_value = goal.hmax[0]
+        debug_values.cut = cut
+        debug_values.pcf = {a:a.hmax_supporter for a in task.actions}
     return goal.hmax[0], cut
 
 
-def collect_cut(task, near_goal_area=None):
+def collect_cut(task, debug_values=None):
     goal, = task.goals
     goal_plateau = set()
     def recurse(subgoal):
@@ -129,9 +133,9 @@ def collect_cut(task, near_goal_area=None):
                     recurse(action.hmax_supporter)
     recurse(goal)
 
-    # added by flo:
-    if near_goal_area is not None:
-        near_goal_area.extend(goal_plateau)
+    # added by flo for debug:
+    if debug_values is not None:
+        debug_values.near_goal_area = list(goal_plateau)
     
 
     cut_hmax, cut = hmax(task, goal_plateau)
@@ -139,26 +143,21 @@ def collect_cut(task, near_goal_area=None):
     return cut
 
 
-def additive_hmax(task, hmax_function=None, near_goal_area=None):
+def additive_hmax(task, debug_value_list=None):
     MULTIPLIER = 1
     result = 0
     for action in task.actions:
         action.cost *= MULTIPLIER
     while True:
-        # added by flo (only set values once):
-        if hmax_function is not None and len(hmax_function) > 0:
-            hmax_function = None
+        #added by flo for debug
+        if debug_value_list is not None:
+            debug_values = debug_value_list.newEntry()
 
-        cost, _ = hmax(task, hmax_function=hmax_function)
+        cost, _ = hmax(task, debug_values=debug_values)
         if cost == 0:
             break
         result += 1
-
-        # added by flo (only set values once):
-        if near_goal_area is not None and len(near_goal_area) > 0:
-            near_goal_area = None
-
-        cut = collect_cut(task, near_goal_area=near_goal_area)
+        cut = collect_cut(task, debug_values=debug_values)
         for action in cut:
             assert action.cost >= 1
             action.cost -= 1
