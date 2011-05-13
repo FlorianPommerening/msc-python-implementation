@@ -19,7 +19,7 @@ translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
 
 def compareTask(problemfile, domainfile):
-    p = Popen([translatepath, domainfile, problemfile], stdout=PIPE)
+    p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
     p.wait()
     parser = SASParser()
     sastask = parser.parse_task(open("output.sas"))
@@ -46,7 +46,8 @@ def listproblems(basedir):
     problemfiles = [file for file in glob(basedir + '*')
                         if file.find("domain", len(basedir)) == -1]
     for problemfile in problemfiles:
-        match = re.match(basedir + "p(\d\d)", problemfile)
+        problemfile = problemfile.replace("\\", "/")
+        match = re.match(basedir + r"p(\d\d)", problemfile)
         domainfile = ""
         if match:
             domainfile = basedir + "domain_p%s.pddl" % match.groups(1)
@@ -57,7 +58,8 @@ def listproblems(basedir):
 
         assert os.path.exists(domainfile), "could not find domainfile for problem '%s'" % problemfile
         result.append((problemfile, domainfile))
-    return sorted(result)
+    sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]
+    return [name for (_, name) in sorted(sortlist)]
 
 def benchmark(domains=None, problems=None, compare=['heristic', 'hmax', 'goalzone']):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
