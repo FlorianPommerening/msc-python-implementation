@@ -1,3 +1,5 @@
+# this whole file is an ugly HACK
+
 class DomainResults:
     def __init__(self, name, problemresults):
         self.name = name
@@ -8,6 +10,8 @@ class DomainResults:
         self.maxheuristicdifference = 0
         self.minheuristicdifference = 0
         count = 0
+        self.good_hmax = None
+        self.good_goalzone = None
         for res in problemresults.values():
             if not res.hasTimes:
                 continue
@@ -22,6 +26,14 @@ class DomainResults:
                 aggregatedspeedup += 1
             else:
                 aggregatedspeedup += res.malte_t / res.my_t
+            if res.hmax is not None:
+                if self.good_hmax is None:
+                    self.good_hmax = True
+                self.good_hmax &= res.hmax
+            if res.goalzone is not None:
+                if self.good_goalzone is None:
+                    self.good_goalzone = True
+                self.good_goalzone &= res.goalzone
         self.hasTimes = False
         if count > 0:
             self.hasTimes = True
@@ -29,7 +41,6 @@ class DomainResults:
             self.averagespeedup = aggregatedspeedup / count
             self.averageheuristicdifference = aggregatedheuristicdifference / count
 
-# ugly HACK
 class ProblemResults:
     def __init__(self, name, times=None, hmax=None, goalzone=None):
         self.name = name
@@ -42,11 +53,11 @@ class ProblemResults:
             self.my_h = int(my_h)
             self.malte_h = int(malte_h)
         if hmax is not None:
-            self.hmax = bool(hmax)
+            self.hmax = (hmax == "True")
         else:
             self.hmax = None
         if goalzone is not None:
-            self.goalzone = bool(goalzone)
+            self.goalzone = (goalzone == "True")
         else:
             self.goalzone = None
 
@@ -113,4 +124,8 @@ def print_results(results):
                               )
         else:
             print "no time entry for domain:", domainresults.name
+        if domainresults.good_hmax is not None and not domainresults.good_hmax:
+            print "  has h^max errors"
+        if domainresults.good_goalzone is not None and not domainresults.good_goalzone:
+            print "  has different goalzones"
 

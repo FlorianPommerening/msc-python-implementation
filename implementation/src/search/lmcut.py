@@ -53,7 +53,7 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
             operator_costs[op] -= landmark_cost
         hmax_value, hmax_function, precondition_choice_function = hmax(task, state, operator_costs)
 
-    debug_message("hlmcut(state) = %s" % str(hmax_value + sum(additive_costs)), 0)
+    debug_message("hlmcut(state) = %d" % sum(additive_costs), 0)
     return sum(additive_costs)
 
 def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values=None):

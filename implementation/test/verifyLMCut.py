@@ -6,8 +6,7 @@ from search.lmcut import incremental_lmcut
 from translate.additivehmax import crossreference_task, additive_hmax
 
 from relaxedtasktranslator import translate_relaxed_task
-from comparehmax import compareHmax
-from compareGoalZone import compareGoalZone
+from compare import compareHmax, compareGoalZone
 from Results import *
 
 from time import time
@@ -124,5 +123,5 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
 
 
 if __name__ == "__main__":
-    benchmark(domains=[0], problems=range(0,20)) 
+    #benchmark(domains=[0], problems=range(0,20)) 
     print_results(parse_results("results.txt"))
