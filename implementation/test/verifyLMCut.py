@@ -62,13 +62,17 @@ def listproblems(basedir):
     return [name for (_, name) in sorted(sortlist)]
 
 def run_with_timeout(timeout, default, f, *args, **kwargs):
-    if timeout:
-        signal.signal(signal.SIGALRM, raiseTimeout)
-        signal.alarm(timeout)
+    if not timeout:
+        return f(*args, **kwargs)
+    old_handler = signal.signal(signal.SIGALRM, raiseTimeout)
+    signal.alarm(timeout)
     try:
         return f(*args, **kwargs)
     except TimeoutException:
         return default
+    finally:
+        signal.signal(signal.SIGALRM, old_handler)
+        signal.alarm(0)
 
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
