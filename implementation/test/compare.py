@@ -1,19 +1,26 @@
 from relaxedtasktranslator import varname
 
 
-def validateCut(debug_value_list, task):
-    cut = debug_value_list.steps[0].cut
-    operators = [op for op in task.operators if op not in cut]
-    state = task.initial_state
-    old_state = None
-    while state != old_state:
-        old_state = state
-        for op in operators:
-            if op.precondition.issubset(state):
-                state = state.union(op.effect)
-    valid = not task.goal.issubset(state)
-    # DEBUG
-    assert valid, "Found invalid cut"
+def validateCut(debug_value_list, task, all=False):
+    if all:
+        cuts = [step.cut for step in debug_value_list.steps]
+    else:
+        cuts = [debug_value_list.steps[0].cut]
+    current_cut = []
+    valid = True
+    for cut in cuts:
+        current_cut.extend(cut)
+        operators = [op for op in task.operators if op not in current_cut]
+        state = task.initial_state
+        old_state = None
+        while state != old_state:
+            old_state = state
+            for op in operators:
+                if op.precondition.issubset(state):
+                    state = state.union(op.effect)
+        valid &= not task.goal.issubset(state)
+        # DEBUG
+        assert valid, "Found invalid cut: [%s]" % [op.name for op in current_cut] 
     return valid
         
 

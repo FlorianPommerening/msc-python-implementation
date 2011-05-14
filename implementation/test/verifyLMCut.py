@@ -22,6 +22,9 @@ benchmarksdir = '../../../downward/benchmarks/'
 class TimeoutException(Exception):
     pass
 
+def raiseTimeout(signum, frame): 
+    raise TimeoutException()
+
 class DebugValueList:
     def __init__(self):
         self.steps = []
@@ -37,40 +40,6 @@ class DebugValues:
         self.pcf = {}
         self.hmax_value = 0
         self.cut = []
-
-def compareTask(problemfile, domainfile, what_to_compare):
-    p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
-    p.wait()
-    parser = SASParser()
-    sastask = parser.parse_task(open("output.sas"))
-    translationkey = parser.parse_translationkey(open("test.groups"))
-    task = delete_relaxation(sastask, translationkey)
-    task.convert_to_canonical_form()
-    filter_irrelevant_variables(task)
-    malte_task = translate_relaxed_task(task)
-    malte_debug_value_list, my_debug_value_list = (DebugValueList(), DebugValueList())
-
-    print "  Mine",
-    start = time()
-    my_h = incremental_lmcut(task, task.initial_state, [], {}, debug_value_list=my_debug_value_list)
-    my_t = time() - start
-    print " H:%d, T:%d" % (my_h, my_t * 1000)
-    print "  Malte",
-    start = time()
-    crossreference_task(malte_task)
-    malte_h = additive_hmax(malte_task, debug_value_list=malte_debug_value_list)
-    malte_t = time() - start
-    print " H:%d, T:%d" % (malte_h, malte_t * 1000)
-
-    times = (my_t, malte_t, my_h, malte_h)
-    samehmax, samegoalzone = (None, None) 
-    if 'hmax' in what_to_compare:
-        samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True)
-    if 'goalzone' in what_to_compare:
-        samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=True)
-    if 'cut' in what_to_compare:
-        valid_cut = validateCut(my_debug_value_list, task)
-    return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
 
 def listproblems(basedir):
     result = []
@@ -92,7 +61,68 @@ def listproblems(basedir):
     sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]
     return [name for (_, name) in sorted(sortlist)]
 
-def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone'], timeout=None):
+def run_with_timeout(timeout, default, f, *args, **kwargs):
+    if timeout:
+        signal.signal(signal.SIGALRM, raiseTimeout)
+        signal.alarm(timeout)
+    try:
+        return f(*args, **kwargs)
+    except TimeoutException:
+        return default
+
+def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
+    p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
+    p.wait()
+    parser = SASParser()
+    sastask = parser.parse_task(open("output.sas"))
+    translationkey = parser.parse_translationkey(open("test.groups"))
+    task = delete_relaxation(sastask, translationkey)
+    task.convert_to_canonical_form()
+    filter_irrelevant_variables(task)
+    malte_task = translate_relaxed_task(task)
+    malte_debug_value_list, my_debug_value_list = (DebugValueList(), DebugValueList())
+
+    print "  Mine",
+    start = time()
+    my_h = run_with_timeout(timeout, None, incremental_lmcut,
+                            task, debug_value_list=my_debug_value_list)
+    my_t = time() - start
+    if my_h is None:
+        print "  Timed out"
+        return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
+    print " H:%d, T:%d" % (my_h, my_t * 1000)
+    print "  Malte",
+    start = time()
+    crossreference_task(malte_task)
+    malte_h = run_with_timeout(timeout, None, additive_hmax,
+                               malte_task, debug_value_list=malte_debug_value_list)
+    malte_t = time() - start
+    if malte_h is None:
+        print "  Malte timed out"
+        return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
+    print " H:%d, T:%d" % (malte_h, malte_t * 1000)
+
+    times = (my_t, malte_t, my_h, malte_h)
+    samehmax, samegoalzone, valid_cut = (None, None, None) 
+    if 'hmax' in what_to_compare:
+        print "  comparing hmax... ",
+        samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True)
+        print "same" if samehmax else "different"
+    if 'goalzone' in what_to_compare:
+        print "  comparing goalzone... ",
+        samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=True)
+        print "same" if samegoalzone else "different"
+    if 'cut' in what_to_compare:
+        print "  validating first cut... ",
+        valid_cut = validateCut(my_debug_value_list, task)
+        print "valid" if valid_cut else "invalid"
+    if 'cuts' in what_to_compare:
+        print "  validating all cuts... ",
+        valid_cut = validateCut(my_debug_value_list, task, all=True)
+        print "valid" if valid_cut else "invalid"
+    return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
+
+def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone', 'cuts'], timeout=None):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
                     for domainname in
                     ['airport', 'blocks', 'depot', 'driverlog', 'freecell', 'gripper',
@@ -103,33 +133,24 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
                   ]
     resultsfile = open("results.txt", "w")
     if domains:
-        domains = sorted(list(set(domains) & set(range(len(lmcut_suite)))))
+        domain_ids = sorted(list(set(domains) & set(range(len(lmcut_suite)))))
     else:
-        domains = range(len(lmcut_suite))
+        domain_ids = range(len(lmcut_suite))
     domains_done = 0
-    for domain_id in domains:
+    for domain_id in domain_ids:
         (domainname, filepaths) = lmcut_suite[domain_id]
         if problems:
-            problems = sorted(list(set(problems) & set(range(len(filepaths)))))
+            problem_ids = sorted(list(set(problems) & set(range(len(filepaths)))))
         else:
-            problems = range(len(filepaths))
+            problem_ids = range(len(filepaths))
         problems_done = 0
         resultsfile.write("domain: %s\n" % domainname)
-        for problem_id in problems:
+        for problem_id in problem_ids:
             (problemfile, domainfile) = filepaths[problem_id]
-            print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domains),
+            print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domain_ids),
                                                                  domainname, 
-                                                                 problems_done +1, len(problems))
-            if timeout:
-                def raiseTimeout(signum, frame): 
-                    raise TimeoutException()
-                signal.signal(signal.SIGALRM, raiseTimeout)
-                signal.alarm(timeout)
-            try:
-                results = compareTask(problemfile, domainfile, what_to_compare)
-            except TimeoutException:
-                print "  Timed out"
-                results = ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
+                                                                 problems_done +1, len(problem_ids))
+            results = compareTask(problemfile, domainfile, what_to_compare)
             resultsfile.write(str(results))
             resultsfile.flush()
             problems_done += 1
@@ -138,5 +159,5 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
 
 
 if __name__ == "__main__":
-    benchmark(domains=[3], problems=range(0,20), what_to_compare=["cut"], timeout=60) 
+    benchmark(domains=range(0,20), problems=range(0,160), timeout=60) 
     print_results(parse_results("results.txt"))

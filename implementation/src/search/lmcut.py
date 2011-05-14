@@ -2,7 +2,7 @@ from collections import defaultdict
 from .hmax import hmax
 from .Debug import debug_message
 
-def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operator=None, removed_operator=None, debug_value_list=None):
+def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, added_operator=None, removed_operator=None, debug_value_list=None):
     '''
     landmarks can contain previously discovered landmarks and will be changed in place.
 
@@ -19,6 +19,8 @@ def incremental_lmcut(task, state, landmarks, operator_to_landmark, added_operat
 
     Returns heuristic value of state
     '''
+    if state == None:
+        state = task.initial_state
 #TODO: for now this is only regular lmcut (not incremental)
 # clear landmarks, as they are recomputed in each step
     landmarks[:] = []
