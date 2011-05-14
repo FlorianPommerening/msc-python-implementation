@@ -12,18 +12,13 @@ from Results import *
 from time import time
 from glob import glob
 from subprocess import Popen, PIPE
+from threading import Timer
 import re
 import os
-import signal
+import thread
 
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
-
-class TimeoutException(Exception):
-    pass
-
-def raiseTimeout(signum, frame): 
-    raise TimeoutException()
 
 class DebugValueList:
     def __init__(self):
@@ -62,12 +57,15 @@ def listproblems(basedir):
     return [name for (_, name) in sorted(sortlist)]
 
 def run_with_timeout(timeout, default, f, *args, **kwargs):
-    if timeout:
-        signal.signal(signal.SIGALRM, raiseTimeout)
-        signal.alarm(timeout)
-    try:
+    if not timeout:
         return f(*args, **kwargs)
-    except TimeoutException:
+    try:
+        timeout_timer = Timer(timeout, thread.interrupt_main)
+        timeout_timer.start()
+        result = f(*args, **kwargs)
+        timeout_timer.cancel()
+        return result
+    except KeyboardInterrupt:
         return default
 
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
@@ -160,4 +158,6 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
 
 if __name__ == "__main__":
     benchmark(domains=range(0,20), problems=range(0,160), timeout=60) 
+    # import profile
+    # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
     print_results(parse_results("results.txt"))

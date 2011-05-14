@@ -48,7 +48,7 @@ class SASParser:
         try:
             value = self._read_value()
             return int(value)
-        except:
+        except ValueError:
             raise ParseError("Expected number but got: '%s'" % (value))
 
     def _read_list(self, name=None, count=None):
@@ -79,7 +79,7 @@ class SASParser:
                 axiom_layers.append(int(axiom_layer))
                 ranges.append(int(size))
                 variable_id +=1
-            except:
+            except TypeError, ValueError:
                 raise ParseError("Invalid variable entry for var%d: '%s'" % (variable_id, entry))
         return SASVariables(ranges, axiom_layers)
     
@@ -88,7 +88,7 @@ class SASParser:
         for value in self._read_list("state", variable_count):
             try:
                 values.append(int(value))
-            except:
+            except ValueError:
                 raise ParseError("Invalid state entry: '%s'" % value)
         return SASInit(values)
 
@@ -98,7 +98,7 @@ class SASParser:
             try:
                 (variable, value) = entry.split()
                 pairs.append((int(variable), int(value)))
-            except:
+            except TypeError, ValueError:
                 raise ParseError("Invalid goal entry: '%s'" % entry)
         return SASGoal(pairs)
     
@@ -117,7 +117,7 @@ class SASParser:
             try:
                 (var, val) = entry.split()
                 prevail.append((int(var), int(val)))
-            except:
+            except TypeError, ValueError:
                 raise ParseError("Invalid prevail entry in operator '%s': '%s'" % (name, entry))
         pre_post = []
         for effect in self._read_list():
@@ -133,7 +133,7 @@ class SASParser:
                                     effectstream.next(),
                                     effectstream.next())
                 pre_post.append((var, pre, post, cond))
-            except:
+            except ValueError, StopIteration:
                 raise ParseError("Invalid effect entry in operator '%s': '%s'" % (name, effect))
         cost = self._read_number()
         self._read_value("end_operator")
@@ -153,7 +153,7 @@ class SASParser:
             try:
                 (variable, value) = entry.split()
                 condition.append((int(variable), int(value)))
-            except:
+            except TypeError, ValueError:
                 raise ParseError("Invalid condition entry in axiom: '%s'" % entry)
         try:
             effectline = self._read_value()
@@ -162,7 +162,7 @@ class SASParser:
             if 1 - int(old_value) != int(new_value):
                 raise ParseError()
             effect = (variable, new_value)
-        except:
+        except TypeError, ValueError:
             raise ParseError("Invalid effect in axiom: '%s'" % effectline)
         self._read_value("end_rule")
         return SASAxiom(condition, effect)
