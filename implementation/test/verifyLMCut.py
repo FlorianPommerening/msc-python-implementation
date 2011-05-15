@@ -69,15 +69,30 @@ def run_with_timeout(timeout, default, f, *args, **kwargs):
         return default
 
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
+    print "  Translation ...",
+    start = time()
     p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
     p.wait()
+    print time() - start
+    print "  Parsing ...",
+    start = time()
     parser = SASParser()
     sastask = parser.parse_task(open("output.sas"))
     translationkey = parser.parse_translationkey(open("test.groups"))
+    print time() - start
+    print "  Relaxing ...",
+    start = time()
     task = delete_relaxation(sastask, translationkey)
     task.convert_to_canonical_form()
+    print time() - start
+    print "  Filtering ...",
+    start = time()
     filter_irrelevant_variables(task)
+    print time() - start
+    print "  Conversion ...",
+    start = time()
     malte_task = translate_relaxed_task(task)
+    print time() - start
     malte_debug_value_list, my_debug_value_list = (DebugValueList(), DebugValueList())
 
     print "  Mine",
@@ -148,7 +163,7 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
             print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domain_ids),
                                                                  domainname, 
                                                                  problems_done +1, len(problem_ids))
-            results = compareTask(problemfile, domainfile, what_to_compare)
+            results = compareTask(problemfile, domainfile, what_to_compare, timeout)
             resultsfile.write(str(results))
             resultsfile.flush()
             problems_done += 1
