@@ -28,18 +28,15 @@ def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, a
 
     operator_costs = {op:op.cost for op in task.operators}
     hmax_value, hmax_function, precondition_choice_function = hmax(task, state, operator_costs)
-
     debug_message("hmax(state) = %s" % str(hmax_value), 0)
-
     if hmax_value == float("infinity"):
         return hmax_value
+
     additive_costs = []
     while hmax_value != 0:
         if debug_value_list is not None:
             debug_values = debug_value_list.newEntry()
-
         cut = find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values)
-
         if debug_values is not None:
             debug_values.hmax_function = hmax_function
             debug_values.pcf = precondition_choice_function
@@ -59,18 +56,15 @@ def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, a
     return sum(additive_costs)
 
 def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values=None):
-    zero_cost_operators_with_effect = defaultdict(list)
-    operators_with_pcf_choice = defaultdict(list)
-    for op in task.operators:
-        if not precondition_choice_function.has_key(op):
-            # if the PCF has no entry for op, this means that 
-            # op has at least one condition c with hmax(c) = inf
-            continue
-        operators_with_pcf_choice[precondition_choice_function[op]].append(op)
-        if operator_costs[op] == 0:
-            for e in op.effect:
-                zero_cost_operators_with_effect[e].append(op)
-    
+    effect_to_zero_cost_operators = {}
+    for (e, operators) in task.effect_to_operators.items():
+        effect_to_zero_cost_operators[e] = [op for op in operators if operator_costs[op] == 0]
+    inverse_pcf = defaultdict(list)
+    for (op, p) in precondition_choice_function.items():
+        # if the PCF has no entry for op, this means that 
+        # op has at least one condition c with hmax(c) = inf
+        inverse_pcf[p].append(op)
+
     goal_zone = set()
     stack = list(task.goal)
     while stack:
@@ -78,23 +72,20 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
         if v in goal_zone:
             continue
         goal_zone.add(v)
-        for op in zero_cost_operators_with_effect[v]:
+        for op in effect_to_zero_cost_operators[v]:
             stack.append(precondition_choice_function[op])
-
-    # DEBUG
     if debug_values is not None:
         debug_values.near_goal_area = list(goal_zone)
 
-    
     stack = list(state)
     closed = []
     cut = set()
     while stack:
         v = stack.pop()
-        if v in closed: # or hmax_function[v] >= hmax_value:
+        if v in closed:
             continue
         closed.append(v)
-        for op in operators_with_pcf_choice[v]:
+        for op in inverse_pcf[v]:
             for e in op.effect:
                 if e in goal_zone:
                     cut.add(op)

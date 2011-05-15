@@ -11,7 +11,6 @@ def filter_irrelevant_variables(task):
     This function also removes the irrelevant variables from each operator and
     removes the operator if its effect becomes empty by doing this.
     """
-    irrelevant_operators = list(task.operators)
     relevant_operators = []
     relevant_variables = []    
     relevant_variable_queue = deque(task.goal)
@@ -20,14 +19,9 @@ def filter_irrelevant_variables(task):
         if v in relevant_variables:
             continue
         relevant_variables.append(v)
-        operators_to_remove = []
-        for op in irrelevant_operators:
-            if v in op.effect:
-                relevant_operators.append(op)
-                operators_to_remove.append(op)
-                relevant_variable_queue.extend(op.precondition)
-        for op in operators_to_remove:
-            irrelevant_operators.remove(op)
+        for op in task.effect_to_operators[v]:
+            relevant_operators.append(op)
+            relevant_variable_queue.extend(op.precondition)
                         
     # filter variables
     old_variable_count = len(task.variables) 

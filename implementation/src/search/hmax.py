@@ -1,21 +1,14 @@
-from collections import defaultdict
 from heapq import heappush, heappop
 
 def hmax(task, state, operator_costs=None):
     if operator_costs is None:
         operator_costs = {op:op.cost for op in task.operators}
-        
-    hmax, closed, operators_with_precondition, precondition_choice_function = {}, {}, defaultdict(list), {}
+    hmax, closed, precondition_choice_function = {}, {}, {}
     for v in task.variables:
         hmax[v] = float("infinity")
         closed[v] = False
-
     for op in task.operators:
-        assert len(op.precondition), "operator without precondition unsupported"
         op.unsatisfied_preconditions = len(op.precondition)
-        for e in op.precondition:
-            operators_with_precondition[e].append(op)
-
     # nodes are stored with the key (hmax, depth) to use depth for tie-breaking
     # this gives better (more) landmarks
     heap = []
@@ -31,7 +24,7 @@ def hmax(task, state, operator_costs=None):
             # but it is faster to insert duplicates and ignore the ones with the old key
             continue
         closed[u] = True
-        for op in operators_with_precondition[u]:
+        for op in task.precondition_to_operators[u]:
             op.unsatisfied_preconditions -= 1
             if op.unsatisfied_preconditions == 0:
                 # We discovered all preconditions of this action.

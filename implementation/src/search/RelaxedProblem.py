@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 # TODO use bitmaps instead of sets
 class RelaxedProblem:
     def __init__(self, variables, initial_state, operators, goal):
@@ -43,6 +45,16 @@ class RelaxedProblem:
             self.variables.append("@@init")
             self.initial_state = frozenset(["@@init"])
     
+    def crossreference(self):
+        self.precondition_to_operators = defaultdict(list)
+        self.effect_to_operators = defaultdict(list)
+        for op in self.operators:
+            assert len(op.precondition), "operator without precondition unsupported"
+            for p in op.precondition:
+                self.precondition_to_operators[p].append(op)
+            for e in op.effect:
+                self.effect_to_operators[e].append(op)
+
     def dump(self):
         print "Variables"
         for var in self.variables:

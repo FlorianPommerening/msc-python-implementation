@@ -84,6 +84,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     start = time()
     task = delete_relaxation(sastask, translationkey)
     task.convert_to_canonical_form()
+    task.crossreference()
     print time() - start
     print "  Filtering ...",
     start = time()
