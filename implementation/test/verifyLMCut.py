@@ -84,15 +84,16 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     start = time()
     task = delete_relaxation(sastask, translationkey)
     task.convert_to_canonical_form()
-    task.crossreference()
     print time() - start
     print "  Filtering ...",
     start = time()
     filter_irrelevant_variables(task)
+    task.crossreference()
     print time() - start
     print "  Conversion ...",
     start = time()
     malte_task = translate_relaxed_task(task)
+    crossreference_task(malte_task)
     print time() - start
     malte_debug_value_list, my_debug_value_list = (DebugValueList(), DebugValueList())
 
@@ -107,7 +108,6 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print " H:%d, T:%d" % (my_h, my_t * 1000)
     print "  Malte",
     start = time()
-    crossreference_task(malte_task)
     malte_h = run_with_timeout(timeout, None, additive_hmax,
                                malte_task, debug_value_list=malte_debug_value_list)
     malte_t = time() - start

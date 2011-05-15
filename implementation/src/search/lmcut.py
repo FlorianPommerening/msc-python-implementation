@@ -56,7 +56,7 @@ def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, a
     return sum(additive_costs)
 
 def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values=None):
-    effect_to_zero_cost_operators = {}
+    effect_to_zero_cost_operators = defaultdict(list)
     for (e, operators) in task.effect_to_operators.items():
         effect_to_zero_cost_operators[e] = [op for op in operators if operator_costs[op] == 0]
     inverse_pcf = defaultdict(list)
@@ -69,6 +69,7 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
     stack = list(task.goal)
     while stack:
         v = stack.pop()
+        assert v != "@@init"
         if v in goal_zone:
             continue
         goal_zone.add(v)
