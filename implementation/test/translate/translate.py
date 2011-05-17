@@ -408,15 +408,13 @@ def translate_task(strips_to_sas, ranges, mutex_dict, mutex_ranges, init, goals,
 
 def unsolvable_sas_task(msg):
     print "%s! Generating unsolvable task..." % msg
-    write_translation_key([])
-    write_mutex_key([])
     variables = sas_tasks.SASVariables([2], [-1])
     init = sas_tasks.SASInit([0])
     goal = sas_tasks.SASGoal([(0, 1)])
     operators = []
     axioms = []
     metric = True
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric)
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric), [], []
 
 def pddl_to_sas(task):
     with timers.timing("Instantiating", block=True):
@@ -473,12 +471,7 @@ def pddl_to_sas(task):
                     sas_task, mutex_key, translation_key)
             except simplify.Impossible:
                 return unsolvable_sas_task("Simplified to trivially false goal")
-
-    with timers.timing("Writing translation key"):
-        write_translation_key(translation_key)
-    with timers.timing("Writing mutex key"):
-        write_mutex_key(mutex_key)
-    return sas_task
+    return sas_task, translation_key, mutex_key
 
 def build_mutex_key(strips_to_sas, groups):
     group_keys = []
@@ -589,7 +582,11 @@ if __name__ == "__main__":
     # import psyco
     # psyco.full()
 
-    sas_task = pddl_to_sas(task)
+    sas_task, translation_key, mutex_key = pddl_to_sas(task)
     with timers.timing("Writing output"):
         sas_task.output(file("output.sas", "w"))
+    with timers.timing("Writing translation key"):
+        write_translation_key(translation_key)
+    with timers.timing("Writing mutex key"):
+        write_mutex_key(mutex_key)
     print "Done! %s" % timer

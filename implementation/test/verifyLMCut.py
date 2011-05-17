@@ -6,18 +6,20 @@ from search.lmcut import incremental_lmcut
 from search.Debug import DebugValueList
 
 from translate.additivehmax import crossreference_task, additive_hmax
+from translate.translate import pddl_to_sas
+import translate.pddl
 
 from relaxedtasktranslator import translate_relaxed_task, translate_pcf
 from compare import compareHmax, compareGoalZone, validateCut, compareCuts
-from Results import *
+from Results import ProblemResults, print_results, parse_results
 
-from time import time
+from time import time, strftime
 from glob import glob
-from subprocess import Popen, PIPE
 from threading import Timer
 import re
 import os
 import thread
+import sys
 
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
@@ -57,14 +59,11 @@ def run_with_timeout(timeout, default, f, *args, **kwargs):
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Translation ...",
     start = time()
-    p = Popen(["python", translatepath, domainfile, problemfile], stdout=PIPE)
-    p.wait()
-    print time() - start
-    print "  Parsing ...",
-    start = time()
-    parser = SASParser()
-    sastask = parser.parse_task(open("output.sas"))
-    translationkey = parser.parse_translationkey(open("test.groups"))
+    old_stdout = sys.stdout
+    sys.stdout = open(os.devnull, 'w')
+    task = translate.pddl.open(task_filename=problemfile, domain_filename=domainfile)
+    sastask, translationkey, _ = pddl_to_sas(task)
+    sys.stdout = old_stdout
     print time() - start
     print "  Relaxing ...",
     start = time()
@@ -124,7 +123,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
         print "valid" if valid_cut else "invalid"
     return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
 
-def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone', 'cuts'], timeout=None):
+def benchmark(filename, domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone', 'cuts'], timeout=None):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
                     for domainname in
                     ['airport', 'blocks', 'depot', 'driverlog', 'freecell', 'gripper',
@@ -133,7 +132,7 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
                      'pipesworld-tankage', 'psr-small', 'rovers', 'tpp', 'trucks-strips',
                      'zenotravel']
                   ]
-    resultsfile = open("results.txt", "w")
+    resultsfile = open(filename, "w")
     if domains:
         domain_ids = sorted(list(set(domains) & set(range(len(lmcut_suite)))))
     else:
@@ -161,7 +160,8 @@ def benchmark(domains=None, problems=None, what_to_compare=['heristic', 'hmax', 
 
 
 if __name__ == "__main__":
-    benchmark(domains=range(0,20), problems=range(0,160), timeout=60) 
+    filename = "results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
+    benchmark(filename, domains=range(0,20), problems=range(0,160), timeout=60) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
-    print_results(parse_results("results.txt"))
+    print_results(parse_results(filename))
