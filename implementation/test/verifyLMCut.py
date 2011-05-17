@@ -3,10 +3,12 @@ from search.SASParser import SASParser
 from search.DeleteRelaxation import delete_relaxation
 from search.RelevanceAnalysis import filter_irrelevant_variables
 from search.lmcut import incremental_lmcut
+from search.Debug import DebugValueList
+
 from translate.additivehmax import crossreference_task, additive_hmax
 
-from relaxedtasktranslator import translate_relaxed_task
-from compare import compareHmax, compareGoalZone, validateCut
+from relaxedtasktranslator import translate_relaxed_task, translate_pcf
+from compare import compareHmax, compareGoalZone, validateCut, compareCuts
 from Results import *
 
 from time import time
@@ -19,22 +21,6 @@ import thread
 
 translatepath = "./translate/translate.py"
 benchmarksdir = '../../../downward/benchmarks/'
-
-class DebugValueList:
-    def __init__(self):
-        self.steps = []
-    def newEntry(self):
-        new = DebugValues()
-        self.steps.append(new)
-        return new
-
-class DebugValues:
-    def __init__(self):
-        self.hmax_function = {}
-        self.near_goal_area = [] 
-        self.pcf = {}
-        self.hmax_value = 0
-        self.cut = []
 
 def listproblems(basedir):
     result = []
@@ -109,7 +95,8 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Malte",
     start = time()
     malte_h = run_with_timeout(timeout, None, additive_hmax,
-                               malte_task, debug_value_list=malte_debug_value_list)
+                               malte_task, debug_value_list=malte_debug_value_list,
+                               pcfs=(translate_pcf(step.pcf, malte_task) for step in my_debug_value_list.steps))
     malte_t = time() - start
     if malte_h is None:
         print "  Malte timed out"
@@ -120,11 +107,11 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     samehmax, samegoalzone, valid_cut = (None, None, None) 
     if 'hmax' in what_to_compare:
         print "  comparing hmax... ",
-        samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True)
+        samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True, all=True)
         print "same" if samehmax else "different"
     if 'goalzone' in what_to_compare:
         print "  comparing goalzone... ",
-        samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=True)
+        samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=False, all=True)
         print "same" if samegoalzone else "different"
     if 'cut' in what_to_compare:
         print "  validating first cut... ",
@@ -132,6 +119,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
         print "valid" if valid_cut else "invalid"
     if 'cuts' in what_to_compare:
         print "  validating all cuts... ",
+        compareCuts(my_debug_value_list, malte_debug_value_list, all=True)
         valid_cut = validateCut(my_debug_value_list, task, all=True)
         print "valid" if valid_cut else "invalid"
     return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)

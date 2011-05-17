@@ -117,12 +117,11 @@ def hmax(task, goal_cut_facts=(), debug_values=None):
                             heappush(heap, (action_hmax, effect))
     if debug_values is not None:
         debug_values.hmax_value = goal.hmax[0]
-        debug_values.cut = cut
         debug_values.pcf = {a:a.hmax_supporter for a in task.actions}
     return goal.hmax[0], cut
 
 
-def collect_cut(task, debug_values=None):
+def collect_cut(task, debug_values=None, pcf=None):
     goal, = task.goals
     goal_plateau = set()
     def recurse(subgoal):
@@ -130,20 +129,27 @@ def collect_cut(task, debug_values=None):
             goal_plateau.add(subgoal)
             for action in subgoal.effect_of:
                 if action.cost == 0:
-                    recurse(action.hmax_supporter)
+                    # added by flo for debug:
+                    if pcf:
+                        recurse(pcf[action.name])
+                    else:
+                        recurse(action.hmax_supporter)
     recurse(goal)
-
     # added by flo for debug:
     if debug_values is not None:
         debug_values.near_goal_area = list(goal_plateau)
     
 
     cut_hmax, cut = hmax(task, goal_plateau)
+    # added by flo for debug:
+    if debug_values is not None:
+        debug_values.cut = list(cut)
+
     assert cut_hmax == infinity, "did not extract a landmark!"
     return cut
 
 
-def additive_hmax(task, debug_value_list=None):
+def additive_hmax(task, debug_value_list=None, pcfs=None):
     MULTIPLIER = 1
     result = 0
     for action in task.actions:
@@ -157,7 +163,13 @@ def additive_hmax(task, debug_value_list=None):
         if cost == 0:
             break
         result += 1
-        cut = collect_cut(task, debug_values=debug_values)
+        #added by flo for debug
+        try:
+            pcf = pcfs.next()
+        except:
+            pcf = None
+
+        cut = collect_cut(task, debug_values=debug_values, pcf=pcf)
         for action in cut:
             assert action.cost >= 1
             action.cost -= 1
