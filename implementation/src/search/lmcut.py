@@ -57,13 +57,10 @@ def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, a
 
 def find_cut(task, state, operator_costs, hmax_value, hmax_function, precondition_choice_function, debug_values=None):
     effect_to_zero_cost_operators = defaultdict(list)
-    for (e, operators) in task.effect_to_operators.items():
-        effect_to_zero_cost_operators[e] = [op for op in operators if operator_costs[op] == 0]
-    inverse_pcf = defaultdict(list)
-    for (op, p) in precondition_choice_function.items():
-        # if the PCF has no entry for op, this means that 
-        # op has at least one condition c with hmax(c) = inf
-        inverse_pcf[p].append(op)
+    for op, cost in operator_costs.items():
+        if cost == 0:
+            for e in op.effect:
+                effect_to_zero_cost_operators[e].append(op)
 
     goal_zone = set()
     stack = list(task.goal)
@@ -78,6 +75,9 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
     if debug_values is not None:
         debug_values.near_goal_area = list(goal_zone)
 
+    for op in task.operators:
+        op.unsatisfied_preconditions = len(op.precondition)
+    
     stack = list(state)
     closed = []
     cut = set()
@@ -86,11 +86,21 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
         if v in closed:
             continue
         closed.append(v)
-        for op in inverse_pcf[v]:
-            for e in op.effect:
-                if e in goal_zone:
-                    cut.add(op)
-                    break
-            else:
-                stack.extend(op.effect)
+        for op in task.precondition_to_operators[v]:
+            op.unsatisfied_preconditions -= 1
+            if op.unsatisfied_preconditions == 0:
+                
+                #DEBUG only sort for compare with malte
+                from relaxedtasktranslator import varname
+                effects = [(varname(e), e) for e in op.effect]
+                effects = [e for (n,e) in sorted(effects)]
+                
+                for e in effects:
+                    if e in goal_zone:
+                        cut.add(op)
+                        break
+                    else:
+                        stack.append(e)
+#                else:
+#                    stack.extend(op.effect)
     return cut
