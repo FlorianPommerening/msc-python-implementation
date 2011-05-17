@@ -18,7 +18,7 @@ def hmax(task, state, operator_costs=None):
 
     while heap:
         ((key, depth), u) = heappop(heap)
-        if hmax[u] > key:
+        if hmax[u] < key:
             # the hmax value of this key was decreased after inserting it
             # this could be done with the min-heap operation decrease-key,
             # but it is faster to insert duplicates and ignore the ones with the old key
