@@ -16,6 +16,10 @@ def opname(op):
         return "@@init-action"
     return "(%s)" % op.name
 
+def translate_pcf(pcf, translated_task):
+    varname_to_var = {var.name:var for var in translated_task.atoms}
+    return {opname(op):varname_to_var[varname(var)] for (op, var) in pcf.items()}
+
 def translate_relaxed_task(task):
     variables = {name:RelaxedAtom(varname(name)) for name in task.variables}
     atoms = sorted(variables.values())
