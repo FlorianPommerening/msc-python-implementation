@@ -117,7 +117,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
         valid_cut = validateCut(my_debug_value_list, task)
         print "valid" if valid_cut else "invalid"
     if 'cuts' in what_to_compare:
-        print "  validating all cuts... ",
+        print "  validating all cuts (%d ops, %d vars)... " % (len(task.operators), len(task.variables)),
         compareCuts(my_debug_value_list, malte_debug_value_list, all=True)
         valid_cut = validateCut(my_debug_value_list, task, all=True)
         print "valid" if valid_cut else "invalid"
@@ -126,11 +126,10 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
 def benchmark(filename, domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone', 'cuts'], timeout=None):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
                     for domainname in
-                    ['airport', 'blocks', 'depot', 'driverlog', 'freecell', 'gripper',
-                     'logistics00', 'logistics98', 'miconic', 'mprime', 'mystery',
-                     'openstacks-strips', 'pathways-noneg', 'pipesworld-notankage',
-                     'pipesworld-tankage', 'psr-small', 'rovers', 'tpp', 'trucks-strips',
-                     'zenotravel']
+                    ['airport', 'blocks', 'depot', 'driverlog', 'freecell',
+                     'gripper', 'logistics00', 'logistics98', 'miconic', 'mprime',
+                     'mystery', 'openstacks-strips', 'pathways-noneg', 'pipesworld-notankage', 'pipesworld-tankage',
+                     'psr-small', 'rovers', 'tpp', 'trucks-strips', 'zenotravel']
                   ]
     resultsfile = open(filename, "w")
     if domains:
@@ -161,7 +160,7 @@ def benchmark(filename, domains=None, problems=None, what_to_compare=['heristic'
 
 if __name__ == "__main__":
     filename = "results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
-    benchmark(filename, domains=range(10,11), problems=range(6,7), timeout=60) 
+    benchmark(filename, domains=range(0,20), problems=range(0,160), timeout=60) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
     print_results(parse_results(filename))

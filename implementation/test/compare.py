@@ -8,7 +8,9 @@ def validateCut(debug_value_list, task, all=False, silent=False):
     else:
         steps = [debug_value_list.steps[0]]
     for i, step in enumerate(steps):
-        print "%d," % i,
+        if i > 0:
+            sys.stdout.write("\b"*len(str(i-1)))
+        sys.stdout.write(str(i))
         sys.stdout.flush() 
         operators = [op for op in task.operators if op not in step.cut]
         state = task.initial_state
@@ -22,7 +24,7 @@ def validateCut(debug_value_list, task, all=False, silent=False):
             if not silent:
                 assert False, "Found invalid cut: [%s]" % [op.name for op in step.cut]
             return False
-    print 
+    sys.stdout.write("\b"*len(str(i)))
     return True
         
 def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=False):
