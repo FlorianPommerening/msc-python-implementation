@@ -117,7 +117,7 @@ def hmax(task, goal_cut_facts=(), debug_values=None):
                             heappush(heap, (action_hmax, effect))
     if debug_values is not None:
         debug_values.hmax_value = goal.hmax[0]
-        debug_values.pcf = {a:a.hmax_supporter for a in task.actions}
+        debug_values.pcf = {a:a.hmax_supporter for a in task.actions if hasattr(a, "hmax_supporter")}
     return goal.hmax[0], cut
 
 
@@ -160,6 +160,11 @@ def additive_hmax(task, debug_value_list=None, pcfs=None):
             debug_values = debug_value_list.newEntry()
 
         cost, _ = hmax(task, debug_values=debug_values)
+        
+        #added by flo to handle unsolvable problems
+        if cost == float("infinity"):
+            return cost
+        
         if cost == 0:
             break
         result += 1

@@ -116,7 +116,15 @@ def parse_results(filename):
         elif tokens[0] == "error":
             error = " ".join(tokens[1:])
         elif len(tokens) == 4:
-            (my_t, malte_t, my_h, malte_h) = (float(tokens[0]), float(tokens[1]), int(tokens[2]),int(tokens[3]))
+            (my_t, malte_t) = map(float, tokens[0:2])
+            if tokens[2] == "inf":
+                my_h = -1
+            else:
+                my_h = int(tokens[2])
+            if tokens[3] == "inf":
+                malte_h = -1
+            else:
+                malte_h = int(tokens[3])
             times = (my_t, malte_t, my_h, malte_h)  
         else:
             print "cannot parse result line", line

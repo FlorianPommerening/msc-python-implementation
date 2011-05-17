@@ -26,7 +26,7 @@ def filter_irrelevant_variables(task):
                         
     # filter variables
     old_variable_count = len(task.variables) 
-    task.variables = relevant_variables
+    task.variables = sorted(relevant_variables)
     relevant_variable_set = frozenset(relevant_variables)
     task.initial_state &= relevant_variable_set
     debug_message("Relevance analysis removed %d of %d variables" % (old_variable_count - len(task.variables), old_variable_count), 2)

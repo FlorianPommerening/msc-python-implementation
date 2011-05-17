@@ -68,11 +68,11 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Relaxing ...",
     start = time()
     task = delete_relaxation(sastask, translationkey)
-    task.convert_to_canonical_form()
     print time() - start
     print "  Filtering ...",
     start = time()
     filter_irrelevant_variables(task)
+    task.convert_to_canonical_form()
     task.crossreference()
     print time() - start
     print "  Conversion ...",
@@ -90,7 +90,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     if my_h is None:
         print "  Timed out"
         return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
-    print " H:%d, T:%d" % (my_h, my_t * 1000)
+    print " H:%s, T:%d" % (str(my_h), my_t * 1000)
     print "  Malte",
     start = time()
     malte_h = run_with_timeout(timeout, None, additive_hmax,
@@ -100,7 +100,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     if malte_h is None:
         print "  Malte timed out"
         return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
-    print " H:%d, T:%d" % (malte_h, malte_t * 1000)
+    print " H:%s, T:%d" % (str(malte_h), malte_t * 1000)
 
     times = (my_t, malte_t, my_h, malte_h)
     samehmax, samegoalzone, valid_cut = (None, None, None) 
@@ -161,7 +161,7 @@ def benchmark(filename, domains=None, problems=None, what_to_compare=['heristic'
 
 if __name__ == "__main__":
     filename = "results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
-    benchmark(filename, domains=range(0,20), problems=range(0,160), timeout=60) 
+    benchmark(filename, domains=range(10,11), problems=range(6,7), timeout=60) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
     print_results(parse_results(filename))

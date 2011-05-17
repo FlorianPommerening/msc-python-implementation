@@ -414,7 +414,7 @@ def unsolvable_sas_task(msg):
     operators = []
     axioms = []
     metric = True
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric), [], []
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric), [["unsolvable", "<none of those>"]], []
 
 def pddl_to_sas(task):
     with timers.timing("Instantiating", block=True):
