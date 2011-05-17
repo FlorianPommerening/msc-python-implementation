@@ -34,16 +34,16 @@ class RelaxedProblem:
                 op.precondition.add("@@dummy")
         if needs_dummy_var:
             self.initial_state.add("@@dummy")
-        if len(self.goal) != 1:
-            goal_op = RelaxedOperator("@@goal-operator", self.goal, frozenset(["@@goal"]), 0)
-            self.operators.append(goal_op)
-            self.variables.append("@@goal")
-            self.goal = frozenset(["@@goal"])
-        if len(self.initial_state) != 1:
-            init_op = RelaxedOperator("@@init-operator", frozenset(["@@init"]), self.initial_state, 0)
-            self.operators.append(init_op)
-            self.variables.append("@@init")
-            self.initial_state = frozenset(["@@init"])
+        # if len(self.goal) != 1:
+        goal_op = RelaxedOperator("@@goal-operator", self.goal, frozenset(["@@goal"]), 0)
+        self.operators.append(goal_op)
+        self.variables.append("@@goal")
+        self.goal = frozenset(["@@goal"])
+#        if len(self.initial_state) != 1:
+        init_op = RelaxedOperator("@@init-operator", frozenset(["@@init"]), self.initial_state, 0)
+        self.operators.append(init_op)
+        self.variables.append("@@init")
+        self.initial_state = frozenset(["@@init"])
     
     def crossreference(self):
         self.precondition_to_operators = defaultdict(list)
@@ -81,6 +81,9 @@ class RelaxedOperator:
         self.precondition = precondition
         self.effect = effect
         self.cost = cost
+    
+    def __repr__(self):
+        return "%s (%d)" % (self.name, self.cost)
 
     def dump(self):
         print "%s (%d)" % (self.name, self.cost)
