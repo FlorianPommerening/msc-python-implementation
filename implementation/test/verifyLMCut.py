@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from benchmark.timeout import run_with_timeout 
+
 from search.SASParser import SASParser
 from search.DeleteRelaxation import delete_relaxation
 from search.RelevanceAnalysis import filter_irrelevant_variables
@@ -10,15 +12,13 @@ from translate.translate import pddl_to_sas
 import translate.pddl
 
 from relaxedtasktranslator import translate_relaxed_task, translate_pcf
-from compare import compareHmax, compareGoalZone, validateCut, compareCuts
+from compare import compareHmax, compareGoalZone, validateCut, compareCuts, validatePcf, validateRelevanceAnalysis
 from Results import ProblemResults, print_results, parse_results
 
 from time import time, strftime
 from glob import glob
-from threading import Timer
 import re
 import os
-import thread
 import sys
 
 translatepath = "./translate/translate.py"
@@ -44,30 +44,18 @@ def listproblems(basedir):
     sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]
     return [name for (_, name) in sorted(sortlist)]
 
-def run_with_timeout(timeout, default, f, *args, **kwargs):
-    if not timeout:
-        return f(*args, **kwargs)
-    try:
-        timeout_timer = Timer(timeout, thread.interrupt_main)
-        timeout_timer.start()
-        result = f(*args, **kwargs)
-        timeout_timer.cancel()
-        return result
-    except KeyboardInterrupt:
-        return default
-
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Translation ...",
     start = time()
     old_stdout = sys.stdout
     sys.stdout = open(os.devnull, 'w')
     task = translate.pddl.open(task_filename=problemfile, domain_filename=domainfile)
-    sastask, translationkey, _ = pddl_to_sas(task)
+    sas_task, translationkey, _ = pddl_to_sas(task)
     sys.stdout = old_stdout
     print time() - start
     print "  Relaxing ...",
     start = time()
-    task = delete_relaxation(sastask, translationkey)
+    task = delete_relaxation(sas_task, translationkey)
     print time() - start
     print "  Filtering ...",
     start = time()
@@ -105,25 +93,19 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     times = (my_t, malte_t, my_h, malte_h)
     samehmax, samegoalzone, valid_cut = (None, None, None) 
     if 'hmax' in what_to_compare:
-        print "  comparing hmax... ",
         samehmax = compareHmax(my_debug_value_list, malte_debug_value_list, silent=True, all=True)
-        print "same" if samehmax else "different"
     if 'goalzone' in what_to_compare:
-        print "  comparing goalzone... ",
         samegoalzone = compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=False, all=True)
-        print "same" if samegoalzone else "different"
-    if 'cut' in what_to_compare:
-        print "  validating first cut... ",
-        valid_cut = validateCut(my_debug_value_list, task)
-        print "valid" if valid_cut else "invalid"
     if 'cuts' in what_to_compare:
-        print "  validating all cuts (%d ops, %d vars)... " % (len(task.operators), len(task.variables)),
-        compareCuts(my_debug_value_list, malte_debug_value_list, all=True)
-        valid_cut = validateCut(my_debug_value_list, task, all=True)
-        print "valid" if valid_cut else "invalid"
+        valid_cut = compareCuts(my_debug_value_list, malte_debug_value_list, all=True)
+        valid_cut &= validateCut(my_debug_value_list, task, all=True)
+    if 'pcf' in what_to_compare:
+        validatePcf(my_debug_value_list, task, all=True, silent=False)
+    if 'relevance' in what_to_compare:
+        validateRelevanceAnalysis(sas_task, translationkey, my_h, timeout=timeout)
     return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
 
-def benchmark(filename, domains=None, problems=None, what_to_compare=['heristic', 'hmax', 'goalzone', 'cuts'], timeout=None):
+def benchmark(filename, domains=None, problems=None, what_to_compare=['heuristic', 'hmax', 'goalzone', 'cuts', 'pcf', 'relevance'], timeout=None):
     lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
                     for domainname in
                     ['airport', 'blocks', 'depot', 'driverlog', 'freecell',

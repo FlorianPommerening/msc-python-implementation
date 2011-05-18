@@ -1,13 +1,48 @@
+from benchmark.timeout import run_with_timeout 
+from search.DeleteRelaxation import delete_relaxation
+from search.lmcut import incremental_lmcut
 from relaxedtasktranslator import varname, opname
+
 import sys
 
+def validateRelevanceAnalysis(sas_task, translationkey, filtered_h, timeout=None, silent=False):
+    print "  validating relevance analysis... ",
+    unfiltered_task = delete_relaxation(sas_task, translationkey)
+    unfiltered_task.convert_to_canonical_form()
+    unfiltered_task.crossreference()
+    unfiltered_h = run_with_timeout(timeout, None, incremental_lmcut, unfiltered_task)
+    if unfiltered_h is None:
+        print "timed out"
+        return True
+    if unfiltered_h != filtered_h:
+        if not silent:
+            assert False, "Relevance analysis changed heuristic from %d to %d" % (unfiltered_h, filtered_h)
+        print "different heuristic value"
+        return False
+    print "same heuristic value"
+    return True
+
+def validatePcf(debug_value_list, task, all=False, silent=False):
+    print "  validating pcf... ",
+    for i, step in iterateSteps(debug_value_list, None, all):
+        hmax = step.hmax_function
+        pcf = step.pcf
+        for op in task.operators:
+            if pcf.has_key(op):
+                maxhmax = max(hmax[p] for p in op.precondition)
+                best_p = (p for p in op.precondition if hmax[p] == maxhmax).next()
+                if maxhmax != hmax[pcf[op]]:
+                    if not silent:
+                        assert False, "invalid entry in pcf %d: operator '%s' has pcf of '%s' with hmax %d and precondition '%s' with hmax %d" % (
+                                                     i, op.name, pcf[op], hmax[pcf[op]], best_p, maxhmax)
+                    print "invalid"
+                    return False
+    print "valid"
+    return True
 
 def validateCut(debug_value_list, task, all=False, silent=False):
-    if all:
-        steps = debug_value_list.steps
-    else:
-        steps = [debug_value_list.steps[0]]
-    for i, step in enumerate(steps):
+    print "  validating cuts (%d ops, %d vars)... " % (len(task.operators), len(task.variables)),
+    for i, step in iterateSteps(debug_value_list, None, all):
         if i > 0:
             sys.stdout.write("\b"*len(str(i-1)))
         sys.stdout.write(str(i))
@@ -23,11 +58,14 @@ def validateCut(debug_value_list, task, all=False, silent=False):
         if task.goal.issubset(state):
             if not silent:
                 assert False, "Found invalid cut: [%s]" % [op.name for op in step.cut]
+            print "invalid"
             return False
     sys.stdout.write("\b"*len(str(i)))
+    print "valid"
     return True
         
 def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=False):
+    print "  comparing cuts... ",
     for i, my_step, malte_step in iterateSteps(my_debug_value_list, malte_debug_value_list, all):
         my_cut = set(map(opname, my_step.cut))
         malte_cut = set([op.name for op in malte_step.cut])
@@ -49,7 +87,7 @@ def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=F
             print "My cut %d:" % i
             for op in sorted(my_cut):
                 print op
-                
+
     n_me = len(my_debug_value_list.steps)
     n_malte = len(malte_debug_value_list.steps)
     if all and n_me < n_malte:
@@ -66,8 +104,19 @@ def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=F
             print "Additional cut from me:"
             for op in my_debug_value_list.steps[i].cut:
                 print opname(op)
+    if my_cut == malte_cut:
+        print "same"
+        return True
+    else:
+        print "different"
+        return False
 
 def compareHmax(my_debug_value_list, malte_debug_value_list, silent=False, all=False):
+    def fail(var, step, malte, me):
+        if not silent:
+            assert False, "Different hmax value for %s in step %d: (malte: %d, flo: %d)" % (var, step, malte, me)
+        print "different"
+    print "  comparing hmax... ",
     for i, my_step, malte_step in iterateSteps(my_debug_value_list, malte_debug_value_list, all):
         my_hmax = my_step.hmax_function
         my_result = my_step.hmax_value
@@ -75,18 +124,16 @@ def compareHmax(my_debug_value_list, malte_debug_value_list, silent=False, all=F
         malte_result = malte_step.hmax_value
         for var in my_hmax:
             if malte_hmax[varname(var)] != my_hmax[var]:
-                # DEBUG
-                print i, var, "(malte: %d, my: %d)" % (malte_hmax[varname(var)], my_hmax[var])
-                if not silent:
-                    assert False, "Different hmax value for %s in step %d: (malte: %d, flo: %d)" % (var, i, malte_hmax[varname(var)], my_hmax[var])
+                fail(var, i, malte_hmax[varname(var)], my_hmax[var])
                 return False
         if my_result != malte_result:
-            if not silent:
-                assert False, "Different hmax value for goal in step %d: (malte: %d, flo: %d)" % (i, malte_result, my_result)
+            fail("goal", i, malte_result, my_result)
             return False
+    print "same"
     return True
 
 def compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=False, all=False):
+    print "  comparing goalzone... ",
     for i, my_step, malte_step in iterateSteps(my_debug_value_list, malte_debug_value_list, all):
         my_near_goal_area = set(map(varname, my_step.near_goal_area))
         malte_near_goal_area = set(map(str, malte_step.near_goal_area))
@@ -101,12 +148,22 @@ def compareGoalZone(my_debug_value_list, malte_debug_value_list, silent=False, a
             for var in sorted(malte_near_goal_area - my_near_goal_area):
                 print var
         if malte_near_goal_area != my_near_goal_area:
+            print "different"
             return False
+    print "same"
     return True
 
 def iterateSteps(my_debug_value_list, malte_debug_value_list, all):
-    if all:
-        for i, (my_step, malte_step) in enumerate(zip(my_debug_value_list.steps, malte_debug_value_list.steps)):
-            yield (i, my_step, malte_step)
+    if malte_debug_value_list is not None:
+        if all:
+            for i, (my_step, malte_step) in enumerate(zip(my_debug_value_list.steps, malte_debug_value_list.steps)):
+                yield (i, my_step, malte_step)
+        else:
+            yield (0, my_debug_value_list.steps[0], malte_debug_value_list.steps[0])
     else:
-        yield (0, my_debug_value_list.steps[0], malte_debug_value_list.steps[0])
+        if all:
+            for i, step in enumerate(my_debug_value_list.steps):
+                yield (i, step)
+        else:
+            yield (0, my_debug_value_list.steps[0])
+        

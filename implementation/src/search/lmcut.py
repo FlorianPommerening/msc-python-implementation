@@ -32,6 +32,7 @@ def incremental_lmcut(task, state=None, landmarks=[], operator_to_landmark={}, a
     if hmax_value == float("infinity"):
         return hmax_value
 
+    debug_values = None
     additive_costs = []
     while hmax_value != 0:
         if debug_value_list is not None:
