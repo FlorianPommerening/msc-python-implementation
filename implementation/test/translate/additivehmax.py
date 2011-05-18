@@ -131,7 +131,7 @@ def collect_cut(task, debug_values=None, pcf=None):
                 if action.cost == 0:
                     # added by flo for debug:
                     if pcf:
-                        recurse(pcf[action.name])
+                        recurse(pcf[action])
                     else:
                         recurse(action.hmax_supporter)
     recurse(goal)

@@ -77,7 +77,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print time() - start
     print "  Conversion ...",
     start = time()
-    malte_task = translate_relaxed_task(task)
+    malte_task, operator_translator = translate_relaxed_task(task)
     crossreference_task(malte_task)
     print time() - start
     malte_debug_value_list, my_debug_value_list = (DebugValueList(), DebugValueList())
@@ -95,7 +95,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     start = time()
     malte_h = run_with_timeout(timeout, None, additive_hmax,
                                malte_task, debug_value_list=malte_debug_value_list,
-                               pcfs=(translate_pcf(step.pcf, malte_task) for step in my_debug_value_list.steps))
+                               pcfs=(translate_pcf(step.pcf, malte_task, operator_translator) for step in my_debug_value_list.steps))
     malte_t = time() - start
     if malte_h is None:
         print "  Malte timed out"

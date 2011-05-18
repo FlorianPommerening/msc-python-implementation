@@ -16,9 +16,9 @@ def opname(op):
         return "@@init-action"
     return "(%s)" % op.name
 
-def translate_pcf(pcf, translated_task):
+def translate_pcf(pcf, translated_task, operator_translator):
     varname_to_var = {var.name:var for var in translated_task.atoms}
-    return {opname(op):varname_to_var[varname(var)] for (op, var) in pcf.items()}
+    return {operator_translator[op]:varname_to_var[varname(var)] for (op, var) in pcf.items()}
 
 def translate_relaxed_task(task):
     variables = {name:RelaxedAtom(varname(name)) for name in task.variables}
@@ -26,9 +26,12 @@ def translate_relaxed_task(task):
     init = sorted([variables[name] for name in task.initial_state])
     goals = sorted([variables[name] for name in task.goal])
     actions = []
+    operator_translator = {}
     for op in task.operators:
-	preconditions = sorted([variables[name] for name in op.precondition])
-	effects = sorted([variables[name] for name in op.effect])
-        actions.append(RelaxedAction(opname(op), preconditions, effects, op.cost))
-    return RelaxedTask(atoms, init, goals, actions)
+        preconditions = sorted([variables[name] for name in op.precondition])
+        effects = sorted([variables[name] for name in op.effect])
+        action = RelaxedAction(opname(op), preconditions, effects, op.cost)
+        actions.append(action)
+        operator_translator[op] = action
+    return RelaxedTask(atoms, init, goals, actions), operator_translator
 
