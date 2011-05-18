@@ -13,36 +13,12 @@ import translate.pddl
 
 from relaxedtasktranslator import translate_relaxed_task, translate_pcf
 from compare import compareHmax, compareGoalZone, validateCut, compareCuts, validatePcf, validateRelevanceAnalysis
-from Results import ProblemResults, print_results, parse_results
+from benchmark.Results import ProblemResults, print_results, parse_results
+from benchmark.problem_suites import problem_subset
 
 from time import time, strftime
-from glob import glob
-import re
 import os
 import sys
-
-translatepath = "./translate/translate.py"
-benchmarksdir = '../../../downward/benchmarks/'
-
-def listproblems(basedir):
-    result = []
-    problemfiles = [file for file in glob(basedir + '*')
-                        if file.find("domain", len(basedir)) == -1]
-    for problemfile in problemfiles:
-        problemfile = problemfile.replace("\\", "/")
-        match = re.match(basedir + r"p(\d\d)", problemfile)
-        domainfile = ""
-        if match:
-            domainfile = basedir + "domain_p%s.pddl" % match.groups(1)
-            if not os.path.exists(domainfile):
-                domainfile = basedir + "p%s-domain.pddl" % match.groups(1)
-        if not os.path.exists(domainfile):
-            domainfile = basedir + "domain.pddl"
-
-        assert os.path.exists(domainfile), "could not find domainfile for problem '%s'" % problemfile
-        result.append((problemfile, domainfile))
-    sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]
-    return [name for (_, name) in sorted(sortlist)]
 
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Translation ...",
@@ -105,44 +81,23 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
         validateRelevanceAnalysis(sas_task, translationkey, my_h, timeout=timeout)
     return ProblemResults(problemfile, times, samehmax, samegoalzone, valid_cut)
 
-def benchmark(filename, domains=None, problems=None, what_to_compare=['heuristic', 'hmax', 'goalzone', 'cuts', 'pcf', 'relevance'], timeout=None):
-    lmcut_suite = [(domainname, listproblems("%s%s/" % (benchmarksdir, domainname))) 
-                    for domainname in
-                    ['airport', 'blocks', 'depot', 'driverlog', 'freecell',
-                     'gripper', 'logistics00', 'logistics98', 'miconic', 'mprime',
-                     'mystery', 'openstacks-strips', 'pathways-noneg', 'pipesworld-notankage', 'pipesworld-tankage',
-                     'psr-small', 'rovers', 'tpp', 'trucks-strips', 'zenotravel']
-                  ]
+def benchmark(benchmark_suite, filename, what_to_compare=['heuristic', 'hmax', 'goalzone', 'cuts', 'pcf', 'relevance'], timeout=None):
     resultsfile = open(filename, "w")
-    if domains:
-        domain_ids = sorted(list(set(domains) & set(range(len(lmcut_suite)))))
-    else:
-        domain_ids = range(len(lmcut_suite))
-    domains_done = 0
-    for domain_id in domain_ids:
-        (domainname, filepaths) = lmcut_suite[domain_id]
-        if problems:
-            problem_ids = sorted(list(set(problems) & set(range(len(filepaths)))))
-        else:
-            problem_ids = range(len(filepaths))
-        problems_done = 0
+    for domain_id, (domainname, filepaths) in enumerate(benchmark_suite):
         resultsfile.write("domain: %s\n" % domainname)
-        for problem_id in problem_ids:
-            (problemfile, domainfile) = filepaths[problem_id]
-            print "Comparing domain %d/%d (%s) problem %d/%d" % (domains_done +1, len(domain_ids),
-                                                                 domainname, 
-                                                                 problems_done +1, len(problem_ids))
+        for problem_id, (problemfile, domainfile) in enumerate(filepaths):
+            print "Comparing domain %d/%d (%s) problem %d/%d (%s)" % (
+                    domain_id +1, len(benchmark_suite), domainname,
+                    problem_id +1, len(filepaths), problemfile)
             results = compareTask(problemfile, domainfile, what_to_compare, timeout)
             resultsfile.write(str(results))
             resultsfile.flush()
-            problems_done += 1
-        domains_done += 1
     resultsfile.close()
-
 
 if __name__ == "__main__":
     filename = "results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
-    benchmark(filename, domains=range(0,20), problems=range(0,160), timeout=60) 
+    benchmark_suite = problem_subset(problems=range(20))
+    benchmark(benchmark_suite, filename, timeout=60) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
     print_results(parse_results(filename))
