@@ -90,13 +90,7 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
         for op in task.precondition_to_operators[v]:
             op.unsatisfied_preconditions -= 1
             if op.unsatisfied_preconditions == 0:
-                
-                #DEBUG only sort for compare with malte
-                from relaxedtasktranslator import varname
-                effects = [(varname(e), e) for e in op.effect]
-                effects = [e for (n,e) in sorted(effects)]
-                
-                for e in effects:
+                for e in op.effect:
                     if e in goal_zone:
                         cut.add(op)
                         break

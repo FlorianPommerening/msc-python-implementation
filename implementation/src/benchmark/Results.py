@@ -1,156 +1,112 @@
 # this whole file is an ugly HACK
 
 class DomainResults:
-    def __init__(self, name, problemresults):
+    def __init__(self, name):
         self.name = name
-        self.problemresults = problemresults
-        aggregatedtimedifference = 0
-        aggregatedspeedup = 0
-        aggregatedheuristicdifference = 0
-        self.maxheuristicdifference = 0
-        self.minheuristicdifference = 0
-        count = 0
-        self.good_hmax = None
-        self.good_goalzone = None
-        self.good_cuts = None
-        for res in problemresults.values():
-            if not res.hasTimes:
-                continue
-            count += 1
-            dt = res.malte_t - res.my_t  # smaller time is better -> positive value
-            dh = res.my_h - res.malte_h  # larger heuristic is better -> positive value
-            aggregatedtimedifference += dt
-            aggregatedheuristicdifference  += dh
-            self.maxheuristicdifference = max(self.maxheuristicdifference, dh)
-            self.minheuristicdifference = min(self.minheuristicdifference, dh)
-            if res.my_t == 0:
-                aggregatedspeedup += 1
-            else:
-                aggregatedspeedup += res.malte_t / res.my_t
-            if res.hmax is not None:
-                if self.good_hmax is None:
-                    self.good_hmax = True
-                self.good_hmax &= res.hmax
-            if res.goalzone is not None:
-                if self.good_goalzone is None:
-                    self.good_goalzone = True
-                self.good_goalzone &= res.goalzone
-            if res.cut is not None:
-                if self.good_cuts is None:
-                    self.good_cuts = True
-                self.good_cuts &= res.cut
-        self.hasTimes = False
-        if count > 0:
-            self.hasTimes = True
-            self.averagetimedifference = aggregatedtimedifference / count
-            self.averagespeedup = aggregatedspeedup / count
-            self.averageheuristicdifference = aggregatedheuristicdifference / count
+        self.problemresults = []
 
 class ProblemResults:
-    def __init__(self, name, times=None, hmax=None, goalzone=None, cut=None, error=None):
+    def __init__(self, name):
         self.name = name
-        self.hasTimes = False
-        if times is not None:
-            self.hasTimes = True
-            (my_t, malte_t, my_h, malte_h) = times
-            self.my_t = my_t
-            self.malte_t = malte_t
-            self.my_h = my_h
-            self.malte_h = malte_h
-        self.hmax = hmax
-        self.goalzone = goalzone
-        self.cut = cut
-        self.error = error
-        
-
+        self.values = {}
+        self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
+                            'heuristic':float, 'solve_time':float}
+    def has(self, key):
+        return self.values.has_key(key)
+    def get(self, key, default=None):
+        if self.values.has_key(key):
+            return self.values[key]
+        return default
+    def set(self, key, value):
+        if self.known_types.has_key(key):
+            value = self.known_types[key](value)
+        self.values[key] = value
     def __str__(self):
         result = "problem: %s\n" % self.name
-        if self.hasTimes:
-            result += "%s %s %s %s\n" % (self.my_t, self.malte_t, self.my_h, self.malte_h)
-        if self.hmax is not None:
-            result += "hmax %s\n" % self.hmax
-        if self.goalzone is not None:
-            result += "goalzone %s\n" % self.goalzone
-        if self.cut is not None:
-            result += "cut %s\n" % self.cut
-        if self.error is not None:
-            result += "error %s\n" % self.error
+        for (key, value) in self.values.items():
+            result += "%s %s\n" % (str(key), str(value))
         return result
-        
-
 
 def parse_results(filename):
     results = []
-    problemresults = {}
-    domainname = None
-    problemfile = None
-    times = None
-    hmax = None
-    goalzone = None
-    cut = None
-    error = None
+    domain_result = None
+    problem_result = None
     for line in open(filename):
         tokens = line.strip().split()
         if not tokens:
             continue
-        if tokens[0] == "domain:":
-            if domainname is not None:
-                results.append(DomainResults(domainname, problemresults))
-            domainname = " ".join(tokens[1:])
-            problemresults = {}
-        elif tokens[0] == "problem:":
-            if problemfile is not None:
-                problemresults[problemfile] = ProblemResults(problemfile, times, hmax, goalzone, cut, error)
-            problemfile = " ".join(tokens[1:])
-            times = None
-            hmax = None
-            goalzone = None
-            cut = None
-            error = None
-        elif tokens[0] == "hmax" and len(tokens) == 2:
-            hmax = (tokens[1] == "True")
-        elif tokens[0] == "goalzone" and len(tokens) == 2:
-            goalzone = (tokens[1] == "True")
-        elif tokens[0] == "cut" and len(tokens) == 2:
-            cut = (tokens[1] == "True")
-        elif tokens[0] == "error":
-            error = " ".join(tokens[1:])
-        elif len(tokens) == 4:
-            (my_t, malte_t) = map(float, tokens[0:2])
-            if tokens[2] == "inf":
-                my_h = -1
-            else:
-                my_h = int(tokens[2])
-            if tokens[3] == "inf":
-                malte_h = -1
-            else:
-                malte_h = int(tokens[3])
-            times = (my_t, malte_t, my_h, malte_h)  
-        else:
+        if len(tokens) == 1:
             print "cannot parse result line", line
             continue
-    if problemfile is not None:
-        problemresults[problemfile] = ProblemResults(problemfile, times, hmax, goalzone, cut, error)
-    if domainname is not None:
-        results.append(DomainResults(domainname, problemresults))
+        if tokens[0] == "domain:":
+            domain_result = DomainResults(" ".join(tokens[1:]))
+            results.append(domain_result)
+        elif tokens[0] == "problem:":
+            problem_result = ProblemResults(" ".join(tokens[1:]))
+            domain_result.problemresults.append(problem_result)
+        else:
+            problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def print_results(results):
-    for domainresults in results: 
-        if domainresults.hasTimes:
-            print domainresults.name, " (td: %s, su: %s, hd: %s [%s - %s])" % (
-                               str(domainresults.averagetimedifference * 1000),
-                               str(domainresults.averagespeedup),
-                               str(domainresults.averageheuristicdifference),
-                               str(domainresults.minheuristicdifference),
-                               str(domainresults.maxheuristicdifference),
-                              )
-        else:
-            print "no time entry for domain:", domainresults.name
-        if domainresults.good_hmax is not None and not domainresults.good_hmax:
-            print "  has h^max errors"
-        if domainresults.good_goalzone is not None and not domainresults.good_goalzone:
-            print "  has different goalzones"
-        if domainresults.good_cuts is not None and not domainresults.good_cuts:
-            print "  has invalid cut"
+def compare_results(filename0, filename1, name0=None, name1=None):
+    """
+    only domains and problems occurring in both results will be compared
+    missing problems are considered untested and will not be compared
+    problems without heuristic value are considered unsolved
+    problems without solve_time value are ignored in time difference
+    """
+    if name0 is None:
+        name0 = filename0
+    if name1 is None:
+        name1 = filename1
+    name = (name0, name1)
+    results0 = parse_results(filename0)
+    results1 = parse_results(filename1)
+    for domainresults in zipresults(results0, results1):
+        print domainresults[0].name
+        # TODO time difference (average, standard deviation, squared relative error?)
+        # TODO heuristic differences (average, standard deviation, squared relative error?)
+        aggregated_time = (0, 0)
+        timedata_count = 0
+        additional_solved = ([], [])
+        slightly_better = ([], [])
+        much_better = ([], [])
+        for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
+            h = (p[0].get("heuristic"), p[1].get("heuristic"))
+            if h == (None, None):
+                continue
+            t = (p[0].get("solve_time"), p[1].get("solve_time"))
+            if t[0] is not None and t[1] is not None:
+                aggregated_time[0] += t[0]
+                aggregated_time[1] += t[1]
+                timedata_count += 1
+            for i in (0,1):
+                if h[i] is None:
+                    continue
+                if h[i-1] is None:
+                    additional_solved[i].append(p[i])
+                elif h[i] == h[1-i] + 1:
+                    slightly_better[i].append(p[i])
+                elif h[i] > h[1-i] + 1:
+                    much_better[i].append(p[i])
+        for i in (0,1):
+            print "  %s:" % name0
+            if timedata_count:
+                print "    Average time: %f" % (name[i], aggregated_time[i] / timedata_count)
+            if additional_solved[i]:
+                print "    Solved %d problems, not solved by %s" % (len(additional_solved[i]), name[1-i])
+            if slightly_better[i]:
+                print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
+            if much_better[i]:
+                print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
+
+def zipresults(results1, results2):
+    map1 = {result.name:result for result in results1}
+    map2 = {result.name:result for result in results2}
+    common_keys = set(map1) & set(map2)
+    for key in sorted(common_keys):
+        yield (map1[key], map2[key])
+
+
+
 

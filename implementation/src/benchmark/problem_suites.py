@@ -30,7 +30,9 @@ LMCUT_SUITE = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))
                  'psr-small', 'rovers', 'tpp', 'trucks-strips', 'zenotravel']
               ]
 
-def problem_subset(domains=None, problems=None, problem_suite=LMCUT_SUITE):
+def problem_subset(domains=None, problems=None, problem_suite=None):
+    if not problem_suite:
+        problem_suite = LMCUT_SUITE
     domain_names = [domainname for (domainname, _) in problem_suite]
     domain_ids = []
     if domains is None:
