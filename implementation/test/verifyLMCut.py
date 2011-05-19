@@ -14,11 +14,12 @@ import translate.pddl
 from relaxedtasktranslator import translate_relaxed_task, translate_pcf
 from compare import compareHmax, compareGoalZone, validateCut, compareCuts, validatePcf, validateRelevanceAnalysis
 from benchmark.Results import ProblemResults, print_results, parse_results
-from benchmark.problem_suites import problem_subset
+from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE
 
 from time import time, strftime
 import os
 import sys
+import argparse
 
 def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
     print "  Translation ...",
@@ -95,8 +96,16 @@ def benchmark(benchmark_suite, filename, what_to_compare=['heuristic', 'hmax', '
     resultsfile.close()
 
 if __name__ == "__main__":
+    def eval_here(string):
+        return eval(string)
+    parser = argparse.ArgumentParser(description='Run a benchmark')
+    parser.add_argument('-d', '--domains', type=eval_here)
+    parser.add_argument('-p', '--problems', type=eval_here)
+    parser.add_argument('-s', '--suite', type=eval_here)
+    arguments = parser.parse_args(sys.argv[1:])
+
     filename = "results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
-    benchmark_suite = problem_subset(problems=range(20))
+    benchmark_suite = problem_subset(domains=arguments.domains, problems=arguments.problems, problem_suite=arguments.suite)
     benchmark(benchmark_suite, filename, timeout=60) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
