@@ -6,11 +6,16 @@ class DomainResults:
         self.problemresults = []
 
 class ProblemResults:
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.name = name
         self.values = {}
         self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
+                            'valid_relevance_analysis':bool,
+                            'valid_pcf':bool, 'valid_cut':bool,
                             'heuristic':float, 'solve_time':float}
+        for (k,v) in kwargs.items():
+            self.set(k,v)
+
     def has(self, key):
         return self.values.has_key(key)
     def get(self, key, default=None):
@@ -66,7 +71,7 @@ def compare_results(filename0, filename1, name0=None, name1=None):
         print domainresults[0].name
         # TODO time difference (average, standard deviation, squared relative error?)
         # TODO heuristic differences (average, standard deviation, squared relative error?)
-        aggregated_time = (0, 0)
+        aggregated_time = [0, 0]
         timedata_count = 0
         additional_solved = ([], [])
         slightly_better = ([], [])
@@ -90,11 +95,11 @@ def compare_results(filename0, filename1, name0=None, name1=None):
                 elif h[i] > h[1-i] + 1:
                     much_better[i].append(p[i])
         for i in (0,1):
-            print "  %s:" % name0
+            print "  %s:" % name[i]
             if timedata_count:
-                print "    Average time: %f" % (name[i], aggregated_time[i] / timedata_count)
+                print "    Average time: %f" % (aggregated_time[i] / float(timedata_count))
             if additional_solved[i]:
-                print "    Solved %d problems, not solved by %s" % (len(additional_solved[i]), name[1-i])
+                print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
             if slightly_better[i]:
                 print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
             if much_better[i]:
@@ -108,5 +113,5 @@ def zipresults(results1, results2):
         yield (map1[key], map2[key])
 
 
-
-
+if __name__ == '__main__':
+    compare_results('../results/malte-equality.txt', '../results/without-equality.txt', 'with-equality', 'without-equality')

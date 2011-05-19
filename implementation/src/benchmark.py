@@ -9,7 +9,7 @@ import translate.pddl
 
 from benchmark.timeout import run_with_timeout 
 from benchmark.validate import validateCut, validatePcf, validateRelevanceAnalysis
-from benchmark.Results import ProblemResults, print_results, parse_results
+from benchmark.Results import ProblemResults
 from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE
 
 from time import time, strftime
@@ -46,14 +46,14 @@ def benchmarkTask(problemfile, domainfile, what_to_test, timeout=None):
         print "  Timed out"
         return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
     print "H:%s, T:%d" % (str(h), solve_time)
-    valid_cut = None 
+    results = {}
     if 'cuts' in what_to_test:
-        valid_cut = validateCut(debug_value_list, task, all=True)
+        results['valid_cut'] = validateCut(debug_value_list, task, all=True)
     if 'pcf' in what_to_test:
-        validatePcf(debug_value_list, task, all=True, silent=False)
+        results['valid_pcf'] = validatePcf(debug_value_list, task, all=True, silent=False)
     if 'relevance' in what_to_test:
-        validateRelevanceAnalysis(sas_task, translationkey, h, timeout=timeout)
-    return ProblemResults(problemfile, solve_time, valid_cut)
+        results['valid_relevance_analysis'] = validateRelevanceAnalysis(sas_task, translationkey, h, timeout=timeout)
+    return ProblemResults(problemfile, heuristic=h, solve_time=solve_time, **results)
 
 def run_benchmark(results_filename, domains=None, problems=None, problem_suite=None, 
                   what_to_test=['heuristic', 'cuts', 'pcf', 'relevance'], timeout=None):
@@ -86,4 +86,3 @@ if __name__ == "__main__":
                   what_to_test=args.measure, timeout=args.timeout) 
     # import profile
     # profile.run('run_with_timeout(600, None, benchmark, domains=[9], problems=[19])') 
-    print_results(parse_results(filename))
