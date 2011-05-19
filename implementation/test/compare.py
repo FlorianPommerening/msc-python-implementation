@@ -42,6 +42,7 @@ def validatePcf(debug_value_list, task, all=False, silent=False):
 
 def validateCut(debug_value_list, task, all=False, silent=False):
     print "  validating cuts (%d ops, %d vars)... " % (len(task.operators), len(task.variables)),
+    i = -1
     for i, step in iterateSteps(debug_value_list, None, all):
         if i > 0:
             sys.stdout.write("\b"*len(str(i-1)))
@@ -66,6 +67,7 @@ def validateCut(debug_value_list, task, all=False, silent=False):
         
 def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=False):
     print "  comparing cuts... ",
+    same = True
     for i, my_step, malte_step in iterateSteps(my_debug_value_list, malte_debug_value_list, all):
         my_cut = set(map(opname, my_step.cut))
         malte_cut = set([op.name for op in malte_step.cut])
@@ -87,9 +89,11 @@ def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=F
             print "My cut %d:" % i
             for op in sorted(my_cut):
                 print op
+        same &= (my_cut == malte_cut)
 
     n_me = len(my_debug_value_list.steps)
     n_malte = len(malte_debug_value_list.steps)
+    same &= (n_me == n_malte)
     if all and n_me < n_malte:
         for i in range(n_me, n_malte):
             if not malte_debug_value_list.steps[i].cut:
@@ -104,7 +108,7 @@ def compareCuts(my_debug_value_list, malte_debug_value_list, all=False, silent=F
             print "Additional cut from me:"
             for op in my_debug_value_list.steps[i].cut:
                 print opname(op)
-    if my_cut == malte_cut:
+    if same:
         print "same"
         return True
     else:

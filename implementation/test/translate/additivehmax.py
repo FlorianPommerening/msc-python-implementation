@@ -171,7 +171,7 @@ def additive_hmax(task, debug_value_list=None, pcfs=None):
         #added by flo for debug
         try:
             pcf = pcfs.next()
-        except:
+        except StopIteration:
             pcf = None
 
         cut = collect_cut(task, debug_values=debug_values, pcf=pcf)
