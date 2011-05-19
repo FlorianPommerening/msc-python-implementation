@@ -94,8 +94,6 @@ def find_cut(task, state, operator_costs, hmax_value, hmax_function, preconditio
                     if e in goal_zone:
                         cut.add(op)
                         break
-                    else:
-                        stack.append(e)
-#                else:
-#                    stack.extend(op.effect)
+                else:
+                    stack.extend(op.effect)
     return cut
