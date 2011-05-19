@@ -1,9 +1,12 @@
-# this whole file is an ugly HACK
-
 class DomainResults:
     def __init__(self, name):
         self.name = name
         self.problemresults = []
+    def __str__(self):
+        result = "domain: %s\n" % self.name
+        for problemresult in self.problemresults:
+            result += str(problemresult)
+        return result
 
 class ProblemResults:
     def __init__(self, name, **kwargs):
@@ -112,6 +115,31 @@ def zipresults(results1, results2):
     for key in sorted(common_keys):
         yield (map1[key], map2[key])
 
+def mergeresults(*results):
+    maps = [{domainresult.name:domainresult for domainresult in domainresults} 
+            for domainresults in results]
+    domain_names = sorted(set([domainresult.name for domainresults in results
+                               for domainresult in domainresults]))
+    merged_results = []
+    for domain_name in domain_names:
+        merged_domain_results = DomainResults(domain_name)
+        merged_results.append(merged_domain_results)
+        for domainresult in [resultmap[domain_name] for resultmap in maps]:
+            for problemresult in domainresult.problemresults:
+                for existing in merged_domain_results.problemresults:
+                    assert problemresult.name != existing.name
+                merged_domain_results.problemresults.append(problemresult)
+    return merged_results
+
+def mergeresultfiles(mergedfilename, *filenames)
+    results = map(parse_results, filenames)
+    mergedresults = mergeresults(*results)
+    mergedresultsfile = open(mergedfilename, 'w')
+    for result in mergedresults:
+        mergedresultsfile.write(str(result))
+    mergedresultsfile.close()
 
 if __name__ == '__main__':
+    mergeresultfiles("../results/malte-equality.txt", "../results/malte-equality-easy.txt", "../results/malte-equality-medium.txt", "../results/malte-equality-hard.txt")
+    mergeresultfiles("../results/without-equality.txt", "../results/without-equality-easy.txt", "../results/without-equality-medium.txt", "../results/without-equality-hard.txt")
     compare_results('../results/malte-equality.txt', '../results/without-equality.txt', 'with-equality', 'without-equality')

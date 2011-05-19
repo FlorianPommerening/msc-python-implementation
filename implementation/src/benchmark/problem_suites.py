@@ -61,7 +61,7 @@ def problem_subset(domains=None, problems=None, problem_suite=None):
     max_problems = max(len(problems) for (domainname, problems) in problem_suite)
     if not problems:
         problem_idlist = [range(max_problems) for _ in xrange(len(domain_ids))]
-    if type(problems) == int:
+    elif type(problems) == int:
         problem_idlist = [[problems] for _ in xrange(len(domain_ids))]
     elif type(problems) == dict:
         domain_to_problems = problems
@@ -78,7 +78,7 @@ def problem_subset(domains=None, problems=None, problem_suite=None):
             for _ in xrange(len(problems), len(domain_ids)):
                 problem_idlist.append(range(max_problems))
     else:
-        print "Unkown type of problems list"
+        print "Unkown type of problems list '%s'" % type(problems)
     selected_subset = []
     for domain_id, problem_ids in zip(domain_ids, problem_idlist):
         if domain_id < 0 or domain_id >= len(problem_suite):
@@ -93,6 +93,7 @@ def problem_subset(domains=None, problems=None, problem_suite=None):
     return selected_subset
 
 # most tests run within 10 seconds per problem
+# 427 problems
 LMCUT_EASY = problem_subset(problems={
         "airport":[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ],
         "blocks":[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, ],
@@ -117,9 +118,10 @@ LMCUT_EASY = problem_subset(problems={
     })
 
 # most tests run within 10 - 60 seconds per problem
+# 157 problems
 LMCUT_MEDIUM = problem_subset(problems={
         "airport":[15, 16, 17, 18, ],
-	"blocks":[],
+        "blocks":[],
         "depot":[8, 11, 14, 16, 17, 18, 19, ],
         "driverlog":[14, 15, ],
         "freecell":[8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 31, ],
@@ -141,6 +143,7 @@ LMCUT_MEDIUM = problem_subset(problems={
     })
 
 # most tests take over 60 seconds per problem
+# 251 problems
 LMCUT_HARD = problem_subset(problems={
         "airport":[19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, ],
         "blocks":[],
