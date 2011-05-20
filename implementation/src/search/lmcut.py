@@ -35,15 +35,63 @@ class LMcut:
         '''
         applied_operator contains the id of an operator, that was just added to the plan (executed to reach state)
         returns a heuristic value for state
-        ''' 
-        pass
+
+        op+ is not in any LM:
+             All LMs stay LMs.
+             op cost of all operators stays the same
+        op+ is in LM l+ which also contains op1, ..., opn:
+             l+ is no longer a LM.
+             By removing l+ the heuristic value decreases by l+.cost.
+             All other LMs stay LMs.
+             Operator costs of operators op1, ..., opn can be increases by l+.cost.
+        '''
+        self.operator_costs[applied_operator] = -1
+        if self.operator_to_landmark.has_key(applied_operator):
+            landmark = self.operator_to_landmark[applied_operator]
+            self.landmarks.remove(landmark)
+            # TODO maybe store instead of recalculate
+            landmark_cost = 0
+            for op in landmark:
+                if op.cost > landmark_cost:
+                    landmark_cost = op.cost
+            self.heuristic_value -= landmark_cost
+            for op in landmark:
+                if op != applied_operator:
+                    self.operator_costs[op] += landmark_cost
+        return self._lmcut(state)
+
 
     def operator_forbidden(self, forbidden_operator, state):
         '''
         forbidden_operator contains the id of an operator, which was just excluded from the plan (i.e. no plan will use this operator)
         returns a heuristic value for state
+
+        op- is not in any LM:
+             All LMs stay LMs.
+             op cost of all operators stays the same
+        op- is the only operator in LM l-:
+             problem unsolvable: return infinity
+        op- is in LM l- which also contains op1, ..., opn:
+             remove op- from l-
+             All LMs (including l-\{op-}) stay LMs.
+             heuristic value can change if op- was maximum cost in l-
+             op cost of all operators stays the same
         ''' 
-        pass
+        self.operator_costs[forbidden_operator] = -1
+        if self.operator_to_landmark.has_key(forbidden_operator):
+            landmark = self.operator_to_landmark[forbidden_operator]
+            landmark.remove(forbidden_operator)
+            if len(landmark) == 0:
+                self.heuristic_value = float("infinity")
+                return self.heuristic_value
+            # TODO maybe store instead of recalculate
+            landmark_cost = 0
+            for op in landmark:
+                if op.cost > landmark_cost:
+                    landmark_cost = op.cost
+            old_landmark_cost = max(landmark_cost, forbidden_operator.cost)
+            self.heuristic_value -= (old_landmark_cost - landmark_cost)            
+        return self._lmcut(state)
 
     def _lmcut(self, state, debug_value_list=None):
         '''
