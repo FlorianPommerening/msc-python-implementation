@@ -56,13 +56,24 @@ def parse_results(filename):
             problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def compare_results(filename0, filename1, name0=None, name1=None):
+def compare_results(filename0, filename1, name0=None, name1=None, group_by_domain=False):
     """
     only domains and problems occurring in both results will be compared
     missing problems are considered untested and will not be compared
     problems without heuristic value are considered unsolved
     problems without solve_time value are ignored in time difference
     """
+    def printResults():
+        for i in (0,1):
+            print "  %s:" % name[i]
+            if timedata_count:
+                print "    Average time: %f" % (aggregated_time[i] / float(timedata_count))
+            if additional_solved[i]:
+                print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
+            if slightly_better[i]:
+                print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
+            if much_better[i]:
+                print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
     if name0 is None:
         name0 = filename0
     if name1 is None:
@@ -70,15 +81,20 @@ def compare_results(filename0, filename1, name0=None, name1=None):
     name = (name0, name1)
     results0 = parse_results(filename0)
     results1 = parse_results(filename1)
+    aggregated_time = [0, 0]
+    timedata_count = 0
+    additional_solved = ([], [])
+    slightly_better = ([], [])
+    much_better = ([], [])
     for domainresults in zipresults(results0, results1):
-        print domainresults[0].name
         # TODO time difference (average, standard deviation, squared relative error?)
         # TODO heuristic differences (average, standard deviation, squared relative error?)
-        aggregated_time = [0, 0]
-        timedata_count = 0
-        additional_solved = ([], [])
-        slightly_better = ([], [])
-        much_better = ([], [])
+        if group_by_domain:
+            aggregated_time = [0, 0]
+            timedata_count = 0
+            additional_solved = ([], [])
+            slightly_better = ([], [])
+            much_better = ([], [])
         for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
             h = (p[0].get("heuristic"), p[1].get("heuristic"))
             if h == (None, None):
@@ -97,16 +113,11 @@ def compare_results(filename0, filename1, name0=None, name1=None):
                     slightly_better[i].append(p[i])
                 elif h[i] > h[1-i] + 1:
                     much_better[i].append(p[i])
-        for i in (0,1):
-            print "  %s:" % name[i]
-            if timedata_count:
-                print "    Average time: %f" % (aggregated_time[i] / float(timedata_count))
-            if additional_solved[i]:
-                print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
-            if slightly_better[i]:
-                print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
-            if much_better[i]:
-                print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
+        if group_by_domain:
+            print domainresults[0].name
+            printResults()
+    if not group_by_domain:
+        printResults()
 
 def zipresults(results1, results2):
     map1 = {result.name:result for result in results1}
@@ -131,7 +142,7 @@ def mergeresults(*results):
                 merged_domain_results.problemresults.append(problemresult)
     return merged_results
 
-def mergeresultfiles(mergedfilename, *filenames)
+def mergeresultfiles(mergedfilename, *filenames):
     results = map(parse_results, filenames)
     mergedresults = mergeresults(*results)
     mergedresultsfile = open(mergedfilename, 'w')
