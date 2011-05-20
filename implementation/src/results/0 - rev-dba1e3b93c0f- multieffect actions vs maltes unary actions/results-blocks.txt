@@ -1,0 +1,177 @@
+domain: blocks
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-4-0.pddl
+0.00357389450073 0.00307083129883 6 6
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-4-1.pddl
+0.00568294525146 0.00248789787292 6 6
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-4-2.pddl
+0.00622797012329 0.00284218788147 6 6
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-5-0.pddl
+0.0066180229187 0.00507187843323 8 8
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-5-1.pddl
+0.00604391098022 0.00488591194153 7 7
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-5-2.pddl
+0.0111751556396 0.00541591644287 9 9
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-6-0.pddl
+0.012510061264 0.0105259418488 10 11
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-6-1.pddl
+0.0117750167847 0.0106589794159 10 10
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-6-2.pddl
+0.012512922287 0.00910782814026 11 11
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-7-0.pddl
+0.019767999649 0.0155940055847 13 13
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-7-1.pddl
+0.0187830924988 0.0176599025726 12 12
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-7-2.pddl
+0.0186049938202 0.0155870914459 12 12
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-8-0.pddl
+0.0247659683228 0.024806022644 12 13
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-8-1.pddl
+0.0265598297119 0.0242829322815 13 13
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-8-2.pddl
+0.0286679267883 0.0262081623077 14 14
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-9-0.pddl
+0.0417048931122 0.0348579883575 16 16
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-9-1.pddl
+0.0415930747986 0.0318319797516 16 16
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-9-2.pddl
+0.0424909591675 0.0376131534576 17 17
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-10-0.pddl
+0.0554170608521 0.0468239784241 18 18
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-10-1.pddl
+0.0567951202393 0.0517289638519 18 19
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-10-2.pddl
+0.0603179931641 0.0490479469299 19 19
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-11-0.pddl
+0.073184967041 0.0636780261993 19 19
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-11-1.pddl
+0.0783920288086 0.0783808231354 20 21
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-11-2.pddl
+0.0696468353271 0.0612630844116 18 19
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-12-0.pddl
+0.103251934052 0.0861401557922 22 22
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-12-1.pddl
+0.098785161972 0.0820169448853 22 22
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-13-0.pddl
+0.131124019623 0.11393904686 24 24
+hmax True
+goalzone False
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-13-1.pddl
+0.134326934814 0.109421014786 25 25
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-14-0.pddl
+0.156497001648 0.135421037674 23 25
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-14-1.pddl
+0.157778024673 0.162876844406 24 27
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-15-0.pddl
+0.20702791214 0.194272994995 27 28
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-15-1.pddl
+0.210510969162 0.163108110428 28 28
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-16-1.pddl
+0.273591041565 0.21408700943 31 31
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-16-2.pddl
+0.24218082428 0.184736967087 28 28
+hmax True
+goalzone True
+cut True
+problem: ../../../downward/benchmarks/blocks/probBLOCKS-17-0.pddl
+0.318404912949 0.299762010574 30 33
+hmax True
+goalzone True
+cut True
+
