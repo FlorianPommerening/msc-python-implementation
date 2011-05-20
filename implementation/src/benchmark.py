@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from search.DeleteRelaxation import delete_relaxation
 from search.RelevanceAnalysis import filter_irrelevant_variables
-from search.lmcut import incremental_lmcut
+from search.lmcut import calculate_lmcut
 from search.Debug import DebugValueList
 
 from translate.translate import pddl_to_sas
@@ -39,7 +39,7 @@ def benchmarkTask(problemfile, domainfile, what_to_test, timeout=None):
     print "  Solving ...",
     debug_value_list = DebugValueList()
     start = time()
-    h = run_with_timeout(timeout, None, incremental_lmcut,
+    h = run_with_timeout(timeout, None, calculate_lmcut,
                             task, debug_value_list=debug_value_list)
     solve_time = time() - start
     if h is None:

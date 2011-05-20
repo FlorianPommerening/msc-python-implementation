@@ -47,9 +47,9 @@ def dotopname(op):
     return result
 
 def plot_justification_graph(task, state, filename, step=0):
-    from search.lmcut import incremental_lmcut
+    from search.lmcut import calculate_lmcut
     debug_value_list = DebugValueList()
-    incremental_lmcut(task, debug_value_list=debug_value_list)
+    calculate_lmcut(task, debug_value_list=debug_value_list)
     pcf = debug_value_list.steps[step].pcf
     cut = debug_value_list.steps[step].cut
     goalzone = debug_value_list.steps[step].near_goal_area
@@ -81,9 +81,9 @@ def plot_justification_graph(task, state, filename, step=0):
 
 
 def plot_explanation_graph(task, state, filename, target_vars, step=0):
-    from lmcut import incremental_lmcut
+    from lmcut import calculate_lmcut
     debug_value_list = DebugValueList()
-    incremental_lmcut(task, debug_value_list=debug_value_list)
+    calculate_lmcut(task, debug_value_list=debug_value_list)
     pcf = debug_value_list.steps[step].pcf
     hmax_function = debug_value_list.steps[step].hmax_function
 

@@ -1,4 +1,4 @@
-from .lmcut import incremental_lmcut
+from .lmcut import LMcut
 
 class SearchNode(object):
     '''
@@ -10,22 +10,23 @@ class SearchNode(object):
         self.available_operator_ids = []
         self.partial_plan = []
         self.current_cost = 0
-        self.operator_id_to_landmark = {}
-        self.landmarks = []
-        self.heuristic_value = 0
         self.cost_lower_bound = 0
+        self.heuristic_calculator = None
+        
+    def get_heuristic_value(self):
+        return self.heuristic_calculator.heuristic_value
     
-    def initial_node(self, problem):
+    heuristic_value = property(get_heuristic_value)
+    
+    def initial_node(self, task):
         '''
         Create initial node from problem.
         Returns self for ease of use
+        Cannot use constructor, because empty constructor is needed for clone
         '''
-        self.current_state = problem.initial_state
-        self.available_operator_ids = range(len(problem.operators))
-        self.heuristic_value = incremental_lmcut(problem,
-                                                 problem.initial_state,
-                                                 self.landmarks,
-                                                 self.operator_id_to_landmark)
+        self.current_state = task.initial_state
+        self.available_operator_ids = range(len(task.operators))
+        self.heuristic_calculator = LMcut().initial_state(task)
         self.cost_lower_bound = self.current_cost + self.heuristic_value
         return self
     
@@ -42,26 +43,20 @@ class SearchNode(object):
         copy.available_operator_ids = list(self.available_operator_ids)
         copy.partial_plan = list(self.partial_plan)
         copy.current_cost = self.current_cost
-        copy.operator_id_to_landmark = self.operator_id_to_landmark.copy()
-        copy.landmarks = list(self.landmarks)
-        copy.heuristic_value = self.heuristic_value
         copy.cost_lower_bound = self.cost_lower_bound
+        copy.heuristic_calculator = self.heuristic_calculator.copy()
         return copy        
     
-    def successor_with_operator(self, operator_id, problem):
+    def successor_with_operator(self, operator_id, task):
         '''
         Generates a successor state in which the operator with operator_id was applied.
         '''
         successor = self._copy()
-        successor.current_state = problem.apply_operator(operator_id, self.current_state)
+        successor.current_state = task.apply_operator(operator_id, self.current_state)
         successor.remove_operators([operator_id])
         successor.partial_plan.append(operator_id)
-        successor.current_cost += problem.operator_cost(operator_id)
-        successor.heuristic_value = incremental_lmcut(problem, 
-                                                      successor.current_state, 
-                                                      successor.landmarks, 
-                                                      successor.operator_id_to_landmark,
-                                                      added_operator=operator_id)
+        successor.current_cost += task.operator_cost(operator_id)
+        successor.heuristic_calculator.operator_applied(operator_id, successor.current_state)
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
     
@@ -71,16 +66,12 @@ class SearchNode(object):
         '''
         successor = self._copy()
         successor.remove_operators([operator_id])
-        successor.heuristic_value = incremental_lmcut(problem, 
-                                                      successor.current_state, 
-                                                      successor.landmarks, 
-                                                      successor.operator_id_to_landmark,
-                                                      removed_operator=operator_id)
+        successor.heuristic_calculator.operator_forbidden(operator_id, successor.current_state)
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
     
     def __str__(self):
-        landmarks_str = "    " + "\n    ".join(", ".join(op.name for op in lm) for lm in self.landmarks)
+        landmarks_str = "    " + "\n    ".join(", ".join(op.name for op in lm) for lm in self.heuristic_calculator.landmarks)
         return """Node
 State: %s
 Available operators: %s
