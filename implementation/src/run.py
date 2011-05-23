@@ -17,7 +17,7 @@ plot_explanation_graph(problem, problem.initial_state, "explanationgraph.dot", p
 search = BranchAndBoundSearch(problem, AchieveLandmarksRemoveRedundantOperatorSelector())
 print "starting search"
 debug_value_tree = DebugValueTree(DebugValuesSearch())
-heuristic = search.run(debug_value_tree)
+heuristic = search.run(debug_value_tree, validateCuts=True)
 print "ploting results"
 plot_debug_value_tree(problem, debug_value_tree, "debugvaluetree.dot")
 print "Best solution has cost %s" % str(heuristic) 

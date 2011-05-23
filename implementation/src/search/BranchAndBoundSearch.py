@@ -12,7 +12,7 @@ class BranchAndBoundSearch(object):
         self._operatorSelector = operatorSelector or OperatorSelector()
         self._cost_upper_bound = maxint
 
-    def run(self, debug_value_tree=None):
+    def run(self, debug_value_tree=None, validateCuts=False):
         '''
         Returns length of the shortest plan for self._problem or -1 if no plan exists
         '''
@@ -20,9 +20,9 @@ class BranchAndBoundSearch(object):
         initial_node = SearchNode().initial_node(self._problem)
         if initial_node.heuristic_value == float("infinity"):
             return initial_node.heuristic_value
-        return self.recursive_branch_and_bound_search(initial_node, debug_value_tree)
+        return self.recursive_branch_and_bound_search(initial_node, debug_value_tree, validateCuts)
         
-    def recursive_branch_and_bound_search(self, searchnode, debug_value_tree=None):
+    def recursive_branch_and_bound_search(self, searchnode, debug_value_tree=None, validateCuts=False):
         '''
         Returns length of the shortest plan starting from searchnode.current_state and
         using only operators from searchnode.available_operator_ids.
@@ -37,6 +37,14 @@ class BranchAndBoundSearch(object):
             values.upper_bound = self._cost_upper_bound
             values.landmarks = [list(landmark) for landmark in searchnode.heuristic_calculator.landmarks]
             values.operator_costs = searchnode.heuristic_calculator.operator_costs.copy()
+
+        # HACK this package should not depend on benchmark, but saving all cuts and validating them later
+        # uses too much space for large problems
+        if validateCuts:
+            from benchmark.validate import validateCut
+            for landmark in searchnode.heuristic_calculator.landmarks:
+                if not validateCut(self._problem, landmark, searchnode.current_state):
+                    assert False, "invalid landmark detected"
 
         if searchnode.cost_lower_bound >= self._cost_upper_bound:
             debug_message("Exceeded bound (%d) => backtracking" % self._cost_upper_bound, 1)
@@ -64,7 +72,7 @@ class BranchAndBoundSearch(object):
                 successor_debug_tree = debug_value_tree.newChild((edge_text, next_operator_id))
             else:
                 successor_debug_tree = None
-            plan_cost = self.recursive_branch_and_bound_search(next_node, successor_debug_tree)
+            plan_cost = self.recursive_branch_and_bound_search(next_node, successor_debug_tree, validateCuts)
             if plan_cost != float("infinity"):
                 better_plan_found = True
                 # This test allows to break before the other successor is calculated in cases

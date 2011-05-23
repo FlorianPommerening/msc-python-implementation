@@ -8,7 +8,7 @@ from translate.translate import pddl_to_sas
 import translate.pddl
 
 from benchmark.timeout import run_with_timeout 
-from benchmark.validate import validateCut, validatePcf, validateRelevanceAnalysis
+from benchmark.validate import validateCuts, validatePcf, validateRelevanceAnalysis
 from benchmark.Results import ProblemResults
 from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE
 
@@ -48,7 +48,7 @@ def benchmarkTask(problemfile, domainfile, what_to_test, timeout=None):
     print "H:%s, T:%d" % (str(h), solve_time)
     results = {}
     if 'cuts' in what_to_test:
-        results['valid_cut'] = validateCut(debug_value_list, task, all=True)
+        results['valid_cut'] = validateCuts(debug_value_list, task, all=True)
     if 'pcf' in what_to_test:
         results['valid_pcf'] = validatePcf(debug_value_list, task, all=True, silent=False)
     if 'relevance' in what_to_test:

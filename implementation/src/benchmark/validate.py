@@ -39,23 +39,15 @@ def validatePcf(debug_value_list, task, all=False, silent=False):
     print "valid"
     return True
 
-def validateCut(debug_value_list, task, all=False, silent=False):
+def validateCuts(debug_value_list, task, all=False, silent=False):
     print "  validating cuts (%d ops, %d vars)... " % (len(task.operators), len(task.variables)),
     i = -1
     for i, step in iterateSteps(debug_value_list, all):
         if i > 0:
             sys.stdout.write("\b"*len(str(i-1)))
         sys.stdout.write(str(i))
-        sys.stdout.flush() 
-        operators = [op for op in task.operators if op not in step.cut]
-        state = task.initial_state
-        old_state = None
-        while state != old_state:
-            old_state = state
-            for op in operators:
-                if op.precondition.issubset(state):
-                    state = state.union(op.effect)
-        if task.goal.issubset(state):
+        sys.stdout.flush()
+        if not validateCut(task, step.cut):
             if not silent:
                 assert False, "Found invalid cut: [%s]" % [op.name for op in step.cut]
             print "invalid"
@@ -63,7 +55,19 @@ def validateCut(debug_value_list, task, all=False, silent=False):
     sys.stdout.write("\b"*len(str(i)))
     print "valid"
     return True
-        
+
+def validateCut(task, cut, state=None):
+    if state is None:
+        state = task.initial_state
+    operators = [op for op in task.operators if op not in cut]
+    old_state = None
+    while state != old_state:
+        old_state = state
+        for op in operators:
+            if op.precondition.issubset(state):
+                state = state.union(op.effect)
+    return not task.goal.issubset(state)
+
 def iterateSteps(debug_value_list, all):
     if all:
         for i, step in enumerate(debug_value_list.steps):
