@@ -25,6 +25,8 @@ def hmax(task, state, operator_costs=None):
             continue
         closed[u] = True
         for op in task.precondition_to_operators[u]:
+            if operator_costs[op] == -1:
+                continue
             op.unsatisfied_preconditions -= 1
             if op.unsatisfied_preconditions == 0:
                 # We discovered all preconditions of this action.

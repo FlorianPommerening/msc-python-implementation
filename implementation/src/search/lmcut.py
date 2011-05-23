@@ -165,6 +165,8 @@ class LMcut:
                 continue
             closed.append(v)
             for op in self.task.precondition_to_operators[v]:
+                if self.operator_costs[op] == -1:
+                    continue
                 op.unsatisfied_preconditions -= 1
                 if op.unsatisfied_preconditions == 0:
                     for e in op.effect:

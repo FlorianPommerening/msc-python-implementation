@@ -30,9 +30,11 @@ class SearchNode(object):
         self.cost_lower_bound = self.current_cost + self.heuristic_value
         return self
     
-    def remove_operators(self, operators_to_remove):
+    def remove_operators(self, operators_to_remove, task):
         for id in operators_to_remove:
             self.available_operator_ids.remove(id)
+            # HACK save available and forbidden operators only once
+            self.heuristic_calculator.operator_costs[task.operators[id]] = -1
     
     def _copy(self):
         '''
@@ -53,7 +55,8 @@ class SearchNode(object):
         '''
         successor = self._copy()
         successor.current_state = task.apply_operator(operator_id, self.current_state)
-        successor.remove_operators([operator_id])
+        # HACK change the way forbidden operators are stored
+        successor.remove_operators([operator_id], self.heuristic_calculator.task)
         successor.partial_plan.append(operator_id)
         successor.current_cost += task.operator_cost(operator_id)
         successor.heuristic_calculator.operator_applied(self.heuristic_calculator.task.operators[operator_id], successor.current_state)
@@ -65,7 +68,8 @@ class SearchNode(object):
         Generates a successor state in which the operator with operator_id will not be used in any plan.
         '''
         successor = self._copy()
-        successor.remove_operators([operator_id])
+        # HACK change the way forbidden operators are stored
+        successor.remove_operators([operator_id], self.heuristic_calculator.task)
         successor.heuristic_calculator.operator_forbidden(self.heuristic_calculator.task.operators[operator_id], successor.current_state)
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor

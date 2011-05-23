@@ -43,7 +43,8 @@ class BranchAndBoundSearch(object):
         if validateCuts:
             from benchmark.validate import validateCut
             for landmark in searchnode.heuristic_calculator.landmarks:
-                if not validateCut(self._problem, landmark, searchnode.current_state):
+                # HACK find better way to exclude forbidden operators
+                if not validateCut(self._problem, landmark, searchnode.current_state, [op for op in self._problem.operators if searchnode.heuristic_calculator.operator_costs[op] == -1]):
                     assert False, "invalid landmark detected"
 
         if searchnode.cost_lower_bound >= self._cost_upper_bound:
@@ -63,7 +64,7 @@ class BranchAndBoundSearch(object):
             return float("infinity")
         if operators_to_remove:
             debug_message("Found %d redundant operators" % len(operators_to_remove), 1)
-            searchnode.remove_operators(operators_to_remove)
+            searchnode.remove_operators(operators_to_remove, self._problem)
 
         better_plan_found = False
         # TODO allow OperatorSelector to choose whether to test with or without operator first

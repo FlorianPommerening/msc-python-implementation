@@ -56,10 +56,10 @@ def validateCuts(debug_value_list, task, all=False, silent=False):
     print "valid"
     return True
 
-def validateCut(task, cut, state=None):
+def validateCut(task, cut, state=None, forbidden_operators=[]):
     if state is None:
         state = task.initial_state
-    operators = [op for op in task.operators if op not in cut]
+    operators = [op for op in task.operators if op not in cut and op not in forbidden_operators]
     old_state = None
     while state != old_state:
         old_state = state
