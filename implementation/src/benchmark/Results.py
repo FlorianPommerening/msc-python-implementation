@@ -15,7 +15,9 @@ class ProblemResults:
         self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
-                            'heuristic':float, 'solve_time':float}
+                            'heuristic':float, 'h_plus':float, 'solve_time':float,
+                            'translation_time':float, 'relaxation_time':float,
+                            'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
 
