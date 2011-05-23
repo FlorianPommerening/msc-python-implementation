@@ -56,7 +56,7 @@ class SearchNode(object):
         successor.remove_operators([operator_id])
         successor.partial_plan.append(operator_id)
         successor.current_cost += task.operator_cost(operator_id)
-        successor.heuristic_calculator.operator_applied(operator_id, successor.current_state)
+        successor.heuristic_calculator.operator_applied(self.heuristic_calculator.task.operators[operator_id], successor.current_state)
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
     
@@ -66,9 +66,13 @@ class SearchNode(object):
         '''
         successor = self._copy()
         successor.remove_operators([operator_id])
-        successor.heuristic_calculator.operator_forbidden(operator_id, successor.current_state)
+        successor.heuristic_calculator.operator_forbidden(self.heuristic_calculator.task.operators[operator_id], successor.current_state)
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
+    
+    def successors(self, operator_id, problem):
+        yield ("with",    self.successor_with_operator(operator_id, problem))
+        yield ("without", self.successor_without_operator(operator_id, problem))
     
     def __str__(self):
         landmarks_str = "    " + "\n    ".join(", ".join(op.name for op in lm) for lm in self.heuristic_calculator.landmarks)

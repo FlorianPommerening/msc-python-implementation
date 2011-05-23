@@ -62,3 +62,30 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
         if good_operators:
             return good_operators[0]
         return None
+
+class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
+    def _select(self, searchnode, problem, applicable_operators, upper_bound, operators_to_remove):
+        '''
+        Tries to pick operators achieving a landmark 
+        and removes operators that do not change the current state
+        '''
+        best = None
+        smallest = float("inf")
+        for operator_id in applicable_operators:
+            for landmark in searchnode.heuristic_calculator.landmarks:
+                if len(landmark) < smallest and problem.operators[operator_id] in landmark:
+                    smallest = len(landmark)
+                    best = operator_id
+        if best is not None:
+            debug_message("Found landmark achieving operator", 1)
+            return best
+
+        good_operators = []
+        for operator_id in applicable_operators:
+            if (problem.operators[operator_id].effect | searchnode.current_state) == searchnode.current_state:
+                operators_to_remove.append(operator_id)
+            else:
+                good_operators.append(operator_id)
+        if good_operators:
+            return good_operators[0]
+        return None
