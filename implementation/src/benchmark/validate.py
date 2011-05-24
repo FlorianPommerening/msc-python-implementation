@@ -53,7 +53,10 @@ def validateCuts(debug_value_list, task, all=False, silent=False):
             print "invalid"
             return False
     sys.stdout.write("\b"*len(str(i)))
-    print "valid"
+    if all:
+        print "All %d cuts valid" % len(debug_value_list.steps)
+    else:
+        print "First cut valid"
     return True
 
 def validateCut(task, cut, state=None, operators=None):
