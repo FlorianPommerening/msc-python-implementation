@@ -1,3 +1,6 @@
+#!/usr/bin/python
+import argparse
+
 class DomainResults:
     def __init__(self, name):
         self.name = name
@@ -137,11 +140,12 @@ def mergeresults(*results):
     for domain_name in domain_names:
         merged_domain_results = DomainResults(domain_name)
         merged_results.append(merged_domain_results)
-        for domainresult in [resultmap[domain_name] for resultmap in maps]:
+        for domainresult in [resultmap[domain_name] for resultmap in maps if resultmap.has_key(domain_name)]:
             for problemresult in domainresult.problemresults:
                 for existing in merged_domain_results.problemresults:
                     assert problemresult.name != existing.name
                 merged_domain_results.problemresults.append(problemresult)
+        merged_domain_results.problemresults.sort(key=lambda res: res.name)
     return merged_results
 
 def mergeresultfiles(mergedfilename, *filenames):
@@ -153,6 +157,16 @@ def mergeresultfiles(mergedfilename, *filenames):
     mergedresultsfile.close()
 
 if __name__ == '__main__':
-    mergeresultfiles("../results/malte-equality.txt", "../results/malte-equality-easy.txt", "../results/malte-equality-medium.txt", "../results/malte-equality-hard.txt")
-    mergeresultfiles("../results/without-equality.txt", "../results/without-equality-easy.txt", "../results/without-equality-medium.txt", "../results/without-equality-hard.txt")
-    compare_results('../results/malte-equality.txt', '../results/without-equality.txt', 'with-equality', 'without-equality')
+    parser = argparse.ArgumentParser(description='Run a benchmark')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-m', '--merge', nargs="+")
+    group.add_argument('-c', '--compare', nargs=2)
+    parser.add_argument('-n', '--names', nargs=2)
+    parser.add_argument('-d', '--groupbydomain', action='store_true')
+    args = parser.parse_args()
+    if args.merge:
+        mergeresultfiles(args.merge[-1], *args.merge[:-1])
+    else:
+        if not args.names:
+            args.names = [None, None]
+        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.group_by_domain)
