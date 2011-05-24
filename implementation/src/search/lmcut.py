@@ -33,7 +33,7 @@ class LMcut:
 
     def operator_applied(self, applied_operator, state):
         '''
-        applied_operator contains the id of an operator, that was just added to the plan (executed to reach state)
+        applied_operator contains operator that was just added to the plan (executed to reach state)
         returns a heuristic value for state
 
         op+ is not in any LM:
@@ -63,7 +63,7 @@ class LMcut:
 
     def operator_forbidden(self, forbidden_operator, state):
         '''
-        forbidden_operator contains the id of an operator, which was just excluded from the plan (i.e. no plan will use this operator)
+        forbidden_operator contains the operator, which was just excluded from the plan (i.e. no plan will use this operator)
         returns a heuristic value for state
 
         op- is not in any LM:

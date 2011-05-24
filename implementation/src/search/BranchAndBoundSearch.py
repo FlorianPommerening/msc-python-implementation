@@ -25,7 +25,7 @@ class BranchAndBoundSearch(object):
     def recursive_branch_and_bound_search(self, searchnode, debug_value_tree=None, validateCuts=False):
         '''
         Returns length of the shortest plan starting from searchnode.current_state and
-        using only operators from searchnode.available_operator_ids.
+        using only operators that are available in searchnode.heuristic_calculator.
         Returns float("infinity") if no plan exists or the shortest plan is not smaller than self._cost_upper_bound. 
         '''
         debug_message(searchnode)
@@ -43,9 +43,9 @@ class BranchAndBoundSearch(object):
         if validateCuts:
             from benchmark.validate import validateCut
             for landmark in searchnode.heuristic_calculator.landmarks:
-                # HACK find better way to exclude forbidden operators
-                if not validateCut(self._task, landmark, searchnode.current_state, [op for op in self._task.operators if searchnode.heuristic_calculator.operator_costs[op] == -1]):
-                    assert False, "invalid landmark detected"
+                available_operators = [op for op in self._task.operators if searchnode.is_operator_available(op)]
+                if not validateCut(self._task, landmark, searchnode.current_state, available_operators):
+                    assert False, "invalid landmark detected: '%s'" % landmark
 
         if searchnode.cost_lower_bound >= self._cost_upper_bound:
             debug_message("Exceeded bound (%d) => backtracking" % self._cost_upper_bound, 1)
@@ -64,7 +64,7 @@ class BranchAndBoundSearch(object):
             return float("infinity")
         if operators_to_remove:
             debug_message("Found %d redundant operators" % len(operators_to_remove), 1)
-            searchnode.remove_operators(operators_to_remove)
+            searchnode.remove_redundant_operators(operators_to_remove)
 
         better_plan_found = False
         # TODO allow OperatorSelector to choose whether to test with or without operator first

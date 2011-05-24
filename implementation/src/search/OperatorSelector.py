@@ -12,13 +12,13 @@ class OperatorSelector(object):
         To implement an OperatorSelector derive from this calls and override _select()
 
         operators_to_remove can be filled by this function to remove more operators 
-        from searchnode.available_operators, than just the one that is applied.
+        from the available operators, than just the one that is applied.
         This might be the case if an operator is redundant or a no-op 
         '''
         max_cost = upper_bound - searchnode.current_cost
         applicable_operators = []
-        for op in searchnode.available_operators:
-            if op.cost > max_cost:
+        for op in task.operators:
+            if not searchnode.is_operator_available(op) or op.cost > max_cost:
                 continue
             if op.is_applicable(searchnode.current_state):
                 applicable_operators.append(op)
