@@ -206,8 +206,8 @@ def plot_debug_value_tree(task, debug_value_tree, filename):
         # TODO 
         # use v.landmarks and v.operator_costs to validate landmarks
         file.write('%s[label="%s"][color=%s]\n' % (node_names[node], label, color))
-        for ((edge_text, op_id), child) in node.children:
-            label = "%s %s" % (edge_text, task.operators[op_id].name)
+        for ((edge_text, op), child) in node.children:
+            label = "%s %s" % (edge_text, op.name)
             file.write('%s -> %s[label="%s"]\n' % (node_names[node], node_names[child], label))
         for (_, child) in node.children:
             print_node(child)

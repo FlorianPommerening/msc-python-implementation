@@ -49,7 +49,11 @@ def benchmarkSearch(problemfile, domainfile, what_to_test, timeout=None):
     print "  Searching for h^+ ...",
     start = time()
     search = BranchAndBoundSearch(task, AchieveLandmarksRemoveRedundantOperatorSelector())
-    h = run_with_timeout(timeout, None, search.run, validateCuts=("cuts" in what_to_test))
+    try:
+        h = run_with_timeout(timeout, None, search.run, validateCuts=("cuts" in what_to_test))
+    except RuntimeError:
+        print "Recusion depth exceeded"
+        return ProblemResults(problemfile, error="Recusion depth exceeded")
     solve_time = time() - start
     if h is None:
         print "  Timed out"

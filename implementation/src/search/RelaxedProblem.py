@@ -7,15 +7,7 @@ class RelaxedProblem:
         self.initial_state = initial_state
         self.operators = operators
         self.goal = goal
-        
-    def operator_applicable(self, operator_id, state):
-        operator = self.operators[operator_id]
-        return operator.precondition.issubset(state)
-    
-    def apply_operator(self, operator_id, state):
-        operator = self.operators[operator_id]
-        return state.union(operator.effect)
-    
+
     def is_goal_state(self, state):
         return self.goal.issubset(state)
     
@@ -82,6 +74,12 @@ class RelaxedOperator:
         self.effect = effect
         self.cost = cost
     
+    def is_applicable(self, state):
+        return self.precondition.issubset(state)
+    
+    def apply(self, state):
+        return state.union(self.effect)
+
     def __repr__(self):
         return "%s (%d)" % (self.name, self.cost)
 

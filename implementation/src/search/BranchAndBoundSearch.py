@@ -5,19 +5,19 @@ from sys import maxint
 
 class BranchAndBoundSearch(object):
     '''
-    Main class of search. Initialize search object with _problem and call run 
+    Main class of search. Initialize search object with _task and call run 
     '''
-    def __init__(self, problem, operatorSelector=None):
-        self._problem = problem
+    def __init__(self, task, operatorSelector=None):
+        self._task = task
         self._operatorSelector = operatorSelector or OperatorSelector()
         self._cost_upper_bound = maxint
 
     def run(self, debug_value_tree=None, validateCuts=False):
         '''
-        Returns length of the shortest plan for self._problem or -1 if no plan exists
+        Returns length of the shortest plan for self._task or -1 if no plan exists
         '''
         self._cost_upper_bound = maxint
-        initial_node = SearchNode().initial_node(self._problem)
+        initial_node = SearchNode().initial_node(self._task)
         if initial_node.heuristic_value == float("infinity"):
             return initial_node.heuristic_value
         return self.recursive_branch_and_bound_search(initial_node, debug_value_tree, validateCuts)
@@ -44,33 +44,33 @@ class BranchAndBoundSearch(object):
             from benchmark.validate import validateCut
             for landmark in searchnode.heuristic_calculator.landmarks:
                 # HACK find better way to exclude forbidden operators
-                if not validateCut(self._problem, landmark, searchnode.current_state, [op for op in self._problem.operators if searchnode.heuristic_calculator.operator_costs[op] == -1]):
+                if not validateCut(self._task, landmark, searchnode.current_state, [op for op in self._task.operators if searchnode.heuristic_calculator.operator_costs[op] == -1]):
                     assert False, "invalid landmark detected"
 
         if searchnode.cost_lower_bound >= self._cost_upper_bound:
             debug_message("Exceeded bound (%d) => backtracking" % self._cost_upper_bound, 1)
             return float("infinity")
-        if self._problem.is_goal_state(searchnode.current_state):
+        if self._task.is_goal_state(searchnode.current_state):
             debug_message("Found solution with cost %d => Updating upper bound" % searchnode.current_cost, 2)
             if debug_value_tree is not None:
                 debug_value_tree.values.is_goal_state = True
             self._cost_upper_bound = searchnode.current_cost
             return searchnode.current_cost
         operators_to_remove = []
-        next_operator_id = self._operatorSelector.most_promising_operator_id(
-                                       searchnode, self._problem, self._cost_upper_bound, operators_to_remove)
-        if next_operator_id is None:
+        next_operator = self._operatorSelector.most_promising_operator(
+                                       searchnode, self._task, self._cost_upper_bound, operators_to_remove)
+        if next_operator is None:
             debug_message("No more operators => backtracking", 1)
             return float("infinity")
         if operators_to_remove:
             debug_message("Found %d redundant operators" % len(operators_to_remove), 1)
-            searchnode.remove_operators(operators_to_remove, self._problem)
+            searchnode.remove_operators(operators_to_remove)
 
         better_plan_found = False
         # TODO allow OperatorSelector to choose whether to test with or without operator first
-        for edge_text, next_node in searchnode.successors(next_operator_id, self._problem):
+        for edge_text, next_node in searchnode.successors(next_operator):
             if debug_value_tree is not None:
-                successor_debug_tree = debug_value_tree.newChild((edge_text, next_operator_id))
+                successor_debug_tree = debug_value_tree.newChild((edge_text, next_operator))
             else:
                 successor_debug_tree = None
             plan_cost = self.recursive_branch_and_bound_search(next_node, successor_debug_tree, validateCuts)
@@ -87,7 +87,3 @@ class BranchAndBoundSearch(object):
             return self._cost_upper_bound
         else:
             return float("infinity")
-    
-
-
-        

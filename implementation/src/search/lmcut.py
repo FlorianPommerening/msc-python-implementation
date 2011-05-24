@@ -149,6 +149,11 @@ class LMcut:
                 continue
             goal_zone.add(v)
             for op in effect_to_zero_cost_operators[v]:
+                if self.operator_costs[op] == -1:
+                    continue
+                # HACK not sure if this works, TODO check where the key error is coming from
+                if not precondition_choice_function.has_key(op):
+                    continue
                 stack.append(precondition_choice_function[op])
         if debug_values is not None:
             debug_values.near_goal_area = list(goal_zone)
