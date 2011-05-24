@@ -42,8 +42,5 @@ def hmax(task, state, operator_costs=None):
                     if successor_cost < hmax[v]:
                         hmax[v] = successor_cost
                         heappush(heap, ((successor_cost, depth+1), v))
-    result = 0
-    for g in task.goal:
-        if hmax[g] > result:
-            result = hmax[g]
+    result = max([hmax[g] for g in task.goal])
     return result, hmax, precondition_choice_function

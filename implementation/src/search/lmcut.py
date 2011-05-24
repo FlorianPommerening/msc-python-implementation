@@ -151,7 +151,8 @@ class LMcut:
             for op in effect_to_zero_cost_operators[v]:
                 if self.operator_costs[op] == -1:
                     continue
-                # HACK not sure if this works, TODO check where the key error is coming from
+                # if pcf has no key for op, this means that the preconditions of op
+                # are not satisfiable with the available operators
                 if not precondition_choice_function.has_key(op):
                     continue
                 stack.append(precondition_choice_function[op])
