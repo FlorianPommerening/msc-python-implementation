@@ -57,7 +57,7 @@ class BranchAndBoundSearch(object):
             self._cost_upper_bound = searchnode.current_cost
             return searchnode.current_cost
         operators_to_remove = []
-        next_operator = self._operatorSelector.most_promising_operator(
+        next_operator, add_first = self._operatorSelector.most_promising_operator(
                                        searchnode, self._task, self._cost_upper_bound, operators_to_remove)
         if next_operator is None:
             debug_message("No more operators => backtracking", 1)
@@ -67,8 +67,7 @@ class BranchAndBoundSearch(object):
             searchnode.remove_redundant_operators(operators_to_remove)
 
         better_plan_found = False
-        # TODO allow OperatorSelector to choose whether to test with or without operator first
-        for edge_text, next_node in searchnode.successors(next_operator):
+        for edge_text, next_node in searchnode.successors(next_operator, add_first):
             if debug_value_tree is not None:
                 successor_debug_tree = debug_value_tree.newChild((edge_text, next_operator))
             else:

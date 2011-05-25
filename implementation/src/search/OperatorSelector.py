@@ -23,7 +23,7 @@ class OperatorSelector(object):
             if op.is_applicable(searchnode.current_state):
                 applicable_operators.append(op)
         if not applicable_operators:
-            return None
+            return None, None
         return self._select(searchnode, task, applicable_operators, upper_bound, operators_to_remove)
 
     def _select(self, searchnode, task, applicable_operators, upper_bound, operators_to_remove):
@@ -32,7 +32,8 @@ class OperatorSelector(object):
         applicable_operators is guaranteed to contain at least one operator at this point.
         Base class implementation picks first applicable operator. More sophisticated behavior in derived classes
         '''
-        return applicable_operators[0]
+        add_first = True
+        return applicable_operators[0], add_first
 
 
 class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
@@ -41,6 +42,7 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
         Tries to pick operators achieving the most goal literals 
         and removes operators that do not change the current state
         '''
+        add_first = True
         best = None
         most = 0
         missing_goals = task.goal - searchnode.current_state
@@ -51,7 +53,7 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
                 best = op
         if best:
             debug_message("Found goal achieving operator", 1)
-            return best
+            return best, add_first
 
         good_operators = []
         for op in applicable_operators:
@@ -60,8 +62,8 @@ class AchieveTargetsRemoveRedundantOperatorSelector(OperatorSelector):
             else:
                 good_operators.append(op)
         if good_operators:
-            return good_operators[0]
-        return None
+            return good_operators[0], add_first
+        return None, None
 
 class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
     def _select(self, searchnode, task, applicable_operators, upper_bound, operators_to_remove):
@@ -69,6 +71,7 @@ class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
         Tries to pick operators achieving a landmark 
         and removes operators that do not change the current state
         '''
+        add_first = True
         best = None
         smallest = float("inf")
         for op in applicable_operators:
@@ -78,7 +81,7 @@ class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
                     best = op
         if best is not None:
             debug_message("Found landmark achieving operator", 1)
-            return best
+            return best, add_first
 
         good_operators = []
         for op in applicable_operators:
@@ -87,5 +90,42 @@ class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
             else:
                 good_operators.append(op)
         if good_operators:
-            return good_operators[0]
-        return None
+            return good_operators[0], add_first
+        return None, None
+
+class AchieveLandmarksOrGoalsOperatorSelector(OperatorSelector):
+    def _select(self, searchnode, task, applicable_operators, upper_bound, operators_to_remove):
+        '''
+        Tries to pick operators achieving a landmark 
+        if this is not possible, it tries to achieve a goal literal,
+        or a precondition for an operator, achieving a goal literal
+        '''
+        add_first = True
+        best = None
+        smallest = float("inf")
+        for op in applicable_operators:
+            for landmark in searchnode.heuristic_calculator.landmarks:
+                if len(landmark) < smallest and op in landmark:
+                    smallest = len(landmark)
+                    best = op
+        if best is not None:
+            debug_message("Found landmark achieving operator", 1)
+            # if landmark only contains this operator add it immediately,
+            # otherwise try to force a decision for this landmark by removing one operator contained
+            # in the landmark and thus making a smaller landmark in the next step 
+            return best, add_first
+
+        try_achieve_vars = set()
+        next_achieve_vars = set(task.goal)
+        while try_achieve_vars != try_achieve_vars.union(next_achieve_vars):
+            try_achieve_vars.update(next_achieve_vars)
+            next_achieve_vars = set()
+            for var in sorted(try_achieve_vars):
+                for op in task.effect_to_operators[var]:
+                    if not searchnode.is_operator_available(op):
+                        continue
+                    if op.is_applicable(searchnode.current_state):
+                        return op, add_first
+                    next_achieve_vars.update(op.precondition)
+
+        return None, None

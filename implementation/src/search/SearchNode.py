@@ -71,10 +71,14 @@ class SearchNode(object):
         successor.cost_lower_bound = successor.current_cost + successor.heuristic_value
         return successor
     
-    def successors(self, operator):
-        yield ("with",    self.successor_with_operator(operator))
-        yield ("without", self.successor_without_operator(operator))
-    
+    def successors(self, operator, add_first):
+        if add_first:
+            yield ("with",    self.successor_with_operator(operator))
+            yield ("without", self.successor_without_operator(operator))
+        else:
+            yield ("without", self.successor_without_operator(operator))
+            yield ("with",    self.successor_with_operator(operator))
+
     def __str__(self):
         landmarks_str = "    " + "\n    ".join(", ".join(op.name for op in lm) for lm in self.heuristic_calculator.landmarks)
         return """Node
