@@ -1,5 +1,7 @@
 #!/usr/bin/python
+from problem_suites import LMCUT_SUITE
 import argparse
+from collections import defaultdict
 
 class DomainResults:
     def __init__(self, name):
@@ -156,17 +158,39 @@ def mergeresultfiles(mergedfilename, *filenames):
         mergedresultsfile.write(str(result))
     mergedresultsfile.close()
 
+def missingresults(results):
+    missing = defaultdict(list)
+    for (domain, paths) in LMCUT_SUITE:
+        domainresult = next((r for r in results if r.name == domain), None)
+        if domainresult is None:
+            missing[domain] = range(len(paths))
+            continue
+        for i, (problemfile, _) in enumerate(paths):
+            problemresult = next((r for r in domainresult.problemresults if r.name == problemfile), None)
+            if problemresult is None:
+                missing[domain].append(i)
+    return missing
+
+def printmissingresults(filename):
+    missing = missingresults(parse_results(filename))
+    for domain in sorted(missing.keys()):
+        problems = ", ".join(map(str, sorted(missing[domain])))
+        print '        "%s":[%s],' % (domain, problems)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a benchmark')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-m', '--merge', nargs="+")
     group.add_argument('-c', '--compare', nargs=2)
+    group.add_argument('-pm', '--printmissing')
     parser.add_argument('-n', '--names', nargs=2)
     parser.add_argument('-d', '--groupbydomain', action='store_true')
     args = parser.parse_args()
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
-    else:
+    elif args.compare:
         if not args.names:
             args.names = [None, None]
         compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.group_by_domain)
+    else:
+        printmissingresults(args.printmissing)
