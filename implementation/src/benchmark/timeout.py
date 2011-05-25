@@ -8,7 +8,8 @@ def run_with_timeout(timeout, default, f, *args, **kwargs):
         timeout_timer = Timer(timeout, thread.interrupt_main)
         timeout_timer.start()
         result = f(*args, **kwargs)
-        timeout_timer.cancel()
         return result
     except KeyboardInterrupt:
         return default
+    finally:
+        timeout_timer.cancel()
