@@ -4,7 +4,7 @@ from benchmark.timeout import run_with_timeout
 from search.SASParser import SASParser
 from search.DeleteRelaxation import delete_relaxation
 from search.RelevanceAnalysis import filter_irrelevant_variables
-from search.lmcut import incremental_lmcut
+from search.lmcut import calculate_lmcut
 from search.Debug import DebugValueList
 
 from translate.additivehmax import crossreference_task, additive_hmax
@@ -49,7 +49,7 @@ def compareTask(problemfile, domainfile, what_to_compare, timeout=None):
 
     print "  Mine",
     start = time()
-    my_h = run_with_timeout(timeout, None, incremental_lmcut,
+    my_h = run_with_timeout(timeout, None, calculate_lmcut,
                             task, debug_value_list=my_debug_value_list)
     my_t = time() - start
     if my_h is None:

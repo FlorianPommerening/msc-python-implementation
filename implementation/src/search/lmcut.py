@@ -128,9 +128,9 @@ class LMcut:
             for op in cut:
                 self.operator_costs[op] -= landmark_cost
             hmax_value, hmax_function, precondition_choice_function = hmax(self.task, state, self.operator_costs)
-    
+
         debug_message("hlmcut(state) = %d" % additional_cost, 0)
-        self.heuristic_value += additional_cost 
+        self.heuristic_value += additional_cost
         return self.heuristic_value
     
     def _find_cut(self, state, precondition_choice_function, debug_values=None):

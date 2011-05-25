@@ -1,6 +1,6 @@
 from benchmark.timeout import run_with_timeout 
 from search.DeleteRelaxation import delete_relaxation
-from search.lmcut import incremental_lmcut
+from search.lmcut import calculate_lmcut
 from relaxedtasktranslator import varname, opname
 
 import sys
@@ -10,7 +10,7 @@ def validateRelevanceAnalysis(sas_task, translationkey, filtered_h, timeout=None
     unfiltered_task = delete_relaxation(sas_task, translationkey)
     unfiltered_task.convert_to_canonical_form()
     unfiltered_task.crossreference()
-    unfiltered_h = run_with_timeout(timeout, None, incremental_lmcut, unfiltered_task)
+    unfiltered_h = run_with_timeout(timeout, None, calculate_lmcut, unfiltered_task)
     if unfiltered_h is None:
         print "timed out"
         return True
