@@ -80,6 +80,10 @@ class RelaxedOperator:
     def apply(self, state):
         return state.union(self.effect)
 
+    def __eq__(self,other):
+        return self.name, self.precondition, self.effect, self.cost == other.name, other.precondition, other.effect, other.cost
+    def __hash__(self):
+        return hash((self.name, self.precondition, self.effect, self.cost))
     def __repr__(self):
         return "%s (%d)" % (self.name, self.cost)
 
