@@ -4,7 +4,7 @@ from search.RelevanceAnalysis import filter_irrelevant_variables
 from search.lmcut import calculate_lmcut
 from search.Debug import DebugValueList
 from search.BranchAndBoundSearch import BranchAndBoundSearch 
-from search.OperatorSelector import AchieveLandmarksRemoveRedundantOperatorSelector
+from search.OperatorSelector import AchieveLandmarksOrGoalsOperatorSelector
 
 from translate.translate import pddl_to_sas
 import translate.pddl
@@ -48,7 +48,7 @@ def benchmarkSearch(problemfile, domainfile, what_to_test, timeout=None):
     task, _, _ = prepareTask(problemfile, domainfile, results)
     print "  Searching for h^+ ...",
     start = time()
-    search = BranchAndBoundSearch(task, AchieveLandmarksRemoveRedundantOperatorSelector())
+    search = BranchAndBoundSearch(task, AchieveLandmarksOrGoalsOperatorSelector())
     try:
         h = run_with_timeout(timeout, None, search.run, validateCuts=("cuts" in what_to_test))
     except RuntimeError:
@@ -115,6 +115,8 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--timeout', type=int)
     parser.add_argument('-m', '--measure', type=eval_here, default=['heuristic'])
     args = parser.parse_args(sys.argv[1:])
+
+    sys.setrecursionlimit(2000)
 
     filename = "results/results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
     run_benchmark(filename, domains=args.domains, problems=args.problems, problem_suite=args.suite,
