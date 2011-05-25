@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from search.BranchAndBoundSearch import BranchAndBoundSearch 
 from search.SASParser import SASParser
 from search.DeleteRelaxation import delete_relaxation
@@ -20,9 +21,4 @@ debug_value_tree = DebugValueTree(DebugValuesSearch())
 heuristic = search.run(debug_value_tree, validateCuts=True)
 print "ploting results"
 plot_debug_value_tree(problem, debug_value_tree, "debugvaluetree.dot")
-print "Best solution has cost %s" % str(heuristic) 
-
-
-
-
-        
+print "Best solution has cost %s" % str(heuristic)
