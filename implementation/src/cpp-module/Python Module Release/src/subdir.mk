@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Variable.cpp \
 ../src/hplusbnbmodule.cpp 
 
 OBJS += \
+./src/Variable.o \
 ./src/hplusbnbmodule.o 
 
 CPP_DEPS += \
+./src/Variable.d \
 ./src/hplusbnbmodule.d 
 
 
