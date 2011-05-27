@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     sys.setrecursionlimit(2000)
 
-    filename = "results/results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
+    filename = "../results/results_%s.txt" % strftime("%y_%m_%d_%H_%M_%S")
     run_benchmark(filename, domains=args.domains, problems=args.problems, problem_suite=args.suite,
                   heuristic_only=args.heuristic_only, what_to_test=args.measure, timeout=args.timeout) 
     # import profile
