@@ -1,7 +1,13 @@
-#include "Variable.h"
 #include <algorithm>
+#include <iostream>
+
+#include "Variable.h"
 
 Variable::Variable(std::string name): name(name) {
+}
+
+Variable::~Variable() {
+    std::cout << "Variable " << this->name << " destroyed" << std::endl;
 }
 
 VariableSet::VariableSet() {
@@ -14,28 +20,34 @@ void VariableSet::add(Variable *element) {
     this->variables.insert(element);
 }
 
-void VariableSet::union_with(VariableSet &other, VariableSet &unionSet) {
+void VariableSet::union_with(const VariableSet &other, VariableSet &unionSet) const {
     unionSet.variables.clear();
     std::set_union(this->variables.begin(), this->variables.end(),
                    other.variables.begin(), other.variables.end(),
                    std::inserter(unionSet.variables, unionSet.variables.begin()));
 }
 
-const bool VariableSet::isDisjointWith(const VariableSet &other) {
-    std::set<Variable *>::iterator first1 = this->variables.begin();
+bool VariableSet::isDisjointWith(const VariableSet &other) const {
+    if (this->variables.empty() || other.variables.empty()) {
+        return true;
+    }
+    std::set<Variable *>::iterator it1 = this->variables.begin();
     std::set<Variable *>::iterator last1 = this->variables.end();
-    std::set<Variable *>::iterator first2 = other.variables.begin();
+    std::set<Variable *>::iterator it2 = other.variables.begin();
     std::set<Variable *>::iterator last2 = other.variables.end();
-    while (first1!=last1 && first2!=last2)
+    if (*it1 > *(other.variables.rbegin()) || *it2 > *(this->variables.rbegin())) {
+        return true;
+    }
+    while (it1!=last1 && it2!=last2)
     {
-      if (*first1<*first2) ++first1;
-      else if (*first2<*first1) ++first2;
-      else return false;
+      if (*it1 == *it2) return false;
+      else if (*it1 < *it2) ++it1;
+      else ++it2;
     }
     return true;
 }
 
-const bool VariableSet::isSubsetOf(const VariableSet &other) {
+bool VariableSet::isSubsetOf(const VariableSet &other) const {
     return std::includes(other.variables.begin(), other.variables.end(),
                          this->variables.begin(), this->variables.end());
 }

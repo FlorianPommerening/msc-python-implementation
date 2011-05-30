@@ -4,14 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/RelaxedOperator.cpp \
+../src/RelaxedTask.cpp \
 ../src/Variable.cpp \
 ../src/hplusbnb.cpp 
 
 OBJS += \
+./src/RelaxedOperator.o \
+./src/RelaxedTask.o \
 ./src/Variable.o \
 ./src/hplusbnb.o 
 
 CPP_DEPS += \
+./src/RelaxedOperator.d \
+./src/RelaxedTask.d \
 ./src/Variable.d \
 ./src/hplusbnb.d 
 
