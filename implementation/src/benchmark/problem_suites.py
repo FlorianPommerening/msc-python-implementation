@@ -2,21 +2,28 @@ import os, re, glob
 
 BENCHMARKS_DIR = '../../../downward/benchmarks/'
 
+def guessDomainFile(problemFile):
+    basedir = os.path.dirname(problemFile) + '/'
+    match = re.match(basedir + r"p(\d\d\d?)", problemFile)
+    domainfile = ""
+    if match:
+        domainfile = basedir + "domain_p%s.pddl" % match.groups(1)
+        if not os.path.exists(domainfile):
+            domainfile = basedir + "p%s-domain.pddl" % match.groups(1)
+    if not os.path.exists(domainfile):
+        domainfile = basedir + "domain.pddl"
+    return domainfile
+
+def guessDomainName(domainFile):
+    return os.path.basename(os.path.dirname(domainFile))
+
 def listproblems(basedir):
     result = []
     problemfiles = [file for file in glob.glob(basedir + '*')
                         if file.find("domain", len(basedir)) == -1]
     for problemfile in problemfiles:
         problemfile = problemfile.replace("\\", "/")
-        match = re.match(basedir + r"p(\d\d)", problemfile)
-        domainfile = ""
-        if match:
-            domainfile = basedir + "domain_p%s.pddl" % match.groups(1)
-            if not os.path.exists(domainfile):
-                domainfile = basedir + "p%s-domain.pddl" % match.groups(1)
-        if not os.path.exists(domainfile):
-            domainfile = basedir + "domain.pddl"
-
+        domainfile = guessDomainFile(problemfile)
         assert os.path.exists(domainfile), "could not find domainfile for problem '%s'" % problemfile
         result.append((problemfile, domainfile))
     sortlist = [(map(int, re.findall(r"\d+", problemfile)), (problemfile, domainfile)) for (problemfile, domainfile) in result]

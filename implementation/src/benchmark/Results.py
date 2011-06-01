@@ -17,10 +17,12 @@ class ProblemResults:
     def __init__(self, name, **kwargs):
         self.name = name
         self.values = {}
+        # the bool field hmax is there for historical reasons and should be called same_hmax instead
+        # use the h_max field instead
         self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
-                            'heuristic':float, 'h_plus':float, 'solve_time':float,
+                            'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float,
                             'translation_time':float, 'relaxation_time':float,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
