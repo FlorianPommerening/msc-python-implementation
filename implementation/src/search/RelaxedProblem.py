@@ -47,24 +47,23 @@ class RelaxedProblem:
             for e in op.effect:
                 self.effect_to_operators[e].append(op)
 
-    def dump(self):
-        print "Variables"
+    def dump(self, stream = None):
+        print >> stream, "Variables"
+        print >> stream, len(self.variables) 
         for var in self.variables:
-            print var
-        print
-        print "Initial state"
+            print >> stream, var
+        print >> stream, "Initial state"
+        print >> stream, len(self.initial_state) 
         for var in self.initial_state:
-            print var
-        print
-        print "Goal"
-        print self.goal
+            print >> stream, var
+        print >> stream, "Goal"
+        print >> stream, len(self.goal) 
         for var in self.goal:
-            print var
-        print
-        print "Operators"
-        print len(self.operators)
+            print >> stream, var
+        print >> stream, "Operators"
+        print >> stream, len(self.operators)
         for op in self.operators:
-            op.dump()
+            op.dump(stream)
 
 
 class RelaxedOperator:
@@ -87,11 +86,13 @@ class RelaxedOperator:
     def __repr__(self):
         return "%s (%d)" % (self.name, self.cost)
 
-    def dump(self):
-        print "%s (%d)" % (self.name, self.cost)
-        print "  Precondition:"
+    def dump(self, stream=None):
+        print >> stream, "Operator"
+        print >> stream, self.name
+        print >> stream, self.cost
+        print >> stream, len(self.precondition)
         for var in self.precondition:
-            print var
-        print "  Effect:" 
+            print >> stream, var
+        print >> stream, len(self.effect) 
         for var in self.effect:
-            print var
+            print >> stream, var
