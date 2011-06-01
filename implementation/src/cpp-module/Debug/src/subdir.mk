@@ -7,18 +7,21 @@ CPP_SRCS += \
 ../src/RelaxedOperator.cpp \
 ../src/RelaxedTask.cpp \
 ../src/Variable.cpp \
+../src/hmax.cpp \
 ../src/hplusbnb.cpp 
 
 OBJS += \
 ./src/RelaxedOperator.o \
 ./src/RelaxedTask.o \
 ./src/Variable.o \
+./src/hmax.o \
 ./src/hplusbnb.o 
 
 CPP_DEPS += \
 ./src/RelaxedOperator.d \
 ./src/RelaxedTask.d \
 ./src/Variable.d \
+./src/hmax.d \
 ./src/hplusbnb.d 
 
 

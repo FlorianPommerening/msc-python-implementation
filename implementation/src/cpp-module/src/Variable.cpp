@@ -6,25 +6,18 @@
 Variable::Variable(std::string name): name(name) {
 }
 
-Variable::~Variable() {
-    std::cout << "Variable " << this->name << " destroyed" << std::endl;
-}
-
 VariableSet::VariableSet() {
-}
-
-VariableSet::VariableSet(Variable **first, Variable **last): variables(first, last) {
 }
 
 void VariableSet::add(Variable *element) {
     this->variables.insert(element);
 }
 
-void VariableSet::union_with(const VariableSet &other, VariableSet &unionSet) const {
-    unionSet.variables.clear();
-    std::set_union(this->variables.begin(), this->variables.end(),
-                   other.variables.begin(), other.variables.end(),
-                   std::inserter(unionSet.variables, unionSet.variables.begin()));
+void VariableSet::setToUnion(const VariableSet &set1, const VariableSet &set2) {
+    this->variables.clear();
+    std::set_union(set1.variables.begin(), set1.variables.end(),
+                   set2.variables.begin(), set2.variables.end(),
+                   std::inserter(this->variables, this->variables.begin()));
 }
 
 bool VariableSet::isDisjointWith(const VariableSet &other) const {
