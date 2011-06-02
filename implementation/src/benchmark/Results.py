@@ -118,7 +118,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
                     continue
                 if h[i-1] is None:
                     additional_solved[i].append(p[i])
-                elif h[i] == h[1-i] + 1:
+                elif h[i] == h[1-i] + 1 and h[i] != float("inf"):
                     slightly_better[i].append(p[i])
                 elif h[i] > h[1-i] + 1:
                     much_better[i].append(p[i])
@@ -193,6 +193,6 @@ if __name__ == '__main__':
     elif args.compare:
         if not args.names:
             args.names = [None, None]
-        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.group_by_domain)
+        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.groupbydomain)
     else:
         printmissingresults(args.printmissing)
