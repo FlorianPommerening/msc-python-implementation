@@ -13,6 +13,7 @@ import pddl
 import sas_tasks
 import simplify
 import timers
+import sys, os
 
 # TODO: The translator may generate trivial derived variables which are always true,
 # for example if there ia a derived predicate in the input that only depends on
@@ -532,16 +533,16 @@ def build_implied_facts(strips_to_sas, groups, mutex_groups):
     return implied_facts
 
 
-def write_translation_key(translation_key):
-    groups_file = file("test.groups", "w")
+def write_translation_key(translation_key, dir=''):
+    groups_file = file(os.path.join(dir, "test.groups"), "w")
     for var_no, var_key in enumerate(translation_key):
         print >> groups_file, "var%d:" % var_no
         for value, value_name in enumerate(var_key):
             print >> groups_file, "  %d: %s" % (value, value_name)
     groups_file.close()
 
-def write_mutex_key(mutex_key):
-    invariants_file = file("all.groups", "w")
+def write_mutex_key(mutex_key, dir=''):
+    invariants_file = file(os.path.join(dir, "all.groups"), "w")
     print >> invariants_file, "begin_groups"
     print >> invariants_file, len(mutex_key)
     for group in mutex_key:
@@ -574,19 +575,33 @@ def write_mutex_key(mutex_key):
 if __name__ == "__main__":
     import pddl
 
+    (task_filename, domain_filename, output_dir) = ('', '', '')
+    if len(sys.argv) == 2:
+        task_filename = sys.argv[1]
+    elif len(sys.argv) == 3:
+        (task_filename, domain_filename) = sys.argv[1:]
+    elif len(sys.argv) == 4:
+        (task_filename, domain_filename, output_dir) = sys.argv[1:]
+    else:
+        print "Needs 1-3 arguments: task_filename [, domain_filename [, output_dir]]"
+        sys.exit(1)
+
     timer = timers.Timer()
     with timers.timing("Parsing"):
-        task = pddl.open()
+        task = pddl.open(task_filename, domain_filename)
 
     # EXPERIMENTAL!
     # import psyco
     # psyco.full()
 
     sas_task, translation_key, mutex_key = pddl_to_sas(task)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     with timers.timing("Writing output"):
-        sas_task.output(file("output.sas", "w"))
+        sas_task.output(file(os.path.join(output_dir, "output.sas"), "w"))
     with timers.timing("Writing translation key"):
-        write_translation_key(translation_key)
+        write_translation_key(translation_key, dir=output_dir)
     with timers.timing("Writing mutex key"):
-        write_mutex_key(mutex_key)
+        write_mutex_key(mutex_key, dir=output_dir)
     print "Done! %s" % timer
