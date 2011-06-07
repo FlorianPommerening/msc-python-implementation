@@ -18,15 +18,14 @@ timeout = '0:11:0'
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
 # integer number, M stands for MByte and G for GByte. If memout is
 # None, then there is no memory bound.
-memout = "500M"
+memout = "250M"
 
 # defines the different configurations of the program to benchmark.
 # The key of each entry represents the name of this configuration, the
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        'internal-hmax' : 'benchmark.py -b hmax_internal -t600 -od ../results/internal',
-        'external-hmax' : 'benchmark.py -b hmax_external -t600 -od ../results/external',
+        'external-hmax' : './hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
@@ -35,7 +34,7 @@ configurations = {
 benchmarks = {}
 for (domainname, paths) in LMCUT_SUITE:
     for i, (p, d) in enumerate(paths):
-        benchmarks["%s-%03.d" % (domainname, i)] = "-pf %s -df %s -o results_%s_%03.d.txt" % (p, d, domainname, i)
+        benchmarks["%s-%03.d" % (domainname, i)] = "%s %s" % (p, d)
 
 
 # the create_tasks functions generates a file containing all possible
