@@ -7,7 +7,7 @@ from Cheetah.Template import Template
 # defines which queue to use for one task. Possible values are "athlon.q" and
 # "athlon_core.q". The former value configures the use of a whole cpu,
 # while the latter option configures the use of a single cpu core.
-queue = "amd_core.q"
+queue = "opteron_core.q"
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
@@ -18,7 +18,7 @@ timeout = '0:11:0'
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
 # integer number, M stands for MByte and G for GByte. If memout is
 # None, then there is no memory bound.
-memout = "250M"
+memout = "1G"
 
 # defines the different configurations of the program to benchmark.
 # The key of each entry represents the name of this configuration, the
@@ -32,7 +32,7 @@ configurations = {
 # this benchmark (eg. 'C1'), and a string containing the input file(s)
 # for this benchmark.
 benchmarks = {}
-for (domainname, paths) in LMCUT_SUITE:
+for (domainname, paths) in problem_subset():
     for i, (p, d) in enumerate(paths):
         benchmarks["%s-%03.d" % (domainname, i)] = "%s %s" % (p, d)
 
