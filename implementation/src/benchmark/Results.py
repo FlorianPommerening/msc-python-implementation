@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from problem_suites import LMCUT_SUITE
-import argparse
+import argparse, os
 from collections import defaultdict
 
 class DomainResults:
@@ -23,7 +23,7 @@ class ProblemResults:
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
                             'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float,
-                            'translation_time':float, 'relaxation_time':float,
+                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
@@ -59,7 +59,8 @@ def parse_results(filename):
             domain_result = DomainResults(" ".join(tokens[1:]))
             results.append(domain_result)
         elif tokens[0] == "problem:":
-            problem_result = ProblemResults(" ".join(tokens[1:]))
+            filename = os.path.basename(" ".join(tokens[1:]))
+            problem_result = ProblemResults(os.path.splitext(filename)[0])
             domain_result.problemresults.append(problem_result)
         else:
             problem_result.set(tokens[0], " ".join(tokens[1:]))
@@ -71,12 +72,14 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
     missing problems are considered untested and will not be compared
     problems without heuristic value are considered unsolved
     problems without solve_time value are ignored in time difference
+    if h_max is present in bot files it must be the same
     """
+    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max")
     def printResults():
         for i in (0,1):
             print "  %s:" % name[i]
-            if timedata_count:
-                print "    Average time: %f" % (aggregated_time[i] / float(timedata_count))
+            for time_name in timedata_counts:
+                print "    Average %s_time: %f" % (time_name, (aggregated_times[i][time_name] / float(timedata_counts[time_name])))
             if additional_solved[i]:
                 print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
             if slightly_better[i]:
@@ -90,8 +93,8 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
     name = (name0, name1)
     results0 = parse_results(filename0)
     results1 = parse_results(filename1)
-    aggregated_time = [0, 0]
-    timedata_count = 0
+    aggregated_times = [defaultdict(int), defaultdict(int)]
+    timedata_counts = defaultdict(int)
     additional_solved = ([], [])
     slightly_better = ([], [])
     much_better = ([], [])
@@ -99,20 +102,25 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
         # TODO time difference (average, standard deviation, squared relative error?)
         # TODO heuristic differences (average, standard deviation, squared relative error?)
         if group_by_domain:
-            aggregated_time = [0, 0]
-            timedata_count = 0
+            aggregated_times = [defaultdict(int), defaultdict(int)]
+            timedata_counts = defaultdict(int)
             additional_solved = ([], [])
             slightly_better = ([], [])
             much_better = ([], [])
         for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
+            for time_name in TIMES:
+                t = (p[0].get("%s_time" % time_name), p[1].get("%s_time" % time_name))
+                if t[0] is not None and t[1] is not None:
+                    aggregated_times[0][time_name] += t[0]
+                    aggregated_times[1][time_name] += t[1]
+                    timedata_counts[time_name] += 1
+            
+            h_max = (p[0].get("h_max"), p[1].get("h_max"))
+            if (h_max[0] is not None and h_max[1] is not None and h_max[0] != h_max[1]):
+                print "Different hmax values (%d, %d) for %s in %s" % (h_max[0], h_max[1], p[0].name, domainresults[0].name)
             h = (p[0].get("heuristic"), p[1].get("heuristic"))
             if h == (None, None):
                 continue
-            t = (p[0].get("solve_time"), p[1].get("solve_time"))
-            if t[0] is not None and t[1] is not None:
-                aggregated_time[0] += t[0]
-                aggregated_time[1] += t[1]
-                timedata_count += 1
             for i in (0,1):
                 if h[i] is None:
                     continue
@@ -169,6 +177,9 @@ def missingresults(results):
             continue
         for i, (problemfile, _) in enumerate(paths):
             problemresult = next((r for r in domainresult.problemresults if r.name == problemfile), None)
+            if problemresult is None:
+                problemname = os.path.splitext(os.path.basename(problemfile))[0]
+                problemresult = next((r for r in domainresult.problemresults if r.name == problemname), None)
             if problemresult is None:
                 missing[domain].append(i)
     return missing
