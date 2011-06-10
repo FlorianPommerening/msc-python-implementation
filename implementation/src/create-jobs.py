@@ -12,7 +12,7 @@ queue = "opteron_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '0:11:0'
+timeout = '0:30:0'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -25,7 +25,7 @@ memout = "1G"
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        'external-hmax' : './hplusbnb ',
+        'lmcut-test' : './hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
