@@ -22,8 +22,8 @@ class ProblemResults:
         self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
-                            'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float,
-                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float,
+                            'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
+                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
@@ -74,7 +74,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
     problems without solve_time value are ignored in time difference
     if h_max is present in bot files it must be the same
     """
-    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max")
+    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus")
     def printResults():
         for i in (0,1):
             print "  %s:" % name[i]
@@ -118,7 +118,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
             h_max = (p[0].get("h_max"), p[1].get("h_max"))
             if (h_max[0] is not None and h_max[1] is not None and h_max[0] != h_max[1]):
                 print "Different hmax values (%d, %d) for %s in %s" % (h_max[0], h_max[1], p[0].name, domainresults[0].name)
-            h = (p[0].get("heuristic"), p[1].get("heuristic"))
+            h = (p[0].get("h_lmcut"), p[1].get("h_lmcut"))
             if h == (None, None):
                 continue
             for i in (0,1):
