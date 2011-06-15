@@ -18,14 +18,14 @@ timeout = '0:30:0'
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
 # integer number, M stands for MByte and G for GByte. If memout is
 # None, then there is no memory bound.
-memout = "1G"
+memout = "2G"
 
 # defines the different configurations of the program to benchmark.
 # The key of each entry represents the name of this configuration, the
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        'lmcut-test' : './hplusbnb ',
+        'hplus-test' : './hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
