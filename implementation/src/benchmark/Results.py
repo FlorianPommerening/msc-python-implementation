@@ -118,7 +118,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
             h_max = (p[0].get("h_max"), p[1].get("h_max"))
             if (h_max[0] is not None and h_max[1] is not None and h_max[0] != h_max[1]):
                 print "Different hmax values (%d, %d) for %s in %s" % (h_max[0], h_max[1], p[0].name, domainresults[0].name)
-            h = (p[0].get("h_lmcut"), p[1].get("h_lmcut"))
+            h = (p[0].get("h_plus"), p[1].get("h_plus"))
             if h == (None, None):
                 continue
             for i in (0,1):
