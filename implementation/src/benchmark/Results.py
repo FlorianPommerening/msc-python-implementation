@@ -66,7 +66,7 @@ def parse_results(filename):
             problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def compare_results(filename0, filename1, name0=None, name1=None, group_by_domain=False):
+def compare_results(filename0, filename1, name0=None, name1=None, group_by_domain=False, verbose=False):
     """
     only domains and problems occurring in both results will be compared
     missing problems are considered untested and will not be compared
@@ -82,10 +82,19 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
                 print "    Average %s_time: %f" % (time_name, (aggregated_times[i][time_name] / float(timedata_counts[time_name])))
             if additional_solved[i]:
                 print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
+                if verbose:
+                    for (domainname, problemresults, _) in additional_solved[i]:
+                        print "        %s %s" % (domainname, problemresults[0].name)
             if slightly_better[i]:
                 print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
+                if verbose:
+                    for (domainname, problemresults, heuristics) in slightly_better[i]:
+                        print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
             if much_better[i]:
                 print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
+                if verbose:
+                    for (domainname, problemresults, heuristics) in much_better[i]:
+                        print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
     if name0 is None:
         name0 = filename0
     if name1 is None:
@@ -125,11 +134,11 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
                 if h[i] is None:
                     continue
                 if h[i-1] is None:
-                    additional_solved[i].append(p[i])
+                    additional_solved[i].append((domainresults[0].name, p, h))
                 elif h[i] == h[1-i] + 1 and h[i] != float("inf"):
-                    slightly_better[i].append(p[i])
+                    slightly_better[i].append((domainresults[0].name, p, h))
                 elif h[i] > h[1-i] + 1:
-                    much_better[i].append(p[i])
+                    much_better[i].append((domainresults[0].name, p, h))
         if group_by_domain:
             print domainresults[0].name
             printResults()
@@ -198,12 +207,13 @@ if __name__ == '__main__':
     group.add_argument('-pm', '--printmissing')
     parser.add_argument('-n', '--names', nargs=2)
     parser.add_argument('-d', '--groupbydomain', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
     elif args.compare:
         if not args.names:
             args.names = [None, None]
-        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.groupbydomain)
+        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.groupbydomain, args.verbose)
     else:
         printmissingresults(args.printmissing)
