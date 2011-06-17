@@ -3,11 +3,12 @@
 
 from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE
 from Cheetah.Template import Template
+import os
 
 # defines which queue to use for one task. Possible values are "athlon.q" and
 # "athlon_core.q". The former value configures the use of a whole cpu,
 # while the latter option configures the use of a single cpu core.
-queue = "opteron_core.q"
+queue = "amd_core.q"
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
@@ -34,7 +35,8 @@ configurations = {
 benchmarks = {}
 for (domainname, paths) in problem_subset():
     for i, (p, d) in enumerate(paths):
-        benchmarks["%s-%03.d" % (domainname, i)] = "%s %s" % (p, d)
+        problemname = os.path.splitext(os.path.basename(p))[0]
+        benchmarks["%s-%s" % (domainname, problemname)] = "%s %s" % (p, d)
 
 
 # the create_tasks functions generates a file containing all possible
