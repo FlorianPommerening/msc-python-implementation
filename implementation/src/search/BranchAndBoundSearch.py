@@ -11,6 +11,7 @@ class BranchAndBoundSearch(object):
         self._task = task
         self._operatorSelector = operatorSelector or OperatorSelector()
         self._cost_upper_bound = maxint
+        self.best_plan = None
 
     def run(self, debug_value_tree=None, validateCuts=False):
         '''
@@ -55,6 +56,7 @@ class BranchAndBoundSearch(object):
             if debug_value_tree is not None:
                 debug_value_tree.values.is_goal_state = True
             self._cost_upper_bound = searchnode.current_cost
+            self.best_plan = list(searchnode.partial_plan)
             return searchnode.current_cost
         operators_to_remove = []
         next_operator, add_first = self._operatorSelector.most_promising_operator(

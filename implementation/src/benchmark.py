@@ -62,6 +62,8 @@ def benchmarkSearch(problemfile, domainfile, what_to_test, timeout=None):
         print "  Timed out"
         return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
     print "H:%s, T:%d" % (str(h), solve_time)
+    results["plan"] = ", ".join(map(str, search.best_plan))
+    print "  With plan:", results["plan"]
     if "cuts" in what_to_test:
         # cut validation will assert False if there is any invalid cut.
         # write in the file to remember that all cuts were validated 

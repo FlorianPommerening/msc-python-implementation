@@ -80,7 +80,7 @@ class AchieveLandmarksRemoveRedundantOperatorSelector(OperatorSelector):
                     smallest = len(landmark)
                     best = op
         if best is not None:
-            debug_message("Found landmark achieving operator", 1)
+            debug_message("Found landmark achieving operator '%s'" % best.name, 1)
             return best, add_first
 
         good_operators = []
@@ -109,7 +109,7 @@ class AchieveLandmarksOrGoalsOperatorSelector(OperatorSelector):
                     smallest = len(landmark)
                     best = op
         if best is not None:
-            debug_message("Found landmark achieving operator", 1)
+            debug_message("Found landmark achieving operator '%s'" % best.name, 1)
             # if landmark only contains this operator add it immediately,
             # otherwise try to force a decision for this landmark by removing one operator contained
             # in the landmark and thus making a smaller landmark in the next step 
