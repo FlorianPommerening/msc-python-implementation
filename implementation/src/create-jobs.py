@@ -36,7 +36,7 @@ benchmarks = {}
 for (domainname, paths) in problem_subset():
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
-        benchmarks["%s-%s" % (domainname, problemname)] = "%s %s" % (p, d)
+        benchmarks["%s_%s" % (domainname, problemname)] = "%s %s" % (p, d)
 
 
 # the create_tasks functions generates a file containing all possible
