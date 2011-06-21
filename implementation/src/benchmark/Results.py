@@ -66,7 +66,48 @@ def parse_results(filename):
             problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def compare_results(filename0, filename1, name0=None, name1=None, group_by_domain=False, verbose=False):
+def print_statistics(filename, name=None, domains=None, print_domain_name=True):
+    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus")
+    def printResults():
+        print "  %s solved %d/%d tasks:" % (name, solved, solved + not_solved)
+        for time_name in timedata_counts:
+            print "    Average %s_time: %f" % (time_name, (aggregated_times[time_name] / float(timedata_counts[time_name])))
+    if name is None:
+        name = filename
+    results = parse_results(filename)
+    aggregated_times = defaultdict(int)
+    timedata_counts = defaultdict(int)
+    solved = 0
+    not_solved = 0
+    for domainresults in results:
+        # TODO time difference (average, standard deviation, squared relative error?)
+        # TODO heuristic differences (average, standard deviation, squared relative error?)
+        if domains is not None:
+            if len(domains) > 0 and domainresults.name not in domains:
+                continue
+            aggregated_times = defaultdict(int)
+            timedata_counts = defaultdict(int)
+            solved = 0
+            not_solved = 0
+        for p in domainresults.problemresults:
+            for time_name in TIMES:
+                t = p.get("%s_time" % time_name)
+                if t is not None:
+                    aggregated_times[time_name] += t
+                    timedata_counts[time_name] += 1
+            h = p.get("h_plus")
+            if h is None:
+                not_solved += 1
+            else:
+                solved += 1
+        if domains is not None:
+            if print_domain_name:
+                print domainresults.name
+            printResults()
+    if domains is None:
+        printResults()
+
+def compare_results(filename0, filename1, name0=None, name1=None, domains=None, verbose=False):
     """
     only domains and problems occurring in both results will be compared
     missing problems are considered untested and will not be compared
@@ -74,56 +115,37 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
     problems without solve_time value are ignored in time difference
     if h_max is present in bot files it must be the same
     """
-    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus")
-    def printResults():
-        for i in (0,1):
-            print "  %s:" % name[i]
-            for time_name in timedata_counts:
-                print "    Average %s_time: %f" % (time_name, (aggregated_times[i][time_name] / float(timedata_counts[time_name])))
-            if additional_solved[i]:
-                print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
-                if verbose:
-                    for (domainname, problemresults, _) in additional_solved[i]:
-                        print "        %s %s" % (domainname, problemresults[0].name)
-            if slightly_better[i]:
-                print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
-                if verbose:
-                    for (domainname, problemresults, heuristics) in slightly_better[i]:
-                        print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
-            if much_better[i]:
-                print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
-                if verbose:
-                    for (domainname, problemresults, heuristics) in much_better[i]:
-                        print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
-    if name0 is None:
-        name0 = filename0
-    if name1 is None:
-        name1 = filename1
-    name = (name0, name1)
+    def printResults(i):
+        if additional_solved[i]:
+            print "    Solved %d problems not solved by %s" % (len(additional_solved[i]), name[1-i])
+            if verbose:
+                for (domainname, problemresults, _) in additional_solved[i]:
+                    print "        %s %s" % (domainname, problemresults[0].name)
+        if slightly_better[i]:
+            print "    Solved %d problems slightly better than %s" % (len(slightly_better[i]), name[1-i])
+            if verbose:
+                for (domainname, problemresults, heuristics) in slightly_better[i]:
+                    print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
+        if much_better[i]:
+            print "    Solved %d problems better than %s" % (len(much_better[i]), name[1-i])
+            if verbose:
+                for (domainname, problemresults, heuristics) in much_better[i]:
+                    print "        %s %s (%d instead of %d)" % (domainname, problemresults[0].name, heuristics[i], heuristics[1-i])
+    filename = (filename0, filename1)
+    name = (name0 or filename0, name1 or filename1)
     results0 = parse_results(filename0)
     results1 = parse_results(filename1)
-    aggregated_times = [defaultdict(int), defaultdict(int)]
-    timedata_counts = defaultdict(int)
     additional_solved = ([], [])
     slightly_better = ([], [])
     much_better = ([], [])
     for domainresults in zipresults(results0, results1):
-        # TODO time difference (average, standard deviation, squared relative error?)
-        # TODO heuristic differences (average, standard deviation, squared relative error?)
-        if group_by_domain:
-            aggregated_times = [defaultdict(int), defaultdict(int)]
-            timedata_counts = defaultdict(int)
+        if domains is not None:
+            if len(domains) > 0 and domainresults[0].name not in domains:
+                continue
             additional_solved = ([], [])
             slightly_better = ([], [])
             much_better = ([], [])
         for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
-            for time_name in TIMES:
-                t = (p[0].get("%s_time" % time_name), p[1].get("%s_time" % time_name))
-                if t[0] is not None and t[1] is not None:
-                    aggregated_times[0][time_name] += t[0]
-                    aggregated_times[1][time_name] += t[1]
-                    timedata_counts[time_name] += 1
-            
             h_max = (p[0].get("h_max"), p[1].get("h_max"))
             if (h_max[0] is not None and h_max[1] is not None and h_max[0] != h_max[1]):
                 print "Different hmax values (%d, %d) for %s in %s" % (h_max[0], h_max[1], p[0].name, domainresults[0].name)
@@ -139,11 +161,15 @@ def compare_results(filename0, filename1, name0=None, name1=None, group_by_domai
                     slightly_better[i].append((domainresults[0].name, p, h))
                 elif h[i] > h[1-i] + 1:
                     much_better[i].append((domainresults[0].name, p, h))
-        if group_by_domain:
+        if domains is not None:
             print domainresults[0].name
-            printResults()
-    if not group_by_domain:
-        printResults()
+            for i in (0,1):
+                print_statistics(filename[i], name[i], domains=[domainresults[0].name], print_domain_name=False)
+                printResults(i)
+    if domains is None:
+        for i in (0,1):
+            print_statistics(filename[i], name[i])
+            printResults(i)
 
 def zipresults(results1, results2):
     map1 = {result.name:result for result in results1}
@@ -200,13 +226,14 @@ def printmissingresults(filename):
         print '        "%s":[%s],' % (domain, problems)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run a benchmark')
+    parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-m', '--merge', nargs="+")
     group.add_argument('-c', '--compare', nargs=2)
+    group.add_argument('-p', '--printstatstics')
     group.add_argument('-pm', '--printmissing')
     parser.add_argument('-n', '--names', nargs=2)
-    parser.add_argument('-d', '--groupbydomain', action='store_true')
+    parser.add_argument('-d', '--domains', nargs="*")
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.merge:
@@ -214,6 +241,9 @@ if __name__ == '__main__':
     elif args.compare:
         if not args.names:
             args.names = [None, None]
-        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.groupbydomain, args.verbose)
+        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.domains, args.verbose)
+    elif args.printstatstics:
+        print_statistics(args.printstatstics, domains=args.domains)
     else:
         printmissingresults(args.printmissing)
+
