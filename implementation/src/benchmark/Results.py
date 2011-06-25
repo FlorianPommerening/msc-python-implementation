@@ -66,17 +66,24 @@ def parse_results(filename):
             problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def print_statistics(filename, name=None, domains=None, print_domain_name=True):
+def print_statistics(filename, name=None, domains=None, common_problems=None, print_domain_name=True):
     TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus")
     def printResults():
         print "  %s solved %d/%d tasks:" % (name, solved, solved + not_solved)
         for time_name in timedata_counts:
-            print "    Average %s_time: %f" % (time_name, (aggregated_times[time_name] / float(timedata_counts[time_name])))
+            if aggregated_times[time_name] == 0 or timedata_counts[time_name] == 0:
+                continue
+            timestr = "    Average %s_time: %f" % (time_name, (aggregated_times[time_name] / float(timedata_counts[time_name])))
+            if common_problems is not None:
+                timestr += " (%f in common problems)" % (aggregated_times_common[time_name] / float(timedata_counts_common[time_name]))
+            print timestr
     if name is None:
         name = filename
     results = parse_results(filename)
     aggregated_times = defaultdict(int)
     timedata_counts = defaultdict(int)
+    aggregated_times_common = defaultdict(int)
+    timedata_counts_common = defaultdict(int)
     solved = 0
     not_solved = 0
     for domainresults in results:
@@ -87,6 +94,8 @@ def print_statistics(filename, name=None, domains=None, print_domain_name=True):
                 continue
             aggregated_times = defaultdict(int)
             timedata_counts = defaultdict(int)
+            aggregated_times_common = defaultdict(int)
+            timedata_counts_common = defaultdict(int)
             solved = 0
             not_solved = 0
         for p in domainresults.problemresults:
@@ -95,6 +104,9 @@ def print_statistics(filename, name=None, domains=None, print_domain_name=True):
                 if t is not None:
                     aggregated_times[time_name] += t
                     timedata_counts[time_name] += 1
+                    if common_problems is not None and p.name in common_problems:
+                        aggregated_times_common[time_name] += t
+                        timedata_counts_common[time_name] += 1
             h = p.get("h_plus")
             if h is None:
                 not_solved += 1
@@ -135,6 +147,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, domains=None, 
     name = (name0 or filename0, name1 or filename1)
     results0 = parse_results(filename0)
     results1 = parse_results(filename1)
+    common_problems = []
     additional_solved = ([], [])
     slightly_better = ([], [])
     much_better = ([], [])
@@ -142,6 +155,7 @@ def compare_results(filename0, filename1, name0=None, name1=None, domains=None, 
         if domains is not None:
             if len(domains) > 0 and domainresults[0].name not in domains:
                 continue
+            common_problems = []
             additional_solved = ([], [])
             slightly_better = ([], [])
             much_better = ([], [])
@@ -152,6 +166,8 @@ def compare_results(filename0, filename1, name0=None, name1=None, domains=None, 
             h = (p[0].get("h_plus"), p[1].get("h_plus"))
             if h == (None, None):
                 continue
+            if h[0] is not None and h[1] is not None:
+                common_problems.append(p[0].name)
             for i in (0,1):
                 if h[i] is None:
                     continue
@@ -164,11 +180,11 @@ def compare_results(filename0, filename1, name0=None, name1=None, domains=None, 
         if domains is not None:
             print domainresults[0].name
             for i in (0,1):
-                print_statistics(filename[i], name[i], domains=[domainresults[0].name], print_domain_name=False)
+                print_statistics(filename[i], name[i], domains=[domainresults[0].name], common_problems=common_problems, print_domain_name=False)
                 printResults(i)
     if domains is None:
         for i in (0,1):
-            print_statistics(filename[i], name[i])
+            print_statistics(filename[i], name[i], common_problems=common_problems)
             printResults(i)
 
 def zipresults(results1, results2):
