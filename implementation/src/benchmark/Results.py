@@ -23,7 +23,7 @@ class ProblemResults:
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
                             'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
-                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,
+                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,"parse_time":float,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
@@ -67,7 +67,7 @@ def parse_results(filename):
     return results
 
 def print_statistics(filename, name=None, domains=None, common_problems=None, print_domain_name=True):
-    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus")
+    TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus", "parse")
     def printResults():
         print "  %s solved %d/%d tasks:" % (name, solved, solved + not_solved)
         for time_name in timedata_counts:
