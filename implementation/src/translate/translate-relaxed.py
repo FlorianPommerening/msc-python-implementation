@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.5
+#! /usr/bin/env python
 # -*- coding: latin-1 -*-
 
 import axiom_rules
@@ -7,6 +7,8 @@ import instantiate
 import pddl
 import sas_tasks
 import simplify
+import sys
+import os
 
 # TODO: The translator may generate trivial derived variables which are always true,
 # for example if there ia a derived predicate in the input that only depends on
@@ -152,7 +154,7 @@ def translate_strips_operator(operator, dictionary, ranges):
             pre_post.append((var, pre, post, eff_condition))
     prevail = condition.items()
 
-    return sas_tasks.SASOperator(operator.name, prevail, pre_post)
+    return sas_tasks.SASOperator(operator.name, prevail, pre_post, operator.cost)
 
 def translate_strips_axiom(axiom, dictionary, ranges):
     condition = translate_strips_conditions(axiom.condition, dictionary, ranges)
@@ -181,7 +183,7 @@ def translate_strips_axioms(axioms, strips_to_sas, ranges):
             result.append(sas_axiom)
     return result
 
-def translate_task(strips_to_sas, ranges, init, goals, actions, axioms):
+def translate_task(strips_to_sas, ranges, init, goals, actions, axioms, metric):
     axioms, axiom_init, axiom_layer_dict = axiom_rules.handle_axioms(
       actions, axioms, goals)
     init = init + axiom_init
@@ -212,7 +214,7 @@ def translate_task(strips_to_sas, ranges, init, goals, actions, axioms):
         axiom_layers[var] = layer
     variables = sas_tasks.SASVariables(ranges, axiom_layers)
 
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms)
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric)
 
 def unsolvable_sas_task(msg):
     print "%s! Generating unsolvable task..." % msg
@@ -221,11 +223,11 @@ def unsolvable_sas_task(msg):
     goal = sas_tasks.SASGoal([(0, 1)])
     operators = []
     axioms = []
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms)
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms), [["unsolvable", "<none of those>"]]
 
 def pddl_to_sas(task):
     print "Instantiating..."
-    relaxed_reachable, atoms, actions, axioms = instantiate.explore(task)
+    relaxed_reachable, atoms, actions, axioms, _ = instantiate.explore(task)
 
     if not relaxed_reachable:
         return unsolvable_sas_task("No relaxed solution")
@@ -251,7 +253,7 @@ def pddl_to_sas(task):
     ranges, strips_to_sas = strips_to_sas_dictionary(groups)
     print "Translating task..."
     sas_task = translate_task(strips_to_sas, ranges, task.init, goal_list,
-                              actions, axioms)
+                              actions, axioms, task.use_min_cost_metric)
 
     try:
         simplify.filter_unreachable_propositions(
@@ -259,8 +261,7 @@ def pddl_to_sas(task):
     except simplify.Impossible:
         return unsolvable_sas_task("Simplified to trivially false goal")
 
-    write_translation_key(translation_key)
-    return sas_task
+    return sas_task, translation_key
 
 def build_mutex_key(strips_to_sas, groups):
     group_keys = []
@@ -275,8 +276,8 @@ def build_mutex_key(strips_to_sas, groups):
         group_keys.append(group_key)
     return group_keys
 
-def write_translation_key(translation_key):
-    groups_file = file("test.groups", "w")
+def write_translation_key(translation_key, dir=''):
+    groups_file = file(os.path.join(dir, "test.groups"), "w")
     for var_no, var_key in enumerate(translation_key):
         print >> groups_file, "var%d:" % var_no
         for value, value_name in enumerate(var_key):
@@ -316,8 +317,20 @@ def write_mutex_key(mutex_key):
 
 if __name__ == "__main__":
     import pddl
+
+    (task_filename, domain_filename, output_dir) = ('', '', '')
+    if len(sys.argv) == 2:
+        task_filename = sys.argv[1]
+    elif len(sys.argv) == 3:
+        (task_filename, domain_filename) = sys.argv[1:]
+    elif len(sys.argv) == 4:
+        (task_filename, domain_filename, output_dir) = sys.argv[1:]
+    else:
+        print "Needs 1-3 arguments: task_filename [, domain_filename [, output_dir]]"
+        sys.exit(1)
+
     print "Parsing..."
-    task = pddl.open()
+    task = pddl.open(task_filename, domain_filename)
     if task.domain_name in ["protocol", "rover"]:
         # This is, of course, a HACK HACK HACK!
         # The real issue is that ALLOW_CONFLICTING_EFFECTS = True
@@ -332,9 +345,13 @@ if __name__ == "__main__":
     # import psyco
     # psyco.full()
 
-    sas_task = pddl_to_sas(task)
+    sas_task, translation_key = pddl_to_sas(task)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     print "Writing output..."
-    sas_task.output(file("output.sas", "w"))
-    print "Done!"
+    sas_task.output(file(os.path.join(output_dir, "output.sas"), "w"))
+    print "Writing translation key"
+    write_translation_key(translation_key, dir=output_dir)
     print "Creating dummy output:"
-    open("all.groups", "w").write("dummy file expected by our scripts\n")
+    file(os.path.join(output_dir, "all.groups"), "w").write("dummy file expected by our scripts\n")
+    print "Done!"
