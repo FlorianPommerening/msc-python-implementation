@@ -1,7 +1,10 @@
 #!/usr/bin/python
 from problem_suites import LMCUT_SUITE
-import argparse, os
+from known_hplus import KNOWN_HPLUS
 from collections import defaultdict
+
+import argparse, os
+from math import log, exp
 
 class DomainResults:
     def __init__(self, name):
@@ -24,6 +27,7 @@ class ProblemResults:
                             'valid_pcf':bool, 'valid_cut':bool,
                             'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
                             'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,"parse_time":float,
+                            'bnb_expansions':int,'evaluations':int,'expanded':int, 'generated':int,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
@@ -66,7 +70,7 @@ def parse_results(filename):
             problem_result.set(tokens[0], " ".join(tokens[1:]))
     return results
 
-def print_statistics(filename, name=None, domains=None, common_problems=None, print_domain_name=True):
+def print_averaged_statistics(filename, name=None, domains=None, common_problems=None, print_domain_name=True):
     TIMES = ("solve", "translation", "relaxation", "relevance_analysis", "h_max", "h_lmcut", "h_plus", "parse")
     def printResults():
         print "  %s solved %d/%d tasks:" % (name, solved, solved + not_solved)
@@ -119,7 +123,7 @@ def print_statistics(filename, name=None, domains=None, common_problems=None, pr
     if domains is None:
         printResults()
 
-def compare_results(filename0, filename1, name0=None, name1=None, domains=None, verbose=False):
+def compare_averaged_results(filename0, filename1, name0=None, name1=None, domains=None, verbose=False):
     """
     only domains and problems occurring in both results will be compared
     missing problems are considered untested and will not be compared
@@ -180,12 +184,130 @@ def compare_results(filename0, filename1, name0=None, name1=None, domains=None, 
         if domains is not None:
             print domainresults[0].name
             for i in (0,1):
-                print_statistics(filename[i], name[i], domains=[domainresults[0].name], common_problems=common_problems, print_domain_name=False)
+                print_averaged_statistics(filename[i], name[i], domains=[domainresults[0].name], common_problems=common_problems, print_domain_name=False)
                 printResults(i)
     if domains is None:
         for i in (0,1):
-            print_statistics(filename[i], name[i], common_problems=common_problems)
+            print_averaged_statistics(filename[i], name[i], common_problems=common_problems)
             printResults(i)
+
+
+def loginterpolate(x, min_x, min_y, max_x, max_y):
+    if x <= min_x:
+        return min_y
+    if x >= max_x:
+        return max_y
+    
+    y_shift = 0
+    if min_y == 0 or max_y == 0:
+        min_y += 1
+        max_y += 1
+        y_shift = 1
+
+    return min_y * exp(
+                        (x - min_x) / float(max_x - min_x)
+                        *
+                        (log(max_y) - log(min_y)) 
+                      ) - y_shift
+    
+
+def compare_results(filenames, names=None, domains=None, times=None, verbose=False):
+    """
+    evaluation by scoring function:
+      time: sum of all 'times' logarithmically scaled between 1 second or below (100 points) and 1800 seconds or above (0 points)
+      coverage: unsolved (0 points) or solved (100 points)
+      expansions: number of expansions logarithmically scaled between 100 or below (100 points) and 1000000 or above (0 points)
+    """
+    if names is None:
+        names = []
+    if times is None:
+        times = ["translation", "parse", "relaxation", "relevance_analysis", "h_plus"]
+    warnings = set()
+    for i in range(len(names), len(filenames)):
+        dirname = os.path.basename(os.path.dirname(filenames[i]))
+        names.append(dirname)
+    new_hplus_values = defaultdict(dict)
+    time_scores = defaultdict(dict)
+    coverage_scores = defaultdict(dict)
+    expansion_scores = defaultdict(dict)
+    for filename, name in zip(filenames, names): 
+        time_score = 0
+        coverage_score = 0
+        expansion_score = 0
+        results = parse_results(filename)
+        for domainresult in results:
+            domainname = domainresult.name
+            if domains is not None:
+                if len(domains) > 0 and domainname not in domains:
+                    continue
+            time_score_sum = 0
+            coverage_score_sum = 0
+            expansion_score_sum = 0
+            for p in domainresult.problemresults:
+                h = p.get("h_plus")
+                if h is None:
+                    continue
+                if not KNOWN_HPLUS[domainname].has_key(p.name):
+                    if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
+                        old_h, old_name = new_hplus_values[domainname][p.name]
+                        warnings.add("!!! Invalid h+ value for %s - %s: %s said %d but %s said %d" % (
+                                     domainname, p.name, old_name, old_h, name, h))
+                    new_hplus_values[domainname][p.name] = (h, name)
+                elif KNOWN_HPLUS[domainname][p.name] != h:
+                    warnings.add("!!! Invalid h+ value for %s - %s: DB said %d but %s said %d" % (
+                                 domainname, p.name, KNOWN_HPLUS[domainname][p.name], name, h))
+                time_sum = 0
+                for time in times:
+                    if not p.has("%s_time" % time) and h < float("inf"):
+                        warnings.add("%s is missing %s_time" % (name, time))
+                        continue
+                    time_sum += p.get("%s_time" % time, 0)
+                expansions = 1000000
+                if p.has("bnb_expansions"):
+                    expansions = p.get("bnb_expansions")
+                elif h == float("inf"):
+                    expansions = 0
+                elif p.has("expanded"):
+                    expansions = p.get("expanded")
+                elif p.has("evaluations"):
+                    expansions = p.get("evaluations")
+                else:
+                    warnings.add("%s is missing bnb_expansions" % name)
+                time_score_sum += loginterpolate(time_sum, 1, 100, 1800, 0)
+                coverage_score_sum += 100
+                expansion_score_sum += loginterpolate(expansions, 100, 100, 1000000, 0)
+            domainsize = domainresult.problemresults 
+            time_score += time_score_sum / float(len(domainsize))    
+            coverage_score += coverage_score_sum / float(len(domainsize))
+            expansion_score += expansion_score_sum / float(len(domainsize))    
+            if domains is not None:
+                time_scores[domainname][name] = time_score
+                coverage_scores[domainname][name] = coverage_score
+                expansion_scores[domainname][name] = expansion_score
+                time_score = 0
+                coverage_score = 0
+                expansion_score = 0
+        if domains is None:
+            nDomains = len(results)
+            time_scores["all"][name] = time_score / float(nDomains)
+            coverage_scores["all"][name] = coverage_score / float(nDomains)
+            expansion_scores["all"][name] = expansion_score / float(nDomains)
+    for warning in sorted(warnings):
+        print warning
+    for domainname, problems in sorted(new_hplus_values.items()):
+        print "New h+ values in '%s':" % domainname
+        for problem, (h, _) in sorted(problems.items()):
+            print "            '%s':%s," % (problem, h)
+    for domainname in sorted(time_scores.iterkeys()):
+        if domainname != "all":
+            print domainname
+        print "%-20s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
+        for name in names:
+            print "%-20s    %10.3f    %15.3f    %15.3f" % (name[:20], 
+                                                           time_scores[domainname][name], 
+                                                           coverage_scores[domainname][name],
+                                                           expansion_scores[domainname][name])
+
 
 def zipresults(results1, results2):
     map1 = {result.name:result for result in results1}
@@ -245,21 +367,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-m', '--merge', nargs="+")
-    group.add_argument('-c', '--compare', nargs=2)
+    group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
     group.add_argument('-pm', '--printmissing')
-    parser.add_argument('-n', '--names', nargs=2)
+    parser.add_argument('-n', '--names', nargs="+")
+    parser.add_argument('-t', '--times', nargs="+")
     parser.add_argument('-d', '--domains', nargs="*")
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
     elif args.compare:
-        if not args.names:
-            args.names = [None, None]
-        compare_results(args.compare[0], args.compare[1], args.names[0], args.names[1], args.domains, args.verbose)
+        compare_results(args.compare, args.names, args.domains, args.times, args.verbose)
     elif args.printstatstics:
-        print_statistics(args.printstatstics, domains=args.domains)
+        print_averaged_statistics(args.printstatstics, domains=args.domains)
     else:
         printmissingresults(args.printmissing)
 

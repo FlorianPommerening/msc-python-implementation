@@ -223,7 +223,7 @@ def unsolvable_sas_task(msg):
     goal = sas_tasks.SASGoal([(0, 1)])
     operators = []
     axioms = []
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms), [["unsolvable", "<none of those>"]]
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms, 0), [["unsolvable", "<none of those>"]]
 
 def pddl_to_sas(task):
     print "Instantiating..."
