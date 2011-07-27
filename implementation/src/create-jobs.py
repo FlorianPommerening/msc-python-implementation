@@ -8,7 +8,7 @@ import os
 # defines which queue to use for one task. Possible values are "athlon.q" and
 # "athlon_core.q". The former value configures the use of a whole cpu,
 # while the latter option configures the use of a single cpu core.
-queue = "amd_core.q"
+queue = "athlon_core.q"
 
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
@@ -26,7 +26,7 @@ memout = "2G"
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        'hplus-test' : './hplusbnb ',
+        'logs' : './hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
