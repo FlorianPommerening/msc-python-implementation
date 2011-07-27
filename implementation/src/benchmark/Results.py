@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from problem_suites import LMCUT_SUITE
+from problem_suites import LMCUT_SUITE, domain_size
 from known_hplus import KNOWN_HPLUS
 from collections import defaultdict
 
@@ -211,7 +211,7 @@ def loginterpolate(x, min_x, min_y, max_x, max_y):
                       ) - y_shift
     
 
-def compare_results(filenames, names=None, domains=None, times=None, verbose=False):
+def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False):
     """
     evaluation by scoring function:
       time: sum of all 'times' logarithmically scaled between 1 second or below (100 points) and 1800 seconds or above (0 points)
@@ -226,11 +226,18 @@ def compare_results(filenames, names=None, domains=None, times=None, verbose=Fal
     for i in range(len(names), len(filenames)):
         dirname = os.path.basename(os.path.dirname(filenames[i]))
         names.append(dirname)
+
+    # domainname -> problemname -> (h, discovered_by)
     new_hplus_values = defaultdict(dict)
+    # domainname -> name -> score
     time_scores = defaultdict(dict)
     coverage_scores = defaultdict(dict)
     expansion_scores = defaultdict(dict)
-    for filename, name in zip(filenames, names): 
+    # domainname -> problemname -> [score_1, score_2, ..., score_n]
+    time_score_plot = defaultdict(lambda : defaultdict(lambda : [0 for i in xrange(len(filenames))]))
+    expansion_score_plot = defaultdict(lambda : defaultdict(lambda : [0 for i in xrange(len(filenames))]))
+
+    for i, (filename, name) in enumerate(zip(filenames, names)): 
         time_score = 0
         coverage_score = 0
         expansion_score = 0
@@ -273,13 +280,18 @@ def compare_results(filenames, names=None, domains=None, times=None, verbose=Fal
                     expansions = p.get("evaluations")
                 else:
                     warnings.add("%s is missing bnb_expansions" % name)
-                time_score_sum += loginterpolate(time_sum, 1, 100, 1800, 0)
+                problem_time_score = loginterpolate(time_sum, 1, 100, 1800, 0)
+                problem_expansion_score = loginterpolate(expansions, 100, 100, 1000000, 0)
+                time_score_sum += problem_time_score
                 coverage_score_sum += 100
-                expansion_score_sum += loginterpolate(expansions, 100, 100, 1000000, 0)
-            domainsize = domainresult.problemresults 
-            time_score += time_score_sum / float(len(domainsize))    
-            coverage_score += coverage_score_sum / float(len(domainsize))
-            expansion_score += expansion_score_sum / float(len(domainsize))    
+                expansion_score_sum += problem_expansion_score
+                
+                time_score_plot[domainname][p.name][i] = problem_time_score
+                expansion_score_plot[domainname][p.name][i] = problem_expansion_score
+            domainsize = domain_size(domainname) 
+            time_score += time_score_sum / float(domainsize)    
+            coverage_score += coverage_score_sum / float(domainsize)
+            expansion_score += expansion_score_sum / float(domainsize)    
             if domains is not None:
                 time_scores[domainname][name] = time_score
                 coverage_scores[domainname][name] = coverage_score
@@ -298,15 +310,54 @@ def compare_results(filenames, names=None, domains=None, times=None, verbose=Fal
         print "New h+ values in '%s':" % domainname
         for problem, (h, _) in sorted(problems.items()):
             print "            '%s':%s," % (problem, h)
-    for domainname in sorted(time_scores.iterkeys()):
-        if domainname != "all":
-            print domainname
-        print "%-20s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
-        for name in names:
-            print "%-20s    %10.3f    %15.3f    %15.3f" % (name[:20], 
-                                                           time_scores[domainname][name], 
-                                                           coverage_scores[domainname][name],
-                                                           expansion_scores[domainname][name])
+    if format == 'console' or format == 'textable':
+        if format == 'console':
+            header = r""
+            domainheader = r"%s"
+            nodomainheader = r""
+            columnheader = r"%-20s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
+            line = r"%-20s    %10.3f    %15.3f    %15.3f"
+            footer = r""
+        if format == 'textable':
+            header = r"""\documentclass{article}
+\usepackage{booktabs}
+
+\begin{document}
+\begin{tabular}{lrrr} \toprule
+    %-20s &  %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Coverage score", "Expansion score")
+            domainheader = r"    \midrule \multicolumn{4}{l}{%s domain} \\ \midrule"
+            nodomainheader = r"\midrule"
+            columnheader = ""
+            line = r"    %-20s &  %10.3f &  %15.3f &  %15.3f \\"
+            footer = "    \\bottomrule\n\\end{tabular}\n\\end{document}"
+        if header:
+            print header
+        for domainname in sorted(time_scores.iterkeys()):
+            if domainname != "all":
+                print domainheader % domainname
+            elif nodomainheader:
+                print nodomainheader
+            if columnheader:
+                print columnheader
+            for name in names:
+                print line % (name[:20], time_scores[domainname][name], 
+                                         coverage_scores[domainname][name],
+                                         expansion_scores[domainname][name])
+        if footer:
+            print footer
+
+    elif format == 'texplottime' or format == 'texplotexpansions':
+        if format == 'texplottime':
+            heading = "Time score"
+            data = time_score_plot
+        elif format == 'texplotexpansions':
+            heading = "Expansion score"
+            data = expansion_score_plot
+        print "# %s" % heading
+        for (domainname, domain_scores) in sorted(data.iteritems()):
+            print "# %s domain" % domainname
+            for (_, scores) in sorted(domain_scores.iteritems()):
+                print " ".join(map(str, scores))
 
 
 def zipresults(results1, results2):
@@ -374,11 +425,13 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--times', nargs="+")
     parser.add_argument('-d', '--domains', nargs="*")
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-f', '--format', choices=['console', 'textable', 'texplottime', 'texplotexpansions'], default='console')
+
     args = parser.parse_args()
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
     elif args.compare:
-        compare_results(args.compare, args.names, args.domains, args.times, args.verbose)
+        compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose)
     elif args.printstatstics:
         print_averaged_statistics(args.printstatstics, domains=args.domains)
     else:

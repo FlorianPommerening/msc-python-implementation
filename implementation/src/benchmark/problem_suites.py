@@ -17,6 +17,7 @@ def guessDomainFile(problemFile):
 def guessDomainName(domainFile):
     return os.path.basename(os.path.dirname(domainFile))
 
+
 def listproblems(basedir):
     result = []
     problemfiles = [file for file in glob.glob(basedir + '*')
@@ -36,6 +37,15 @@ LMCUT_SUITE = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))
                  'mystery', 'openstacks-strips', 'pathways-noneg', 'pipesworld-notankage', 'pipesworld-tankage',
                  'psr-small', 'rovers', 'tpp', 'trucks-strips', 'zenotravel']
               ]
+
+def domain_size(domainname, problem_suite=None):
+    if problem_suite is None:
+        problem_suite = LMCUT_SUITE
+    for (d, problems) in problem_suite:
+        if (d == domainname):
+            return len(problems)
+    return 0
+    
 
 def problem_subset(domains=None, problems=None, problem_suite=None):
     if not problem_suite:
