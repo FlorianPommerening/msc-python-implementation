@@ -198,17 +198,10 @@ def loginterpolate(x, min_x, min_y, max_x, max_y):
     if x >= max_x:
         return max_y
     
-    y_shift = 0
-    if min_y == 0 or max_y == 0:
-        min_y += 1
-        max_y += 1
-        y_shift = 1
-
-    return min_y * exp(
-                        (x - min_x) / float(max_x - min_x)
-                        *
-                        (log(max_y) - log(min_y)) 
-                      ) - y_shift
+    return (max_y - min_y) * (
+                              (log(x)     - log(max_x)) / 
+                              (log(min_x) - log(max_x)) 
+                             ) + min_y
     
 
 def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False):
@@ -313,7 +306,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
     if format == 'console' or format == 'textable':
         if format == 'console':
             header = r""
-            domainheader = r"%s"
+            domainheader = "\n%s (%d tasks)"
             nodomainheader = r""
             columnheader = r"%-20s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
             line = r"%-20s    %10.3f    %15.3f    %15.3f"
@@ -325,7 +318,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
 \begin{document}
 \begin{tabular}{lrrr} \toprule
     %-20s &  %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Coverage score", "Expansion score")
-            domainheader = r"    \midrule \multicolumn{4}{l}{%s domain} \\ \midrule"
+            domainheader = r"    \midrule \multicolumn{4}{l}{%s domain (%d tasks)} \\ \midrule"
             nodomainheader = r"\midrule"
             columnheader = ""
             line = r"    %-20s &  %10.3f &  %15.3f &  %15.3f \\"
@@ -334,7 +327,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             print header
         for domainname in sorted(time_scores.iterkeys()):
             if domainname != "all":
-                print domainheader % domainname
+                print domainheader % (domainname, domain_size(domainname))
             elif nodomainheader:
                 print nodomainheader
             if columnheader:
