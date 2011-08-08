@@ -407,6 +407,33 @@ def printmissingresults(filename):
         problems = ", ".join(map(str, sorted(missing[domain])))
         print '        "%s":[%s],' % (domain, problems)
 
+def add_hplus_to_statistics(filename):
+    results = parse_results(filename)
+    for domainresult in results:
+        domainname = domainresult.name
+        for p in domainresult.problemresults:
+            if KNOWN_HPLUS[domainname].has_key(p.name):
+                p.set('h_plus', KNOWN_HPLUS[domainname][p.name])
+    resultsfile = open(filename, 'w')
+    for result in results:
+        resultsfile.write(str(result))
+    resultsfile.close()
+
+def exportCSV(filename, columns):
+    results = parse_results(filename)
+    for domainresult in results:
+        domainname = domainresult.name
+        for p in domainresult.problemresults:
+            line = []
+            for column in columns:
+                if column == "domain":
+                    line.append(domainname)
+                elif column == "problem":
+                    line.append(p.name)
+                else:
+                    line.append(str(p.get(column)))
+            print ", ".join(line)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
