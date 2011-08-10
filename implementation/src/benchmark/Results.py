@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from problem_suites import LMCUT_SUITE, domain_size
-from known_hplus import KNOWN_HPLUS
+from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
 
 import argparse, os
@@ -26,6 +26,7 @@ class ProblemResults:
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
                             'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
+                            'h_plus_lower_bound':float, 'h_plus_upper_bound':float,
                             'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,"parse_time":float,
                             'bnb_expansions':int,'evaluations':int,'expanded':int, 'generated':int,
                             'relevance_analysis_time':float}
@@ -203,7 +204,6 @@ def loginterpolate(x, min_x, min_y, max_x, max_y):
                               (log(min_x) - log(max_x)) 
                              ) + min_y
     
-
 def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False):
     """
     evaluation by scoring function:
@@ -222,6 +222,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
 
     # domainname -> problemname -> (h, discovered_by)
     new_hplus_values = defaultdict(dict)
+    # domainname -> problemname -> (best discovered lower bound, best discovered upper bound) 
+    new_hplus_bounds = defaultdict(dict)
     # domainname -> name -> score
     time_scores = defaultdict(dict)
     coverage_scores = defaultdict(dict)
@@ -246,16 +248,32 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             for p in domainresult.problemresults:
                 h = p.get("h_plus")
                 if h is None:
+                    # check if better bounds were found
+                    (new_lower_bound, new_upper_bound) = (p.get("h_plus_lower_bound", 0), p.get("h_plus_upper_bound", float("inf")))
+                    if new_hplus_bounds[domainname].has_key(p.name):
+                        (old_lower_bound, old_upper_bound) = new_hplus_bounds[domainname][p.name]
+                    elif UNKNOWN_HPLUS[domainname].has_key(p.name):
+                        (old_lower_bound, old_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
+                    else:
+                        (old_lower_bound, old_upper_bound) = (0, float("inf"))
+                    if new_lower_bound > old_lower_bound or new_upper_bound < old_upper_bound:
+                        new_hplus_bounds[domainname][p.name] = (max(old_lower_bound, new_lower_bound), min(old_upper_bound, new_upper_bound))
                     continue
-                if not KNOWN_HPLUS[domainname].has_key(p.name):
+                if KNOWN_HPLUS[domainname].has_key(p.name):
+                    if KNOWN_HPLUS[domainname][p.name] != h:
+                        warnings.add("!!! Invalid h+ value for %s - %s: DB said %d but %s said %d" % (
+                                     domainname, p.name, KNOWN_HPLUS[domainname][p.name], name, h))
+                else: # h+ not known yet
+                    if UNKNOWN_HPLUS[domainname].has_key(p.name):
+                        (best_lower_bound, best_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
+                        if h > best_lower_bound or h < best_upper_bound:
+                            warnings.add("!!! Invalid h+ value for %s - %s: DB said (%d, %d) but %s said %d" % (
+                                         domainname, p.name, best_lower_bound, best_upper_bound, name, h))
                     if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
                         old_h, old_name = new_hplus_values[domainname][p.name]
                         warnings.add("!!! Invalid h+ value for %s - %s: %s said %d but %s said %d" % (
                                      domainname, p.name, old_name, old_h, name, h))
                     new_hplus_values[domainname][p.name] = (h, name)
-                elif KNOWN_HPLUS[domainname][p.name] != h:
-                    warnings.add("!!! Invalid h+ value for %s - %s: DB said %d but %s said %d" % (
-                                 domainname, p.name, KNOWN_HPLUS[domainname][p.name], name, h))
                 time_sum = 0
                 for time in times:
                     if not p.has("%s_time" % time) and h < float("inf"):
@@ -303,6 +321,13 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         print "New h+ values in '%s':" % domainname
         for problem, (h, _) in sorted(problems.items()):
             print "            '%s':%s," % (problem, h)
+    for domainname, problems in sorted(new_hplus_bounds.items()):
+        unknown_problems = {pname:bound for (pname,bound) in problems.items() if not KNOWN_HPLUS[domainname].has_key(pname)}
+        if not unknown_problems:
+            continue
+        print "New h+ bounds in '%s':" % domainname
+        for problem, (lower, upper) in sorted(unknown_problems.items()):
+            print "            '%s':(%s,%s)," % (problem, str(int(lower)), 'float("inf")' if upper == float("inf") else str(int(upper)))
     if format == 'console' or format == 'textable':
         if format == 'console':
             header = r""
