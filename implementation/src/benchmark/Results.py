@@ -266,7 +266,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 else: # h+ not known yet
                     if UNKNOWN_HPLUS[domainname].has_key(p.name):
                         (best_lower_bound, best_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
-                        if h > best_lower_bound or h < best_upper_bound:
+                        if h < best_lower_bound or h > best_upper_bound:
                             warnings.add("!!! Invalid h+ value for %s - %s: DB said (%d, %d) but %s said %d" % (
                                          domainname, p.name, best_lower_bound, best_upper_bound, name, h))
                     if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
