@@ -41,7 +41,11 @@ class ProblemResults:
         return default
     def set(self, key, value):
         if self.known_types.has_key(key):
-            value = self.known_types[key](value)
+            try:
+                value = self.known_types[key](value)
+            except:
+                print "Could not parse:", self.name, key, value
+
         self.values[key] = value
     def __str__(self):
         result = "problem: %s\n" % self.name
