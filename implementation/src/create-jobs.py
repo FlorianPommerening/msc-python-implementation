@@ -26,7 +26,7 @@ memout = "2G"
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        'logs' : './hplusbnb ',
+        './logs' : './hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
@@ -55,10 +55,10 @@ for (domainname, paths) in problem_subset():
 # grid engine. The $JOB_ID is the same for all tasks of the jobfile,
 # the $SGE_TASK_ID is the id for the current task.
 def create_tasks(filename, configurations, benchmarks):
-    tasks = []
+    tasks = ['mkdir ./logs']
     for conf, cmdline in sorted(configurations.iteritems()):
         for experiment, input_files in sorted(benchmarks.iteritems()):
-            tasks.append("%s %s &> %s/%s" % (cmdline, input_files, conf, experiment))
+            tasks.append("%s %s &> %s/%s_$JOB_ID.$SGE_TASK_ID.log" % (cmdline, input_files, conf, experiment))
 
     template = Template(file='job.tmpl',
                         searchList=[{'tasks'   : tasks,
