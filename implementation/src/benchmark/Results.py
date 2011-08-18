@@ -198,16 +198,16 @@ def compare_averaged_results(filename0, filename1, name0=None, name1=None, domai
             printResults(i)
 
 
-def loginterpolate(x, min_x, min_y, max_x, max_y):
+def loginterpolate(x, min_x, max_x, min_score, max_score):
     if x <= min_x:
-        return min_y
+        return max_score
     if x >= max_x:
-        return max_y
+        return min_score
     
-    return (max_y - min_y) * (
+    return (max_score - min_score) * (
                               (log(x)     - log(max_x)) / 
                               (log(min_x) - log(max_x)) 
-                             ) + min_y
+                             ) + min_score
     
 def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False):
     """
@@ -298,8 +298,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                     expansions = p.get("evaluations")
                 else:
                     warnings.add("%s is missing bnb_expansions" % name)
-                problem_time_score = loginterpolate(time_sum, 1, 100, 1800, 0)
-                problem_expansion_score = loginterpolate(expansions, 100, 100, 1000000, 0)
+                problem_time_score = loginterpolate(time_sum, 1, 1800, 0, 100)
+                problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
                 time_score_sum += problem_time_score
                 coverage_score_sum += 100
                 expansion_score_sum += problem_expansion_score
