@@ -3,8 +3,9 @@ from problem_suites import LMCUT_SUITE, domain_size
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
 
-import argparse, os
+import sys, argparse, os, tempfile, shutil, subprocess
 from math import log, exp
+from random import random
 
 class DomainResults:
     def __init__(self, name):
@@ -262,6 +263,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                         (old_lower_bound, old_upper_bound) = (0, float("inf"))
                     if new_lower_bound > old_lower_bound or new_upper_bound < old_upper_bound:
                         new_hplus_bounds[domainname][p.name] = (max(old_lower_bound, new_lower_bound), min(old_upper_bound, new_upper_bound))
+                    time_score_plot[domainname][p.name][i] = 0
+                    expansion_score_plot[domainname][p.name][i] = 0
                     continue
                 if KNOWN_HPLUS[domainname].has_key(p.name):
                     if KNOWN_HPLUS[domainname][p.name] != h:
@@ -375,11 +378,40 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         elif format == 'texplotexpansions':
             heading = "Expansion score"
             data = expansion_score_plot
-        print "# %s" % heading
+
+        # bining of data
+        binsize = [[0 for _ in xrange(101)] for _ in xrange(101)]
         for (domainname, domain_scores) in sorted(data.iteritems()):
-            print "# %s domain" % domainname
             for (_, scores) in sorted(domain_scores.iteritems()):
-                print " ".join(map(str, scores))
+                binsize[int(scores[0])][int(scores[1])] += 1
+
+        plotfile = open('plot.data', 'w')
+        print "Generating plot data"
+        plotfile.write("# %s\n" % heading)
+        for (domainname, domain_scores) in sorted(data.iteritems()):
+            plotfile.write("# %s domain\n" % domainname)
+            for (_, scores) in sorted(domain_scores.iteritems()):
+                neighbors = binsize[int(scores[0])][int(scores[1])]
+                if neighbors > 1:
+                    print_scores = [int(scores[0]) + random() -0.5, int(scores[1]) + random() -0.5]
+                else:
+                    print_scores = [int(scores[0]), int(scores[1])]
+                plotfile.write(" ".join(map(str, print_scores + [neighbors])) + '\n')
+        fnull = open(os.devnull, 'w')
+        plotfile.close()
+        tmpdir = tempfile.mkdtemp()
+        shutil.copy('/home/flogo/masterthesis/implementation/src/benchmark/scatterplot.tex', tmpdir + '/scatterplot.tex')
+        shutil.copy('plot.data', tmpdir + '/plot.data')
+        owd = os.getcwd()
+        os.chdir(tmpdir)
+        print "Compiling scatter plot"
+        subprocess.call(['pdflatex', '%s/scatterplot.tex' % tmpdir], stdout=fnull, stderr=fnull)
+        os.chdir(owd)
+        shutil.copy(tmpdir + '/scatterplot.pdf', 'scatterplot.pdf')
+        subprocess.Popen(['evince', 'scatterplot.pdf'], stdout=fnull, stderr=fnull)
+        shutil.rmtree(tmpdir)
+        fnull.close()
+        
 
 
 def zipresults(results1, results2):

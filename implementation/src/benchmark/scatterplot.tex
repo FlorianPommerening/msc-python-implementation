@@ -1,0 +1,16 @@
+\documentclass[a4paper]{scrreprt}
+
+\usepackage{pgfplots}
+
+\pgfplotsset{colormap={slowstart}{rgb(0cm)=(0,0,0); rgb(1cm)=(0,1,0); rgb(10cm)=(1,1,0); rgb(300cm)=(1,0,0)}}
+
+\begin{document}
+\begin{tikzpicture}
+  \begin{axis}[colorbar,width=\textwidth]
+    \addplot+[scatter,scatter src=explicit, only marks,mark=x] file{plot.data};
+  \end{axis}
+\end{tikzpicture}
+
+
+\end{document}
+
