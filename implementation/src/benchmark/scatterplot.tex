@@ -6,8 +6,9 @@
 
 \begin{document}
 \begin{tikzpicture}
-  \begin{axis}[colorbar,width=\textwidth]
+  \begin{axis}[xmin=0,xmax=100,ymin=0,ymax=100,colorbar,width=\textwidth]
     \addplot+[scatter,scatter src=explicit, only marks,mark=x] file{plot.data};
+    \addplot+[sharp plot, no marks, color=lightgray] coordinates {(0,0) (100,100)};
   \end{axis}
 \end{tikzpicture}
 
