@@ -29,7 +29,7 @@ class ProblemResults:
                             'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
                             'h_plus_lower_bound':float, 'h_plus_upper_bound':float,
                             'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,"parse_time":float,
-                            'bnb_expansions':int,'evaluations':int,'expanded':int, 'generated':int,
+                            'bnb_expansions':int,'bnb_expansions_last_layer':int,'evaluations':int,'expanded':int, 'generated':int,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
             self.set(k,v)
