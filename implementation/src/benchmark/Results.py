@@ -393,7 +393,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             for (_, scores) in sorted(domain_scores.iteritems()):
                 neighbors = binsize[int(scores[0])][int(scores[1])]
                 if neighbors > 1:
-                    print_scores = [int(scores[0]) + random() -0.5, int(scores[1]) + random() -0.5]
+                    print_scores = [max(0, min(100, int(scores[0]) + random() -0.5)), max(0, min(100, int(scores[1]) + random() -0.5))]
                 else:
                     print_scores = [int(scores[0]), int(scores[1])]
                 plotfile.write(" ".join(map(str, print_scores + [neighbors])) + '\n')
@@ -406,13 +406,15 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         os.chdir(tmpdir)
         print "Compiling scatter plot"
         subprocess.call(['pdflatex', '%s/scatterplot.tex' % tmpdir], stdout=fnull, stderr=fnull)
+        plotname = 'time' if format == 'texplottime' else 'expansions'
+        plotname += '_%s_%s_' % (names[0].split()[0], names[1].split()[0])
+        plotname += "_".join(data.iterkeys())
+        plotname += '.png'
         os.chdir(owd)
-        shutil.copy(tmpdir + '/scatterplot.pdf', 'scatterplot.pdf')
-        subprocess.Popen(['evince', 'scatterplot.pdf'], stdout=fnull, stderr=fnull)
+        subprocess.call(['convert', '%s/scatterplot.pdf' % tmpdir, '-crop', '460x360+94+78', plotname])
+        subprocess.Popen(['eog', plotname], stdout=fnull, stderr=fnull)
         shutil.rmtree(tmpdir)
         fnull.close()
-        
-
 
 def zipresults(results1, results2):
     map1 = {result.name:result for result in results1}
