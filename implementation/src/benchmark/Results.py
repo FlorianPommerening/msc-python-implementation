@@ -268,18 +268,18 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                     continue
                 if KNOWN_HPLUS[domainname].has_key(p.name):
                     if KNOWN_HPLUS[domainname][p.name] != h:
-                        warnings.add("!!! Invalid h+ value for %s - %s: DB said %d but %s said %d" % (
-                                     domainname, p.name, KNOWN_HPLUS[domainname][p.name], name, h))
+                        warnings.add("!!! Invalid h+ value for %s - %s: DB said %s but %s said %s" % (
+                                     domainname, p.name, str(KNOWN_HPLUS[domainname][p.name]), name, str(h)))
                 else: # h+ not known yet
                     if UNKNOWN_HPLUS[domainname].has_key(p.name):
                         (best_lower_bound, best_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
                         if h < best_lower_bound or h > best_upper_bound:
-                            warnings.add("!!! Invalid h+ value for %s - %s: DB said (%d, %d) but %s said %d" % (
-                                         domainname, p.name, best_lower_bound, best_upper_bound, name, h))
+                            warnings.add("!!! Invalid h+ value for %s - %s: DB said (%s, %s) but %s said %s" % (
+                                         domainname, p.name, str(best_lower_bound), str(best_upper_bound), name, str(h)))
                     if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
                         old_h, old_name = new_hplus_values[domainname][p.name]
-                        warnings.add("!!! Invalid h+ value for %s - %s: %s said %d but %s said %d" % (
-                                     domainname, p.name, old_name, old_h, name, h))
+                        warnings.add("!!! Invalid h+ value for %s - %s: %s said %s but %s said %s" % (
+                                     domainname, p.name, old_name, str(old_h), name, str(h)))
                     new_hplus_values[domainname][p.name] = (h, name)
                 time_sum = 0
                 for time in times:
@@ -497,9 +497,52 @@ def exportCSV(filename, columns):
                     line.append(str(p.get(column)))
             print ", ".join(line)
 
+def do_custom_stuff(filename):
+    """
+    temporary stuff, for test that are only useful once or twice
+    """
+    results = parse_results(filename)
+    nPerfect = 0
+    nAlmostPerfect = 0
+    nBetterBound = 0
+    for domainresults in results:
+        domainname = domainresults.name
+        for p in domainresults.problemresults:
+            problemname = p.name
+            plancost = p.get("plancost")
+            if KNOWN_HPLUS[domainname].has_key(problemname):
+                hplus = KNOWN_HPLUS[domainname][problemname]
+            else:
+                (lower_bound, upper_bound) = UNKNOWN_HPLUS[domainname][problemname]
+                if plancost is not None:
+                    if lower_bound > int(plancost):
+                        print "ERROR: plancost (%d) smaller than lower bound (%d)" % (int(plancost), lower_bound)
+                    elif lower_bound == int(plancost):
+                        nPerfect += 1
+                        print "New h+ value: ", domainname, problemname, plancost
+                    elif lower_bound + 1 == int(plancost):
+                        nAlmostPerfect += 1
+                    elif int(plancost) < upper_bound:
+                        nBetterBound += 1
+                continue
+            if hplus > int(plancost):
+                print "ERROR: plancost (%d) smaller than h+ (%d)" % (int(plancost), hplus)
+                continue
+            if float(plancost) == hplus or ( 
+                 plancost is None and hplus == float("inf")):
+                nPerfect += 1
+            elif float(plancost) <= hplus + 1:
+                nAlmostPerfect += 1
+            else:
+                print domainname, problemname, plancost, hplus
+    print nPerfect, "values are perfect h^+ values"
+    print nAlmostPerfect, "values are perfect h^+ values + 1"
+    print nBetterBound, "values have better h^+ bounds"
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
+    group.add_argument('-x', '--custom')
     group.add_argument('-m', '--merge', nargs="+")
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
@@ -517,6 +560,8 @@ if __name__ == '__main__':
         compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose)
     elif args.printstatstics:
         print_averaged_statistics(args.printstatstics, domains=args.domains)
+    elif args.custom:
+        do_custom_stuff(args.custom)
     else:
         printmissingresults(args.printmissing)
 
