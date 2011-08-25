@@ -502,14 +502,18 @@ def do_custom_stuff(filename):
     temporary stuff, for test that are only useful once or twice
     """
     results = parse_results(filename)
+    nNoSearch = 0
     nPerfect = 0
+    nLMcutPerfect = 0
     nAlmostPerfect = 0
     nBetterBound = 0
     for domainresults in results:
         domainname = domainresults.name
         for p in domainresults.problemresults:
             problemname = p.name
-            plancost = p.get("plancost")
+            plancost = p.get("optimized_initial_plan_cost")
+            if plancost is None:
+                plancost = p.get("initial_plan_cost")
             if KNOWN_HPLUS[domainname].has_key(problemname):
                 hplus = KNOWN_HPLUS[domainname][problemname]
             else:
@@ -519,23 +523,35 @@ def do_custom_stuff(filename):
                         print "ERROR: plancost (%d) smaller than lower bound (%d)" % (int(plancost), lower_bound)
                     elif lower_bound == int(plancost):
                         nPerfect += 1
+                        if float(p.get("h_lmcut", 0)) == int(plancost):
+                            nNoSearch += 1
                         print "New h+ value: ", domainname, problemname, plancost
                     elif lower_bound + 1 == int(plancost):
                         nAlmostPerfect += 1
                     elif int(plancost) < upper_bound:
                         nBetterBound += 1
+                    if p.get("h_lmcut") == upper_bound:
+                        nLMcutPerfect += 1
                 continue
-            if hplus > int(plancost):
-                print "ERROR: plancost (%d) smaller than h+ (%d)" % (int(plancost), hplus)
+            if plancost is not None and hplus > int(plancost):
+                print "ERROR: plancost (%f) smaller than h+ (%f)" % (int(plancost), hplus)
+                print "in", domainname, problemname
                 continue
-            if float(plancost) == hplus or ( 
-                 plancost is None and hplus == float("inf")):
+            if p.get("h_lmcut") == hplus:
+                nLMcutPerfect += 1
+            if plancost is None and hplus == float("inf") or ( 
+                 float(plancost) == hplus):
                 nPerfect += 1
+                if (plancost is None and p.get("h_lmcut", float("inf")) == float("inf")) or (
+                     float(p.get("h_lmcut", 0)) == float(plancost)):
+                    nNoSearch += 1
             elif float(plancost) <= hplus + 1:
                 nAlmostPerfect += 1
             else:
                 print domainname, problemname, plancost, hplus
-    print nPerfect, "values are perfect h^+ values"
+    print nPerfect, "values are perfect h^+ values (%d h^+ values known)" % sum([len(d) for d in KNOWN_HPLUS.itervalues()])
+    print nNoSearch, "of these values also have a perfect h^lmcut value"
+    print nLMcutPerfect, "of all LMcut values reach the perfect h^+ value"
     print nAlmostPerfect, "values are perfect h^+ values + 1"
     print nBetterBound, "values have better h^+ bounds"
     
