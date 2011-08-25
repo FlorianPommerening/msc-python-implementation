@@ -3,15 +3,14 @@ from .RelaxedProblem import RelaxedProblem, RelaxedOperator
 class VariableTranslator:
     def __init__(self, sas_variables, translationkey=None): 
         self._translationkey = translationkey
-        # contains the tuple (var, val) at position i that corresponds to the variable names[i]
-        # i.e. the meaning of sas_tuples[1] == (2,3) is that variable 1 (with the name: names[1]) represents
-        # that the SAS variable 2 has the value 3 
-        self.sas_tuples = []
+        self.translations = []
         self.names = []
         for (var, range) in enumerate(sas_variables.ranges):
+            self.translations.append([])
             for val in xrange(range):
-                self.names.append(self._variable_name(var, val))
-                self.sas_tuples.append((var, val))
+                varname = self._variable_name(var, val)
+                self.names.append(varname)
+                self.translations[var].append(varname)
 
     def _variable_name(self, sas_variable, sas_value):
         translation = ""
@@ -25,9 +24,8 @@ class VariableTranslator:
         into a set representing the translated assignment in the delete relaxation.
         """
         result = []
-        for (name, sas_pair) in zip(self.names, self.sas_tuples):
-            if sas_pair in var_val_pairs:
-                result.append(name)
+        for (var, val) in var_val_pairs:
+            result.append(self.translations[var][val])
         return frozenset(result)
 
 def delete_relaxation(sastask, translationkey=None):
