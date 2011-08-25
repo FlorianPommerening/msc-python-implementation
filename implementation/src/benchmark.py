@@ -7,6 +7,8 @@ from search.BranchAndBoundSearch import BranchAndBoundSearch
 from search.OperatorSelector import AchieveLandmarksOrGoalsOperatorSelector
 from search.hmax import hmax
 
+from improve.steinertreeimprove import discover_plan, serialize_plan, opimize_plan
+
 from translate.translate import pddl_to_sas
 import translate.pddl
 
@@ -105,6 +107,34 @@ def benchmarkHmax(problemfile, domainfile, hmax_function, timeout=None):
     print "H:%s, T:%d" % (str(h), solve_time)
     return ProblemResults(problemfile, h_max=h, solve_time=solve_time, **results)
 
+def benchmarkHadd(problemfile, domainfile, timeout):
+    results = {}
+    task, _, _ = prepareTask(problemfile, domainfile, results)
+    print "  searching h^add ...",
+    start = time()
+    
+    h_add_achiever = {}
+    h, plan = run_with_timeout(timeout, None, discover_plan, task, h_add_achiever)
+    serialized_plan = serialize_plan(task, plan)
+    results['plan'] = ", ".join([op.name for op in serialized_plan])
+    results['plancost'] = sum([op.cost for op in serialized_plan])
+    results['h_add_time'] = time() - start
+    print "H:%s, T:%d" % (str(results['plancost']), results['h_add_time'])
+
+    print "  optimizing plan ...",
+    start = time()
+    plan = run_with_timeout(timeout, None, opimize_plan, task, plan, h_add_achiever)
+    serialized_plan = serialize_plan(task, plan)
+    results['optimized_plan'] = ", ".join([op.name for op in serialized_plan])
+    results['optimized_plancost'] = sum([op.cost for op in serialized_plan])
+    results['optimize_time'] = time() - start
+    print "H:%s, T:%d" % (results['optimized_plancost'], results['optimize_time'])
+    if plan is None:
+        print "  Timed out"
+        return ProblemResults(problemfile, error="Took longer than %d seconds" % timeout)
+    return ProblemResults(problemfile, h_add=h, **results)
+    
+
 def run_benchmark(results_filename, domains=None, problems=None, problem_suite=None, benchmark='heuristic',
                   what_to_test=['cuts', 'pcf', 'relevance'], timeout=None):
     benchmark_suite = problem_subset(domains=domains, problems=problems, problem_suite=problem_suite)
@@ -123,6 +153,8 @@ def run_benchmark(results_filename, domains=None, problems=None, problem_suite=N
                 results = benchmarkHmax(problemfile, domainfile, cppmodule.adapter.hmax, timeout)
             elif benchmark == 'lmcut_internal':
                 results = benchmarkHeuristic(problemfile, domainfile, what_to_test, timeout)
+            elif benchmark == 'hadd':
+                results = benchmarkHadd(problemfile, domainfile, timeout)
             else:
                 results = benchmarkSearch(problemfile, domainfile, what_to_test, timeout)
             resultsfile.write(str(results))
@@ -133,7 +165,7 @@ if __name__ == "__main__":
     def eval_here(string):
         return eval(string)
     parser = argparse.ArgumentParser(description='Run a benchmark')
-    parser.add_argument('-b', '--benchmark', choices=['heuristic', 'hmax_internal', 'hmax_external', 'lmcut_internal'], default='heuristic')
+    parser.add_argument('-b', '--benchmark', choices=['heuristic', 'hmax_internal', 'hmax_external', 'lmcut_internal', 'hadd'], default='heuristic')
     
     # TODO the two ways to define problems should be mutually exclusive. no idea how to do this with argparse
     # right now -p -d and -s just get preference
