@@ -451,6 +451,7 @@ KNOWN_HPLUS = {
             'p21-net3-b12-g2':9.0,
             'p22-net3-b12-g4':19.0,
             'p23-net3-b14-g3':14.0,
+            'p37-net4-b20-g5':14.0,
             'p41-net5-b22-g2':8.0,
         },
         "pipesworld-tankage":{
@@ -621,7 +622,7 @@ UNKNOWN_HPLUS = {
        },
         "driverlog":{
             'pfile16':(43,55),
-            'pfile17':(50,62),
+            'pfile17':(50,61),
             'pfile18':(52,64),
             'pfile19':(71,87),
             'pfile20':(65,89),
@@ -673,7 +674,7 @@ UNKNOWN_HPLUS = {
             'probfreecell-3-5':(9,14),
             'probfreecell-4-1':(11,22),
             'probfreecell-4-2':(10,22),
-            'probfreecell-4-3':(11,24),
+            'probfreecell-4-3':(11,21),
             'probfreecell-4-4':(10,25),
             'probfreecell-4-5':(10,21),
             'probfreecell-5-1':(12,32),
@@ -682,7 +683,7 @@ UNKNOWN_HPLUS = {
             'probfreecell-5-4':(11,32),
             'probfreecell-5-5':(13,31),
             'probfreecell-6-1':(14,40),
-            'probfreecell-6-2':(12,40),
+            'probfreecell-6-2':(12,38),
             'probfreecell-6-3':(13,40),
             'probfreecell-6-4':(13,40),
             'probfreecell-6-5':(14,40),
@@ -794,7 +795,7 @@ UNKNOWN_HPLUS = {
         "pipesworld-notankage":{
             'p10-net1-b14-g8':(15,17),
             'p18-net2-b16-g7':(15,22),
-            'p19-net2-b18-g6':(16,22),
+            'p19-net2-b18-g6':(16,21),
             'p20-net2-b18-g8':(17,35),
             'p24-net3-b14-g5':(16,18),
             'p25-net3-b16-g5':(16,23),
@@ -809,7 +810,6 @@ UNKNOWN_HPLUS = {
             'p34-net4-b16-g6':(17,30),
             'p35-net4-b18-g4':(12,20),
             'p36-net4-b18-g6':(13,26),
-            'p37-net4-b20-g5':(13,15),
             'p38-net4-b20-g7':(13,23),
             'p39-net4-b22-g7':(14,24),
             'p40-net4-b22-g8':(15,28),
@@ -828,7 +828,7 @@ UNKNOWN_HPLUS = {
             'p09-net1-b14-g6-t50':(11,16),
             'p10-net1-b14-g8-t50':(13,23),
             'p14-net2-b12-g5-t30':(14,19),
-            'p16-net2-b14-g6-t80':(16,23),
+            'p16-net2-b14-g6-t80':(16,20),
             'p18-net2-b16-g7-t60':(11,22),
             'p19-net2-b18-g6-t60':(14,29),
             'p20-net2-b18-g8-t90':(14,33),
@@ -915,7 +915,7 @@ UNKNOWN_HPLUS = {
             'pfile17':(50,56),
             'pfile18':(49,53),
             'pfile19':(57,63),
-            'pfile20':(67,69),
+            'pfile20':(67,68),
        }
     }
 
