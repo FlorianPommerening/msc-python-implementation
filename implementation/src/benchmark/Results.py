@@ -497,68 +497,132 @@ def exportCSV(filename, columns):
                     line.append(str(p.get(column)))
             print ", ".join(line)
 
-def do_custom_stuff(filename):
+def print_initial_node_statistics(filenames):
+    results = parse_results(filenames[0])
+    outfile = open(filenames[1], 'w')
+    outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\pgfdeclareplotmark{v}{%
+  \pgfpathmoveto{\pgfpoint{-\pgfplotmarksize}{\pgfplotmarksize}}
+  \pgfpathlineto{\pgfpoint{0pt}{0pt}}
+  \pgfpathlineto{\pgfpoint{\pgfplotmarksize}{\pgfplotmarksize}}
+  \pgfusepathqstroke
+}
+
+\pgfdeclareplotmark{^}{%
+  \pgfpathmoveto{\pgfpoint{-\pgfplotmarksize}{-\pgfplotmarksize}}
+  \pgfpathlineto{\pgfpoint{0pt}{0pt}}
+  \pgfpathlineto{\pgfpoint{\pgfplotmarksize}{-\pgfplotmarksize}}
+  \pgfusepathqstroke
+}
+
+
+\begin{document}
+""")
+    # outfile.write("domain, problem, lmcut, initial_plan, optimized_initial_plan, hplus, hplus_lower_bound, hplus_upper_bound\n")
+    for domainresults in results:
+        domainname = domainresults.name
+        i = 0
+        lb_markers = []
+        ub_markers = []
+        lbh_markers = []
+        ubh_markers = []
+        perfect_markers = []
+        lines = []
+        nNoSearch = 0
+        nPerfect = 0
+        nLMcutPerfect = 0
+        for p in domainresults.problemresults:
+            problemname = p.name
+            i += 1
+            lmcut = p.get("h_lmcut")
+            if p.get("initial_plan_cost") is None:
+                initial_plan_cost = float("inf")
+            else:
+                initial_plan_cost = float(p.get("initial_plan_cost"))
+            if p.get("optimized_initial_plan_cost") is None:
+                optimized_initial_plan_cost = initial_plan_cost
+            else:
+                optimized_initial_plan_cost = float(p.get("optimized_initial_plan_cost"))
+            if lmcut == float("inf"):
+                initial_plan_cost = float("inf")
+                optimized_initial_plan_cost = float("inf")
+            hplus, lower_bound, upper_bound = ("UNKNOWN", 0, float("inf"))
+            if KNOWN_HPLUS[domainname].has_key(problemname):
+                hplus = KNOWN_HPLUS[domainname][problemname]
+                lower_bound, upper_bound = (hplus, hplus)
+            else:
+                lower_bound, upper_bound = UNKNOWN_HPLUS[domainname][problemname]
+            if lmcut == optimized_initial_plan_cost:
+                nNoSearch += 1
+#            else:
+#                outfile.write("%s,%s,%s,%s,%s,%s,%s,%s\n" % (domainname,problemname,lmcut,initial_plan_cost,optimized_initial_plan_cost,hplus,lower_bound,upper_bound))
+            if hplus == optimized_initial_plan_cost:
+                nPerfect += 1
+            if lmcut == hplus:
+                nLMcutPerfect += 1
+
+            if hplus == float("inf"):
+                continue
+            if lmcut == optimized_initial_plan_cost:
+                perfect_markers.append("(%s,%s)" % (i, int(hplus)))
+            else:
+                lines.append("\\addplot[mark=none] coordinates { (%s,%s) (%s,%s) };" % (i, int(lmcut), i, int(initial_plan_cost)))
+                lb_markers.append("(%s,%s)" % (i, int(lmcut)))
+                ub_markers.append("(%s,%s)" % (i, int(initial_plan_cost)))
+                ub_markers.append("(%s,%s)" % (i, int(optimized_initial_plan_cost)))
+                if hplus == "UNKNOWN":
+                    lbh_markers.append("(%s,%s)" % (i, int(lower_bound)))
+                    ubh_markers.append("(%s,%s)" % (i, int(upper_bound)))
+                else:
+                    perfect_markers.append("(%s,%s)" % (i, int(hplus)))
+
+        outfile.write(r"""
+  Domain: %s\\
+  \begin{tabular}{lllll}
+    Problems & Known $h^+$ & perfect ub & perfect lb & both perfect \\ \hline
+    %s       & %s          & %s         & %s         & %s
+  \end{tabular}
+
+  \noindent
+  \begin{tikzpicture}
+    \begin{axis}[width=\textwidth]
+      \addplot+[only marks, color=blue,  mark=-] coordinates { %s };
+      \addplot+[only marks, color=red,   mark=-] coordinates { %s };
+      \addplot+[only marks, color=black, mark=^] coordinates { %s };
+      \addplot+[only marks, color=black, mark=v] coordinates { %s };
+      \addplot+[only marks, color=black, mark=x] coordinates { %s };
+      %s
+    \end{axis}
+  \end{tikzpicture}
+  \newpage
+""" % (domainname,
+       i,
+       len(KNOWN_HPLUS[domainname]),
+       nPerfect,
+       nLMcutPerfect,
+       nNoSearch,
+       " ".join(lb_markers),
+       " ".join(ub_markers),
+       " ".join(lbh_markers),
+       " ".join(ubh_markers),
+       " ".join(perfect_markers),
+       "\n      ".join(lines)))
+    outfile.write("\\end{document}\n")
+    outfile.close()
+
+def do_custom_stuff(filenames):
     """
     temporary stuff, for test that are only useful once or twice
     """
-    results = parse_results(filename)
-    nNoSearch = 0
-    nPerfect = 0
-    nLMcutPerfect = 0
-    nAlmostPerfect = 0
-    nBetterBound = 0
-    for domainresults in results:
-        domainname = domainresults.name
-        for p in domainresults.problemresults:
-            problemname = p.name
-            plancost = p.get("optimized_initial_plan_cost")
-            if plancost is None:
-                plancost = p.get("initial_plan_cost")
-            if KNOWN_HPLUS[domainname].has_key(problemname):
-                hplus = KNOWN_HPLUS[domainname][problemname]
-            else:
-                (lower_bound, upper_bound) = UNKNOWN_HPLUS[domainname][problemname]
-                if plancost is not None:
-                    if lower_bound > int(plancost):
-                        print "ERROR: plancost (%d) smaller than lower bound (%d)" % (int(plancost), lower_bound)
-                    elif lower_bound == int(plancost):
-                        nPerfect += 1
-                        if float(p.get("h_lmcut", 0)) == int(plancost):
-                            nNoSearch += 1
-                        print "New h+ value: ", domainname, problemname, plancost
-                    elif lower_bound + 1 == int(plancost):
-                        nAlmostPerfect += 1
-                    elif int(plancost) < upper_bound:
-                        nBetterBound += 1
-                    if p.get("h_lmcut") == upper_bound:
-                        nLMcutPerfect += 1
-                continue
-            if plancost is not None and hplus > int(plancost):
-                print "ERROR: plancost (%f) smaller than h+ (%f)" % (int(plancost), hplus)
-                print "in", domainname, problemname
-                continue
-            if p.get("h_lmcut") == hplus:
-                nLMcutPerfect += 1
-            if plancost is None and hplus == float("inf") or ( 
-                 float(plancost) == hplus):
-                nPerfect += 1
-                if (plancost is None and p.get("h_lmcut", float("inf")) == float("inf")) or (
-                     float(p.get("h_lmcut", 0)) == float(plancost)):
-                    nNoSearch += 1
-            elif float(plancost) <= hplus + 1:
-                nAlmostPerfect += 1
-            else:
-                print domainname, problemname, plancost, hplus
-    print nPerfect, "values are perfect h^+ values (%d h^+ values known)" % sum([len(d) for d in KNOWN_HPLUS.itervalues()])
-    print nNoSearch, "of these values also have a perfect h^lmcut value"
-    print nLMcutPerfect, "of all LMcut values reach the perfect h^+ value"
-    print nAlmostPerfect, "values are perfect h^+ values + 1"
-    print nBetterBound, "values have better h^+ bounds"
+    print_initial_node_statistics(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-x', '--custom')
+    group.add_argument('-x', '--custom', nargs=2)
     group.add_argument('-m', '--merge', nargs="+")
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
