@@ -613,11 +613,76 @@ def print_initial_node_statistics(filenames):
     outfile.write("\\end{document}\n")
     outfile.close()
 
+def print_ida_layer_evaluation(filenames):
+    results = parse_results(filenames[0])
+    outfile = open(filenames[1], 'w')
+    outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\begin{document}
+""")
+    # outfile.write("domain, problem, lmcut, initial_plan, optimized_initial_plan, hplus, hplus_lower_bound, hplus_upper_bound\n")
+    for domainresults in results:
+        domainname = domainresults.name
+        last_layer_percentages = []
+        second_to_last_layer_percentages = []
+        other_layers_percentages = []
+        all_layers_scores = []
+        errors = []
+        for p in domainresults.problemresults:
+            problemname = p.name
+            if p.get("error") is not None or p.get("h_plus") == float("inf"):
+                last_layer_percentages.append(0)
+                second_to_last_layer_percentages.append(0)
+                other_layers_percentages.append(0)
+                all_layers_scores.append(1)
+                errors.append(1)
+                continue
+            all_expansions = p.get("bnb_expansions")
+            if all_expansions is None:
+                print domainname, problemname
+            last_layer_percentages.append(float(p.get("bnb_expansions_last_layer")) / float(all_expansions))
+            second_to_last_layer_percentages.append(float(p.get("bnb_expansions_second_to_last_layer")) / float(all_expansions))
+            other_layers_percentages.append((float(all_expansions) - (float(p.get("bnb_expansions_last_layer")) + float(p.get("bnb_expansions_second_to_last_layer")))) / float(all_expansions))
+            all_layers_scores.append(100 - loginterpolate(float(all_expansions), 100, 1000000, 0, 100))
+            errors.append(0)
+
+        outfile.write(r"""
+  Domain: %s\\
+  \begin{tabular}{llll}
+    Average \%% & last layer & second to last layer & other layers  \\ \hline
+                & %s         & %s                   & %s
+  \end{tabular}
+
+  \noindent
+  \begin{tikzpicture}
+    \begin{axis}[width=\textwidth,ybar stacked]
+      \addplot[color=black, fill=black] coordinates { %s };
+      \addplot[color=green, fill=green] coordinates { %s };
+      \addplot[color=blue, fill=blue] coordinates { %s };
+      \addplot[color=red, fill=red] coordinates { %s };
+    \end{axis}
+  \end{tikzpicture}
+  \newpage
+""" % (domainname,
+       100 * sum(last_layer_percentages) / float(len(last_layer_percentages)),
+       100 * sum(second_to_last_layer_percentages) / float(len(second_to_last_layer_percentages)),
+       100 * sum(other_layers_percentages) / float(len(other_layers_percentages)),
+       " ".join(["(%s,%s)" % (i+1, int(o * a)) for i,(o,a) in enumerate(zip(other_layers_percentages,all_layers_scores))]),
+       " ".join(["(%s,%s)" % (i+1, int(s * a)) for i,(s,a) in enumerate(zip(second_to_last_layer_percentages,all_layers_scores))]),
+       " ".join(["(%s,%s)" % (i+1, int(l * a)) for i,(l,a) in enumerate(zip(last_layer_percentages,all_layers_scores))]),
+       " ".join(["(%s,%s)" % (i+1,-int(e)) for i,e in enumerate(errors)]),
+      ))
+    outfile.write("\\end{document}\n")
+    outfile.close()
+
+
 def do_custom_stuff(filenames):
     """
     temporary stuff, for test that are only useful once or twice
     """
-    print_initial_node_statistics(filenames)
+    print_ida_layer_evaluation(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
