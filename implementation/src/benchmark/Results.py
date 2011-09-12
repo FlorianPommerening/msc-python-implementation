@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 from problem_suites import LMCUT_SUITE, domain_size
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
@@ -677,17 +677,41 @@ def print_ida_layer_evaluation(filenames):
     outfile.write("\\end{document}\n")
     outfile.close()
 
+def sort_expansion_limit_files(filenames):
+    times_per_expansions = defaultdict(list)
+    for filename in filenames:        
+        results = parse_results(filename)
+        p = results[0].problemresults[0]
+        time_spent = p.get("h_plus_time")
+        if time_spent is None:
+            time_spent = float(p.get("h_plus_guess_time"))
+        if float(p.get("bnb_expansions",0)) > 1:
+            times_per_expansions[results[0].name].append(time_spent / float(p.get("bnb_expansions")))
+#        if p.get("error") == "Exceeded expansion limit of 10000":
+#            shutil.copy(filename, "limit")
+#        elif p.get("error") is None:
+#            if p.get("bnb_expansions") == 0:
+#                shutil.copy(filename, "no-search")
+#            else:
+#                shutil.copy(filename, "done")
+#        else:
+#            shutil.copy(filename, "error")
+    for d in sorted(times_per_expansions.keys()):
+        print d, " ".join(map(str,times_per_expansions[d]))
+
+        
 
 def do_custom_stuff(filenames):
     """
     temporary stuff, for test that are only useful once or twice
     """
-    print_ida_layer_evaluation(filenames)
+    sort_expansion_limit_files(filenames)
+    # print_ida_layer_evaluation(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-x', '--custom', nargs=2)
+    group.add_argument('-x', '--custom', nargs="*")
     group.add_argument('-m', '--merge', nargs="+")
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
