@@ -657,7 +657,7 @@ def print_ida_layer_evaluation(filenames):
 
   \noindent
   \begin{tikzpicture}
-    \begin{axis}[width=\textwidth,ybar stacked]
+    \begin{axis}[width=\textwidth,ybar stacked,ymin=-1,ymax=100]
       \addplot[color=black, fill=black] coordinates { %s };
       \addplot[color=green, fill=green] coordinates { %s };
       \addplot[color=blue, fill=blue] coordinates { %s };
