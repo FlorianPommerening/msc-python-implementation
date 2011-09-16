@@ -400,18 +400,37 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         fnull = open(os.devnull, 'w')
         plotfile.close()
         tmpdir = tempfile.mkdtemp()
-        shutil.copy('/home/flogo/masterthesis/implementation/src/benchmark/scatterplot.tex', tmpdir + '/scatterplot.tex')
+        tex_file = open(tmpdir + '/scatterplot.tex', 'w')
+        tex_file.write(r"""\documentclass[a4paper]{scrreprt}
+
+\usepackage{pgfplots}
+
+\pgfplotsset{colormap={slowstart}{rgb(0cm)=(0,0,0); rgb(1cm)=(0,1,0); rgb(10cm)=(1,1,0); rgb(300cm)=(1,0,0)}}
+
+\begin{document}
+\begin{tikzpicture}
+  \begin{axis}[title={%s},xlabel={%s},ylabel={%s},xmin=0,xmax=100,ymin=0,ymax=100,colorbar,width=\textwidth,point meta min=0,point meta max=835]
+    \addplot+[scatter,scatter src=explicit, only marks,mark=x] file{plot.data};
+    \addplot+[sharp plot, no marks, color=lightgray] coordinates {(0,0) (100,100)};
+  \end{axis}
+\end{tikzpicture}
+\end{document}
+""" % ('Time scores' if format == 'texplottime' else 'Expansion scores', names[0], names[1]))
+        tex_file.close()
         shutil.copy('plot.data', tmpdir + '/plot.data')
         owd = os.getcwd()
         os.chdir(tmpdir)
         print "Compiling scatter plot"
-        subprocess.call(['pdflatex', '%s/scatterplot.tex' % tmpdir], stdout=fnull, stderr=fnull)
+        subprocess.call(['pdflatex', 'scatterplot.tex'], stdout=fnull, stderr=fnull)
         plotname = 'time' if format == 'texplottime' else 'expansions'
         plotname += '_%s_%s_' % (names[0].split()[0], names[1].split()[0])
-        plotname += "_".join(data.iterkeys())
+        if len(data) == 20:
+            plotname += "_ALL"
+        else:
+            plotname += "_".join(data.iterkeys())
         plotname += '.png'
         os.chdir(owd)
-        subprocess.call(['convert', '%s/scatterplot.pdf' % tmpdir, '-crop', '460x360+94+78', plotname])
+        subprocess.call(['convert', '-density', '150', '%s/scatterplot.pdf' % tmpdir, '-crop', '900x800+200+150', plotname])
         subprocess.Popen(['eog', plotname], stdout=fnull, stderr=fnull)
         shutil.rmtree(tmpdir)
         fnull.close()
