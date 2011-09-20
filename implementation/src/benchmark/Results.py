@@ -454,7 +454,7 @@ def mergeresults(*results):
         for domainresult in [resultmap[domain_name] for resultmap in maps if resultmap.has_key(domain_name)]:
             for problemresult in domainresult.problemresults:
                 for existing in merged_domain_results.problemresults:
-                    assert problemresult.name != existing.name
+                    assert problemresult.name != existing.name, domain_name + " " + problemresult.name
                 merged_domain_results.problemresults.append(problemresult)
         merged_domain_results.problemresults.sort(key=lambda res: res.name)
     return merged_results
