@@ -706,15 +706,15 @@ def sort_expansion_limit_files(filenames):
             time_spent = float(p.get("h_plus_guess_time"))
         if float(p.get("bnb_expansions",0)) > 1:
             times_per_expansions[results[0].name].append(time_spent / float(p.get("bnb_expansions")))
-#        if p.get("error") == "Exceeded expansion limit of 10000":
-#            shutil.copy(filename, "limit")
-#        elif p.get("error") is None:
-#            if p.get("bnb_expansions") == 0:
-#                shutil.copy(filename, "no-search")
-#            else:
-#                shutil.copy(filename, "done")
-#        else:
-#            shutil.copy(filename, "error")
+        if p.get("error") == "Exceeded expansion limit of 10000":
+            shutil.copy(filename, "limit")
+        elif p.get("error") is None:
+            if p.get("bnb_expansions") == 0:
+                shutil.copy(filename, "no-search")
+            else:
+                shutil.copy(filename, "done")
+        else:
+            shutil.copy(filename, "error")
     for d in sorted(times_per_expansions.keys()):
         print d, " ".join(map(str,times_per_expansions[d]))
 
