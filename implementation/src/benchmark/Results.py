@@ -718,14 +718,51 @@ def sort_expansion_limit_files(filenames):
     for d in sorted(times_per_expansions.keys()):
         print d, " ".join(map(str,times_per_expansions[d]))
 
+
+def generate_expansion_histogram(filenames):
+    domain_name, problem_name = ("", "")
+    expansion_list = []
+    for filename in filenames[:-1]:        
+        results = parse_results(filename)
+        p = results[0].problemresults[0]
+        domain_name, problem_name = (results[0].name, p.name)
+        expansions = p.get("bnb_expansions")
+        if expansions is None:
+            print filename
+            continue
+        expansion_list.append(expansions)
+    min_exp = min(expansion_list)
+    max_exp = max(expansion_list)
+    nBuckets = 100
+    bucketSize = (max_exp+1 - min_exp) / float(nBuckets)
+    counts = [0 for _ in xrange(nBuckets)]
+    for e in expansion_list:
+        counts[int((e - min_exp) / bucketSize)] += 1
+    data = [(i*bucketSize + min_exp,c) for (i,c) in enumerate(counts)]
+    outfile = open(filenames[-1], 'w')
+    outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\begin{document}
+  \begin{tikzpicture}
+    \begin{axis}[width=\textwidth,ybar,bar width=2pt,xlabel=expansions,title=%s]
+      \addplot coordinates { %s };
+    \end{axis}
+  \end{tikzpicture}
+\end{document}
+""" % ("%s - %s" % (domain_name, problem_name), " ".join(["(%f, %d)" % d for d in data])))
+        
+
         
 
 def do_custom_stuff(filenames):
     """
     temporary stuff, for test that are only useful once or twice
     """
-    sort_expansion_limit_files(filenames)
+    # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
+    generate_expansion_histogram(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
