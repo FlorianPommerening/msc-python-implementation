@@ -722,23 +722,37 @@ def sort_expansion_limit_files(filenames):
 def generate_expansion_histogram(filenames):
     domain_name, problem_name = ("", "")
     expansion_list = []
+    time_list = []
     for filename in filenames[:-1]:        
         results = parse_results(filename)
         p = results[0].problemresults[0]
         domain_name, problem_name = (results[0].name, p.name)
         expansions = p.get("bnb_expansions")
-        if expansions is None:
+        time = p.get("h_plus_time")
+        if expansions is None or time is None:
             print filename
             continue
         expansion_list.append(expansions)
+        time_list.append(time)
     min_exp = min(expansion_list)
     max_exp = max(expansion_list)
+    min_time = min(time_list)
+    max_time = max(time_list)
     nBuckets = 100
-    bucketSize = (max_exp+1 - min_exp) / float(nBuckets)
-    counts = [0 for _ in xrange(nBuckets)]
+    bucketSize_exp = (max_exp - min_exp) / float(nBuckets)
+    if bucketSize_exp == 0:
+        bucketSize_exp = 1
+    bucketSize_time = (max_time - min_time) / float(nBuckets)
+    if bucketSize_time == 0:
+        bucketSize_time = 1
+    counts_exp = [0 for _ in xrange(nBuckets)]
+    counts_time = [0 for _ in xrange(nBuckets)]
     for e in expansion_list:
-        counts[int((e - min_exp) / bucketSize)] += 1
-    data = [(i*bucketSize + min_exp,c) for (i,c) in enumerate(counts)]
+        counts_exp[min(nBuckets-1, int((e - min_exp) / bucketSize_exp))] += 1
+    for e in time_list:
+        counts_time[min(nBuckets-1, int((e - min_time) / bucketSize_time))] += 1
+    data_exp =  [(i*bucketSize_exp  + min_exp,c)  for (i,c) in enumerate(counts_exp)]
+    data_time = [(i*bucketSize_time + min_time,c) for (i,c) in enumerate(counts_time)]
     outfile = open(filenames[-1], 'w')
     outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
 \usepackage{tikz}
@@ -746,15 +760,126 @@ def generate_expansion_histogram(filenames):
 
 \begin{document}
   \begin{tikzpicture}
-    \begin{axis}[width=\textwidth,ybar,bar width=2pt,xlabel=expansions,title=%s]
+    \begin{axis}[height=0.48\textheight,ybar,bar width=2pt,xlabel=expansions,title=%s]
       \addplot coordinates { %s };
+      \addplot[color=red] coordinates { %s };
+    \end{axis}
+  \end{tikzpicture}
+
+  \begin{tikzpicture}
+    \begin{axis}[height=0.48\textheight,ybar,bar width=2pt,xlabel=time,title=%s]
+      \addplot coordinates { %s };
+      \addplot[color=red] coordinates { %s };
     \end{axis}
   \end{tikzpicture}
 \end{document}
-""" % ("%s - %s" % (domain_name, problem_name), " ".join(["(%f, %d)" % d for d in data])))
-        
+""" % ("%s - %s" % (domain_name, problem_name),
+       " ".join(["(%f, %d)" % d for d in data_exp]),
+       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 500-sum(counts_exp)),
+       "%s - %s" % (domain_name, problem_name),
+       " ".join(["(%f, %d)" % d for d in data_time]),
+       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 500-sum(counts_time))))
 
+def lost_gained_problems(filenames):
+    results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
+    gained, lost, unsolved_known = defaultdict(list), defaultdict(list), defaultdict(list)
+    for domainresults in zipresults(results0, results1):
+        for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
+            if (p[0].get("h_plus") is None) and (p[1].get("h_plus") is not None):
+                gained[domainresults[0].name].append(p[0].name)
+            elif (p[0].get("h_plus") is not None) and (p[1].get("h_plus") is None):
+                lost[domainresults[1].name].append(p[1].name)
+            if (p[1].get("h_plus") is None) and KNOWN_HPLUS[domainresults[1].name].has_key(p[1].name):
+                unsolved_known[domainresults[1].name].append(p[1].name)
+    print "Gained (solved in %s but not in %s):" % (filenames[1], filenames[0])
+    for d in sorted(gained.keys()):
+        for p in sorted(gained[d]):
+            print "  %s %s" % (d, p)
+    print "Lost (solved in %s but not in %s):" % (filenames[0], filenames[1])
+    for d in sorted(lost.keys()):
+        for p in sorted(lost[d]):
+            print "  %s %s" % (d, p)
+    print "Unsolved but known h^+ value:"
+    for d in sorted(unsolved_known.keys()):
+        for p in sorted(unsolved_known[d]):
+            print "  %s %s" % (d, p)
         
+def list_nontrivial_problems(filenames):
+    trivial = defaultdict(list)
+    easy = defaultdict(list)
+    medium = defaultdict(list)
+    hard = defaultdict(list)
+    unsolved = defaultdict(list)
+
+    results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
+    coverage_score = 0
+    for domainresults in zipresults(results0, results1):
+        domain_coverage = 0
+        for p in zipresults(domainresults[0].problemresults, domainresults[1].problemresults):
+            difficulty = ["", ""]
+            for i in (0,1):
+                expansions = p[i].get("bnb_expansions")
+                time = p[i].get("h_plus_time")
+                if time is None:
+                    difficulty[i] = "unsolved"
+                elif expansions is not None and expansions == 0:
+                    difficulty[i] = "trivial"
+                elif time < 1:
+                    difficulty[i] = "easy"
+                else:
+                    difficulty[i] = "hard"
+            if difficulty != ["unsolved", "unsolved"]:
+                domain_coverage += 1
+            if difficulty == ["trivial", "trivial"]:
+                trivial[domainresults[0].name].append(p[0].name)
+            elif difficulty[0] in ("trivial", "easy") and difficulty[1] in ("trivial", "easy"):
+                easy[domainresults[0].name].append(p[0].name)
+            elif ((difficulty[0] == "hard" and difficulty[1] in ("trivial", "easy")) or 
+                  (difficulty[0] in ("trivial", "easy") and difficulty[1] == "hard") ):
+                medium[domainresults[0].name].append(p[0].name)
+            elif ((difficulty[0] == "unsolved" and difficulty[1] != "unsolved") or
+                  (difficulty[0] != "unsolved" and difficulty[1] == "unsolved") or
+                  difficulty == ["hard", "hard"] ):
+                hard[domainresults[0].name].append(p[0].name)
+            elif difficulty == ["unsolved", "unsolved"]:
+                unsolved[domainresults[0].name].append(p[0].name)
+            else:
+                print domainresults[0].name, p[0].name, difficulty
+        coverage_score += domain_coverage / float(len(domainresults[0].problemresults))
+    coverage_score = coverage_score / float(len(results0))
+
+    trivial_numbers = defaultdict(list)
+    easy_numbers = defaultdict(list)
+    medium_numbers = defaultdict(list)
+    hard_numbers = defaultdict(list)
+    unsolved_numbers = defaultdict(list)
+
+    from problem_suites import problem_subset
+    for (domainname, paths) in problem_subset():
+        for i, (p, d) in enumerate(paths):
+            problemname = os.path.splitext(os.path.basename(p))[0]
+            if problemname in trivial[domainname]:
+                trivial_numbers[domainname].append(i)
+            if problemname in easy[domainname]:
+                easy_numbers[domainname].append(i)
+            if problemname in medium[domainname]:
+                medium_numbers[domainname].append(i)
+            if problemname in hard[domainname]:
+                hard_numbers[domainname].append(i)
+            if problemname in unsolved[domainname]:
+                unsolved_numbers[domainname].append(i)
+    print "trivial", sum([len(e) for e in trivial_numbers.values()]), trivial_numbers
+    print
+    print "easy", sum([len(e) for e in easy_numbers.values()]), easy_numbers
+    print
+    print "medium", sum([len(e) for e in medium_numbers.values()]), medium_numbers
+    print
+    print "hard", sum([len(e) for e in hard_numbers.values()]), hard_numbers
+    print
+    print "unsolved", sum([len(e) for e in unsolved_numbers.values()]), 835 - sum([len(e) for e in KNOWN_HPLUS.values()]), unsolved_numbers
+    print
+    print "Best case coverage without unsolved", coverage_score
+
 
 def do_custom_stuff(filenames):
     """
@@ -762,7 +887,9 @@ def do_custom_stuff(filenames):
     """
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    generate_expansion_histogram(filenames)
+    # generate_expansion_histogram(filenames)
+    # list_nontrivial_problems(filenames)
+    lost_gained_problems(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
