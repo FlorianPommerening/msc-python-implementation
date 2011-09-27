@@ -13,7 +13,7 @@ queue = "athlon_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '0:30:0'
+timeout = '0:01:0'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -33,11 +33,29 @@ configurations = {
 # this benchmark (eg. 'C1'), and a string containing the input file(s)
 # for this benchmark.
 benchmarks = {}
-for (domainname, paths) in problem_subset(problems={'depot':[0], 'rovers':range(11)}):
-    for x in xrange(1000):
-        for i, (p, d) in enumerate(paths):
-            problemname = os.path.splitext(os.path.basename(p))[0]
-            benchmarks["%s_%s_%d" % (domainname, problemname, x)] = "%s %s results/%s_%s_%d.result" % (p, d, domainname, problemname, x)
+dirs = []
+for (domainname, paths) in problem_subset(problems={
+        "airport":['p50-airport5MUC-p15'],
+        "depot":['pfile5', 'pfile6', 'pfile9', 'pfile11', 'pfile12', 'pfile15', 'pfile16', 'pfile17', 'pfile19', 'pfile21'],
+        "driverlog":['pfile15'],
+        "freecell":['probfreecell-2-1', 'probfreecell-2-2', 'probfreecell-2-5', 'probfreecell-3-1', 'probfreecell-3-2', 'probfreecell-3-3', 'probfreecell-3-4', 'probfreecell-3-5', 'probfreecell-4-1', 'probfreecell-4-3', 'probfreecell-4-4', 'probfreecell-5-4', 'probfreecell-6-4'],
+        "logistics00":['probLOGISTICS-15-0'],
+        "logistics98":['prob08', 'prob09', 'prob13', 'prob15', 'prob17', 'prob26', 'prob34'],
+        "mprime":['prob13', 'prob15', 'prob23', 'prob30'],
+        "mystery":['prob06', 'prob22'],
+        "openstacks-strips":['p01', 'p02', 'p03', 'p04', 'p05'],
+        "pathways-noneg":['p06', 'p07', 'p08', 'p09', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15', 'p16', 'p17', 'p18', 'p19', 'p20', 'p21', 'p22', 'p23', 'p24', 'p25', 'p26', 'p27', 'p28', 'p30'],
+        "pipesworld-notankage":['p10-net1-b14-g8', 'p14-net2-b12-g5', 'p22-net3-b12-g4', 'p37-net4-b20-g5'],
+        "pipesworld-tankage":['p07-net1-b12-g5-t80', 'p08-net1-b12-g7-t80', 'p09-net1-b14-g6-t50', 'p10-net1-b14-g8-t50', 'p12-net2-b10-g4-t60', 'p13-net2-b12-g3-t70', 'p15-net2-b14-g4-t30', 'p17-net2-b16-g5-t20'],
+        "rovers":['p13', 'p18', 'p19', 'p22', 'p25', 'p26', 'p27'],
+        "tpp":['p24', 'p25', 'p28'],
+        "trucks-strips":['p04', 'p07', 'p08', 'p09', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15', 'p16', 'p17', 'p18', 'p19', 'p20', 'p21', 'p22', 'p23', 'p24', 'p25', 'p26', 'p27', 'p28', 'p29', 'p30'],
+}):
+    for i, (p, d) in enumerate(paths):
+        problemname = os.path.splitext(os.path.basename(p))[0]
+        dirs.append("%s/%s" % (domainname, problemname))
+        for x in xrange(500):
+            benchmarks["%s_%s_%d" % (domainname, problemname, x)] = "%s %s results/%s/%s/%s_%s_%d.result" % (p, d, domainname, problemname, domainname, problemname, x)
 
 
 # the create_tasks functions generates a file containing all possible
@@ -57,6 +75,8 @@ for (domainname, paths) in problem_subset(problems={'depot':[0], 'rovers':range(
 # the $SGE_TASK_ID is the id for the current task.
 def create_tasks(filename, configurations, benchmarks):
     tasks = ['mkdir ./logs']
+    for directory in dirs:
+        tasks.append('mkdir %s' % directory)
     for conf, cmdline in sorted(configurations.iteritems()):
         for experiment, input_files in sorted(benchmarks.iteritems()):
             tasks.append("%s %s &> %s/%s_$JOB_ID.$SGE_TASK_ID.log" % (cmdline, input_files, conf, experiment))
