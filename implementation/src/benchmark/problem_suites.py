@@ -45,6 +45,16 @@ def domain_size(domainname, problem_suite=None):
         if (d == domainname):
             return len(problems)
     return 0
+
+def get_problem_id(domainname, problem_name, problem_suite=None):
+    if problem_suite is None:
+        problem_suite = LMCUT_SUITE
+    for (d, problems) in problem_suite:
+        if (d == domainname):
+            for (i,p) in enumerate(problems):
+                if os.path.splitext(os.path.basename(p[0]))[0] == problem_name:
+                    return i
+    return -1
     
 
 def problem_subset(domains=None, problems=None, problem_suite=None):
@@ -84,7 +94,19 @@ def problem_subset(domains=None, problems=None, problem_suite=None):
         domain_to_problems = problems
         for domain in domains:
             if domain_to_problems.has_key(domain):
-                problem_idlist.append(domain_to_problems[domain])
+                domain_problem_id_list = []
+                for problem_desc in domain_to_problems[domain]:
+                    if type(problem_desc) == int:
+                        domain_problem_id_list.append(problem_desc)
+                    elif type(problem_desc) == str:
+                        prob_id = get_problem_id(domain, problem_desc, problem_suite)
+                        if prob_id == -1:
+                            print "unknown task", domain, problem_desc
+                            continue
+                        domain_problem_id_list.append(prob_id)
+                    else:
+                        print "unknown type describing problem", type(problem_desc)
+                problem_idlist.append(domain_problem_id_list)
             else:
                 problem_idlist.append(range(max_problems))
     elif type(problems) == list:
