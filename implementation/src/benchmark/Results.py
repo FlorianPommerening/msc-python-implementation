@@ -775,10 +775,10 @@ def generate_expansion_histogram(filenames):
 \end{document}
 """ % ("%s - %s" % (domain_name, problem_name),
        " ".join(["(%f, %d)" % d for d in data_exp]),
-       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 500-sum(counts_exp)),
+       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 100-sum(counts_exp)),
        "%s - %s" % (domain_name, problem_name),
        " ".join(["(%f, %d)" % d for d in data_time]),
-       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 500-sum(counts_time))))
+       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 100-sum(counts_time))))
 
 def lost_gained_problems(filenames):
     results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
@@ -887,9 +887,9 @@ def do_custom_stuff(filenames):
     """
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    # generate_expansion_histogram(filenames)
+    generate_expansion_histogram(filenames)
     # list_nontrivial_problems(filenames)
-    lost_gained_problems(filenames)
+    # lost_gained_problems(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
