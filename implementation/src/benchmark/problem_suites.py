@@ -152,69 +152,73 @@ LMCUT_TRIVIAL = problem_subset(problems={
         'zenotravel': [0, 1, 2, 3, 4, 5, 7, 8],
     })
 
-# most tests should run in under a second per problem
-# 113 problems
+# most tests should run in under a minute per problem
+# 141 problems
 LMCUT_EASY = problem_subset(problems={
-        'airport': [38, 41, 43, 44, 45],
+        'airport': [38, 41, 43, 44, 45, 46],
         'blocks': [28],
-        'depot': [0, 1, 2, 3, 6, 9, 13, 16],
-        'driverlog': [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        'logistics00': [22, 23, 24, 25, 27],
-        'logistics98': [0, 6, 10],
-        'mprime': [0, 1, 2, 3, 4, 6, 7, 10, 11, 15, 18, 26, 27, 28, 30, 33, 34],
-        'mystery': [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 15, 17, 18, 23, 25, 26, 27, 28, 29],
-        'pipesworld-notankage': [1, 2, 3, 4, 5, 6, 10, 20, 40],
-        'pipesworld-tankage': [0, 1, 2, 3, 4],
-        'rovers': [6, 8, 9, 11, 15, 16],
-        'tpp': [4, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19],
-        'trucks-strips': [0, 1, 2, 3, 4, 5, 6],
-        'zenotravel': [6, 10, 11, 12],
+        'depot': [0, 1, 2, 3, 4, 6, 8, 9, 13, 16],
+        'driverlog': [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+        'freecell': [5],
+        'logistics00': [22, 23, 24, 25, 26, 27],
+        'logistics98': [0, 6, 7, 10, 33],
+        'mprime': [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 13, 15, 18, 25, 26, 27, 28, 30, 32, 33, 34],
+        'mystery': [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 22, 23, 25, 26, 27, 28, 29],
+        'pipesworld-notankage': [1, 2, 3, 4, 5, 6, 10, 11, 12, 14, 16, 20, 40],
+        'pipesworld-tankage': [0, 1, 2, 3, 4, 10],
+        'rovers': [6, 8, 9, 10, 11, 15, 17, 24],
+        'tpp': [4, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 21],
+        'trucks-strips': [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        'zenotravel': [6, 9, 10, 11, 12],
     })
 
-# can be solved fast fast, but not always
-# 4 problems
+# can be solved in less than a minute, but not always
+# 23 problems
 LMCUT_MEDIUM = problem_subset(problems={
-        'airport': [46],
-        'depot': [4],
-        'mystery': [22],
-        'logistics98': [33]
+        'airport': [47, 48],
+        'depot': [5, 15, 18],
+        'freecell': [0, 4, 63],
+        'logistics98': [5, 12],
+        'mprime': [9, 23],
+        'mystery': [12],
+        'pipesworld-notankage': [7, 8, 15, 22],
+        'pipesworld-tankage': [5, 20, 40],
+        'rovers': [16],
+        'tpp': [20, 22],
     })
 
-# sometimes unsolvable, but it should be possible to get these
-# 69 problems
+# always more than a minute, some of these are sometimes unsolvable
+# 31 problems
 LMCUT_HARD = problem_subset(problems={
-        'airport': [47, 48, 49],
-        'depot': [5, 8, 15, 18, 20],
-        'driverlog': [13, 14],
-        'freecell': [0, 4, 5],
-        'logistics00': [26],
-        'logistics98': [5, 7],
-        'mprime': [8, 9, 13, 14, 23, 25, 29, 32],
-        'mystery': [5, 9, 12, 13, 14, 19, 21],
-        'openstacks-strips': [0, 1, 2, 3, 4],
-        'pipesworld-notankage': [7, 8, 11, 12, 14, 15, 16, 21, 22, 23, 36],
-        'pipesworld-tankage': [5, 10, 14, 16, 20, 40],
-        'rovers': [10, 12, 17, 18, 24, 26],
-        'tpp': [20, 21, 22],
-        'trucks-strips': [7, 8, 9, 10, 11, 12],
-        'zenotravel': [9],
+        'airport':[49],
+        'depot':[20],
+        'driverlog':[14],
+        'logistics98':[25],
+        'mprime':[12, 14, 29],
+        'mystery':[5, 21],
+        'openstacks-strips':[0, 1, 2, 3, 4],
+        'pipesworld-notankage':[13, 21, 23, 36],
+        'pipesworld-tankage':[6, 11, 12, 14, 16],
+        'rovers':[12, 18, 26],
+        'tpp':[23],
+        'trucks-strips':[9, 10, 11, 12],
     })
 
-# not solved yet, but it should be possible to get these
-# 282 problems
+# not solved by any run yet
+# 273 problems
 LMCUT_VERY_HARD = problem_subset(problems={
-        'depot': [10, 11, 14, 17, 19, 21],
-        'driverlog': [15, 16, 17, 18, 19],
-        'freecell': [1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79],
-        'logistics98': [8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-        'mprime': [5, 12, 17, 19, 21, 22],
-        'pathways-noneg': [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-        'pipesworld-notankage': [9, 13, 17, 18, 19, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49],
-        'pipesworld-tankage': [6, 7, 8, 9, 11, 12, 13, 15, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49],
-        'openstacks-strips': [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-        'rovers': [19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
-        'tpp': [23, 24, 25, 26, 27, 28, 29],
-        'trucks-strips': [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-        'zenotravel': [13, 14, 15, 16, 17, 18, 19],
+        'depot':[10, 11, 14, 17, 19, 21],
+        'driverlog':[15, 16, 17, 18, 19],
+        'freecell':[1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79],
+        'logistics98':[8, 9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29],
+        'mprime':[5, 17, 19, 21, 22],
+        'openstacks-strips':[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+        'pathways-noneg':[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+        'pipesworld-notankage':[9, 17, 18, 19, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+        'pipesworld-tankage':[7, 8, 9, 13, 15, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+        'rovers':[19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+        'tpp':[24, 25, 26, 27, 28, 29],
+        'trucks-strips':[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+        'zenotravel':[13, 14, 15, 16, 17, 18, 19],
     })
 

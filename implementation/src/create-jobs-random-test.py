@@ -34,12 +34,12 @@ configurations = {
 # for this benchmark.
 benchmarks = {}
 dirs = set()
-for (domainname, paths) in LMCUT_EASY:
+for (domainname, paths) in LMCUT_MEDIUM:
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
         dirs.add("results/%s" % (domainname))
         dirs.add("results/%s/%s" % (domainname, problemname))
-        for x in xrange(100):
+        for x in xrange(100, 500):
             benchmarks["%s_%s_%d" % (domainname, problemname, x)] = "%s %s results/%s/%s/%s_%s_%d.result" % (p, d, domainname, problemname, domainname, problemname, x)
 
 # the create_tasks functions generates a file containing all possible
