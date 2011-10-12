@@ -889,7 +889,131 @@ def do_custom_stuff(filenames):
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
     # list_nontrivial_problems(filenames)
-    lost_gained_problems(filenames)
+    # lost_gained_problems(filenames)
+    plans = set()
+    for filename in filenames:
+        results = parse_results(filename)
+        p = results[0].problemresults[0]
+        plan = set(p.get("plan").split(", "))
+        # 1) common steps in all plans
+        #       init and goal are in all plans
+        plan -= set(['@@goal-operator,', '@@init-operator'])
+        #       unit propagation at start
+        plan -= set(['navigate rover1 waypoint2 waypoint0',
+                     'navigate rover1 waypoint2 waypoint1',
+                     'navigate rover1 waypoint1 waypoint3',
+                     'navigate rover1 waypoint2 waypoint6',
+                     'sample_rock rover1 rover1store waypoint6',
+                     'sample_rock rover1 rover1store waypoint0',
+                     'sample_rock rover1 rover1store waypoint3'])
+        #       rover 2 has to collect soil at WP0 (rover 3 could do it, but this is not optimal)
+        assert 'sample_soil rover2 rover2store waypoint0' in plan
+        plan -= set(['sample_soil rover2 rover2store waypoint0'])
+        # 2) meaningless changes
+        #       rover 1 communicates 3 rock data samples each from 1 of 3 possible positions
+        assert ("communicate_rock_data rover1 general waypoint6 waypoint3 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint6 waypoint6 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint6 waypoint1 waypoint4" in plan)
+        assert ("communicate_rock_data rover1 general waypoint0 waypoint3 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint0 waypoint6 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint0 waypoint1 waypoint4" in plan)
+        assert ("communicate_rock_data rover1 general waypoint3 waypoint3 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint3 waypoint6 waypoint4" in plan or
+                "communicate_rock_data rover1 general waypoint3 waypoint1 waypoint4" in plan)
+        plan -= set(["communicate_rock_data rover1 general waypoint6 waypoint3 waypoint4", "communicate_rock_data rover1 general waypoint6 waypoint6 waypoint4", "communicate_rock_data rover1 general waypoint6 waypoint1 waypoint4", 
+                     "communicate_rock_data rover1 general waypoint0 waypoint3 waypoint4", "communicate_rock_data rover1 general waypoint0 waypoint6 waypoint4", "communicate_rock_data rover1 general waypoint0 waypoint1 waypoint4",
+                     "communicate_rock_data rover1 general waypoint3 waypoint3 waypoint4", "communicate_rock_data rover1 general waypoint3 waypoint6 waypoint4", "communicate_rock_data rover1 general waypoint3 waypoint1 waypoint4"])
+        # 3) choices that force other actions
+        #       who collects the soil sample from WP4? R2 or R3?
+        possible_transmissions = {}
+        navigates = []
+        possible_calibrations = {}
+        possible_picture_locations = {}
+        possible_picture_transmissions = {}
+        if 'sample_soil rover2 rover2store waypoint4' in plan:
+            plan -= set(['sample_soil rover2 rover2store waypoint4'])
+            #       who collects the soil sample from WP6? R2 or R3?
+            if 'sample_soil rover2 rover2store waypoint6' in plan:
+                plan -= set(['sample_soil rover2 rover2store waypoint6'])
+                possible_transmissions[0] = [('rover2', 'waypoint3'), ('rover2', 'waypoint6')]
+                possible_transmissions[4] = [('rover2', 'waypoint3'), ('rover2', 'waypoint6')]
+                possible_transmissions[6] = [('rover2', 'waypoint3'), ('rover2', 'waypoint6')]
+                navigates = [('rover2', 'waypoint0', 'waypoint6'), ('rover2', 'waypoint0', 'waypoint3'), ('rover2', 'waypoint3', 'waypoint4')]
+                possible_calibrations = {1:[0,1,2,3], 2:[0]}
+                possible_picture_locations = {1:[0,1,2,3,6], 2:[0,3,4,6]}
+                possible_picture_transmissions = {1:[1,3,6], 2:[3,6]}
+            elif 'sample_soil rover3 rover3store waypoint6' in plan:
+                plan -= set(['sample_soil rover3 rover3store waypoint6'])
+                possible_transmissions[0] = [('rover2', 'waypoint3')]
+                possible_transmissions[4] = [('rover2', 'waypoint3')]
+                possible_transmissions[6] = [('rover3', 'waypoint6')]
+                navigates = [('rover2', 'waypoint0', 'waypoint3'), ('rover2', 'waypoint3', 'waypoint4'), ('rover3', 'waypoint2', 'waypoint6')]
+                possible_calibrations = {1:[0,1,2,3], 2:[0], 3:[2,6]}
+                possible_picture_locations = {1:[0,1,2,3,6], 2:[0,3,4], 3:[2,6]}
+                possible_picture_transmissions = {1:[1,3,6], 2:[3], 3:[6]}
+            else:
+                assert False, plan
+        elif 'sample_soil rover3 rover3store waypoint4' in plan:
+            #       in this case R2 has to collect the sample from WP6
+            assert 'sample_soil rover2 rover2store waypoint6' in plan
+            plan -= set(['sample_soil rover3 rover3store waypoint4', 'sample_soil rover2 rover2store waypoint6'])
+            possible_transmissions[0] = [('rover2', 'waypoint6')]
+            possible_transmissions[4] = [('rover3', 'waypoint1')]
+            possible_transmissions[6] = [('rover2', 'waypoint6')]
+            navigates = [('rover2', 'waypoint0', 'waypoint6'), ('rover3', 'waypoint2', 'waypoint1'), ('rover3', 'waypoint1', 'waypoint4')]
+            possible_calibrations = {1:[0,1,2,3], 2:[0], 3:[1,2,4]}
+            possible_picture_locations = {1:[0,1,2,3,6], 2:[0,6], 3:[1,2,4]}
+            possible_picture_transmissions = {1:[1,3,6], 2:[6], 3:[1,2]}
+        else:
+            assert False, plan
+        # permutations of resulting possible transmissions
+        for sample in (0,4,6):
+            hasone = False
+            for r, w in possible_transmissions[sample]:
+                if 'communicate_soil_data %s general waypoint%s %s waypoint4' % (r, sample, w) in plan:
+                    hasone = True
+                    plan -= set(['communicate_soil_data %s general waypoint%s %s waypoint4' % (r, sample, w)])
+                    break
+            assert hasone, plan
+        # forced navigates
+        for r, f, t in navigates:
+            assert 'navigate %s %s %s' % (r,f,t) in plan
+            plan -= set(['navigate %s %s %s' % (r,f,t)])
+
+        #       who takes the pictures? R1, R2 or R3?
+        hasone = False
+        for r, c, t in ((1, 4, 1),(2, 3, 0),(3, 0, 2)):
+            # permutations of resulting possible calibrations
+            for w in possible_calibrations[r]:
+                if 'calibrate rover%s camera%s objective%s waypoint%s' % (r, c, t, w) in plan:
+                    plan -= set(['calibrate rover%s camera%s objective%s waypoint%s' % (r, c, t, w)])
+                    break
+            else:
+                continue
+            both_res_ok = True
+            for res in ('low_res', 'colour'):
+                for w in possible_picture_locations[r]:
+                    if 'take_image rover%r waypoint%s objective2 camera%s %s' % (r, w, c, res) in plan:
+                        plan -= set(['take_image rover%r waypoint%s objective2 camera%s %s' % (r, w, c, res)])
+                        break
+                else:
+                    both_res_ok = False
+                for w in possible_picture_transmissions[r]:
+                    if 'communicate_image_data rover%s general objective2 %s waypoint%s waypoint4' % (r, res, w) in plan:
+                        plan -= set(['communicate_image_data rover%s general objective2 %s waypoint%s waypoint4' % (r, res, w)])
+                        break
+                else:
+                    both_res_ok = False
+            if not both_res_ok:
+                continue
+            hasone = True
+            break
+        assert hasone, plan
+
+        plans.add(frozenset(plan))
+    print len(plans)
+    for plan in plans:
+        print sorted(plan)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
