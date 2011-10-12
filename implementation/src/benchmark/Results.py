@@ -880,6 +880,36 @@ def list_nontrivial_problems(filenames):
     print
     print "Best case coverage without unsolved", coverage_score
 
+def print_percentiles(filenames):
+    # domain -> problem -> number of solves
+    solves = defaultdict(lambda : defaultdict(int))
+    for filename in filenames:
+        results = parse_results(filename)
+        for domainresults in results:
+            domainname = domainresults.name
+            for p in domainresults.problemresults:
+                problemname = p.name
+                if p.get("h_plus") is not None:
+                    solves[domainname][problemname] += 1
+
+    print "Problems that are solved only in some of the runs"
+    for domain, domainsolves in solves.iteritems():
+        for problem, problemsolves in domainsolves.iteritems():
+            if problemsolves != 0 and problemsolves != len(filenames):
+                print domain, problem, problemsolves
+    print
+    print "Percentiles"
+    for percentile in (25,50,75,100):
+        cutoff = len(filenames) * (100 - percentile) / float(100)
+        coverage = 0
+        for domain, domainsolves in solves.iteritems():
+            domaincoverage = 0
+            for problem, problemsolves in domainsolves.iteritems():
+                if problemsolves >= cutoff:
+                    domaincoverage += 1
+            coverage += domaincoverage / float(domain_size(domain))
+        print "%d-percentile coverage = %f" % (percentile, coverage / float(20))
+
 
 def do_custom_stuff(filenames):
     """
@@ -887,9 +917,10 @@ def do_custom_stuff(filenames):
     """
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    generate_expansion_histogram(filenames)
+    # generate_expansion_histogram(filenames)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
+    print_percentiles(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
