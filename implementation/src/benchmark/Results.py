@@ -775,10 +775,10 @@ def generate_expansion_histogram(filenames):
 \end{document}
 """ % ("%s - %s" % (domain_name, problem_name),
        " ".join(["(%f, %d)" % d for d in data_exp]),
-       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 100-sum(counts_exp)),
+       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 500-sum(counts_exp)),
        "%s - %s" % (domain_name, problem_name),
        " ".join(["(%f, %d)" % d for d in data_time]),
-       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 100-sum(counts_time))))
+       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 500-sum(counts_time))))
 
 def lost_gained_problems(filenames):
     results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
@@ -880,35 +880,95 @@ def list_nontrivial_problems(filenames):
     print
     print "Best case coverage without unsolved", coverage_score
 
-def print_percentiles(filenames):
+def get_solve_chances(filenames, timeout=1800):
     # domain -> problem -> number of solves
     solves = defaultdict(lambda : defaultdict(int))
+    times  = defaultdict(lambda : defaultdict(list))
     for filename in filenames:
         results = parse_results(filename)
         for domainresults in results:
             domainname = domainresults.name
             for p in domainresults.problemresults:
                 problemname = p.name
-                if p.get("h_plus") is not None:
+                if p.get("h_plus") is not None and p.get("h_plus_time") < timeout:
                     solves[domainname][problemname] += 1
-
-    print "Problems that are solved only in some of the runs"
+                    times[domainname][problemname].append(p.get("h_plus_time"))
+    solve_chances = defaultdict(lambda : defaultdict(float))
     for domain, domainsolves in solves.iteritems():
         for problem, problemsolves in domainsolves.iteritems():
-            if problemsolves != 0 and problemsolves != len(filenames):
-                print domain, problem, problemsolves
-    print
-    print "Percentiles"
+            solve_chances[domain][problem] = problemsolves / float(len(filenames))
+    return solve_chances, times
+
+def print_percentiles(solve_chances):
     for percentile in (25,50,75,100):
-        cutoff = len(filenames) * (100 - percentile) / float(100)
+        cutoff = (100 - percentile) / float(100)
         coverage = 0
-        for domain, domainsolves in solves.iteritems():
+        for domain, domainsolves in solve_chances.iteritems():
             domaincoverage = 0
             for problem, problemsolves in domainsolves.iteritems():
                 if problemsolves >= cutoff:
                     domaincoverage += 1
             coverage += domaincoverage / float(domain_size(domain))
-        print "%d-percentile coverage = %f" % (percentile, coverage / float(20))
+        print "%f," % (coverage / float(20)),
+    print
+
+def print_restart_calculation(filenames):
+    # constant increase
+    for const_restart_time in xrange(10, 1801, 10):
+        runs = 1800 / const_restart_time
+        last_run = 1800 % const_restart_time
+        solves_run,_ = get_solve_chances(filenames, timeout=const_restart_time)
+        solves_last_run,_ = get_solve_chances(filenames, timeout=last_run)
+        solve_chances = defaultdict(dict)
+        for domain, domainsolves in solves_run.iteritems():
+            for problem, chance_to_solve_in_run in domainsolves.iteritems():
+                chance_to_solve_in_last_run = solves_last_run[domain][problem]
+                # all available runs
+                solve_chances[domain][problem] = 1-( ((1 - chance_to_solve_in_run) ** runs) * (1- chance_to_solve_in_last_run) )
+                # one run only
+                # solve_chances[domain][problem] = chance_to_solve_in_run
+        print "%d," % const_restart_time,
+        print_percentiles(solve_chances)
+    # geometric increase 
+    inv_solve_chances = defaultdict(lambda: defaultdict(lambda: 1))
+    runs = [2 ** x for x in xrange(10)] + [777]
+    for restart_time in runs:
+        solves_run,_ = get_solve_chances(filenames, timeout=restart_time)
+        for domain, domainsolves in solves_run.iteritems():
+            for problem, chance_to_solve_in_run in domainsolves.iteritems():
+                inv_solve_chances[domain][problem] *= (1 - chance_to_solve_in_run)
+    print "geometric increase"
+    solve_chances = defaultdict(lambda: defaultdict(float))
+    for domain, inv_domainsolves in inv_solve_chances.iteritems():
+        for problem, inv_chance_to_solve in inv_domainsolves.iteritems():
+            solve_chances[domain][problem] = 1 - inv_chance_to_solve
+    print_percentiles(solve_chances)
+    print
+    # 20*1, 2*30, 2*60, 1*1600
+    inv_solve_chances = defaultdict(lambda: defaultdict(lambda: 1))
+    runs = [(20,1), (2,30), (2,60), (1,1600)]
+    for repeats, restart_time in runs:
+        solves_run,_ = get_solve_chances(filenames, timeout=restart_time)
+        for domain, domainsolves in solves_run.iteritems():
+            for problem, chance_to_solve_in_run in domainsolves.iteritems():
+                inv_solve_chances[domain][problem] *= (1 - chance_to_solve_in_run) ** repeats
+    print "manually adjusted increase"
+    solve_chances = defaultdict(lambda: defaultdict(float))
+    for domain, inv_domainsolves in inv_solve_chances.iteritems():
+        for problem, inv_chance_to_solve in inv_domainsolves.iteritems():
+            solve_chances[domain][problem] = 1 - inv_chance_to_solve
+    print_percentiles(solve_chances)
+
+
+def print_restart_analysis(filenames):
+    solve_chances, times = get_solve_chances(filenames)
+    print "Problems that are solved only in some of the runs"
+    for domain, domainsolves in sorted(solve_chances.iteritems()):
+        for problem, solve_chance in domainsolves.iteritems():
+            if solve_chance > 0 and solve_chance < 1:
+                print domain, problem, solve_chance, times[domain][problem]
+    print
+    print_restart_calculation(filenames)
 
 
 def do_custom_stuff(filenames):
@@ -920,7 +980,7 @@ def do_custom_stuff(filenames):
     # generate_expansion_histogram(filenames)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
-    print_percentiles(filenames)
+    print_restart_analysis(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
