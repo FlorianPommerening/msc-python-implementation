@@ -3,7 +3,7 @@ from problem_suites import LMCUT_SUITE, domain_size
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
 
-import sys, argparse, os, tempfile, shutil, subprocess
+import sys, argparse, os, tempfile, shutil, subprocess, re
 from math import log, exp
 from random import random
 
@@ -553,7 +553,8 @@ def print_initial_node_statistics(filenames):
         nNoSearch = 0
         nPerfect = 0
         nLMcutPerfect = 0
-        for p in domainresults.problemresults:
+        sortable_problem_results = [(map(int, re.findall(r"\d+", p.name)), p) for p in domainresults.problemresults]
+        for _,p in sorted(sortable_problem_results):
             problemname = p.name
             i += 1
             lmcut = p.get("h_lmcut")
@@ -880,24 +881,28 @@ def list_nontrivial_problems(filenames):
     print
     print "Best case coverage without unsolved", coverage_score
 
-def get_solve_chances(filenames, timeout=1800):
-    # domain -> problem -> number of solves
-    solves = defaultdict(lambda : defaultdict(int))
-    times  = defaultdict(lambda : defaultdict(list))
+def get_solve_times(filenames):
+    solve_times = defaultdict(lambda : defaultdict(list))
     for filename in filenames:
         results = parse_results(filename)
         for domainresults in results:
             domainname = domainresults.name
             for p in domainresults.problemresults:
                 problemname = p.name
-                if p.get("h_plus") is not None and p.get("h_plus_time") < timeout:
-                    solves[domainname][problemname] += 1
-                    times[domainname][problemname].append(p.get("h_plus_time"))
+                solve_times[domainname][problemname].append(p.get("h_plus_time"))
+    return solve_times
+
+def get_solve_chances(solve_times, timeout=1800):
+    # domain -> problem -> number of solves
     solve_chances = defaultdict(lambda : defaultdict(float))
-    for domain, domainsolves in solves.iteritems():
-        for problem, problemsolves in domainsolves.iteritems():
-            solve_chances[domain][problem] = problemsolves / float(len(filenames))
-    return solve_chances, times
+    for domainname in solve_times.keys():
+        for problemname, problemsolvetimes in solve_times[domainname].items():
+            solves = 0
+            for problemsolvetime in problemsolvetimes:
+                if problemsolvetime  is not None and problemsolvetime < timeout:
+                    solves += 1
+            solve_chances[domainname][problemname] = solves / float(len(problemsolvetimes))
+    return solve_chances
 
 def print_percentiles(solve_chances):
     for percentile in (25,50,75,100):
@@ -906,19 +911,19 @@ def print_percentiles(solve_chances):
         for domain, domainsolves in solve_chances.iteritems():
             domaincoverage = 0
             for problem, problemsolves in domainsolves.iteritems():
-                if problemsolves >= cutoff:
+                if problemsolves > cutoff:
                     domaincoverage += 1
             coverage += domaincoverage / float(domain_size(domain))
         print "%f," % (coverage / float(20)),
     print
 
-def print_restart_calculation(filenames):
+def print_restart_calculation(solve_times):
     # constant increase
     for const_restart_time in xrange(10, 1801, 10):
         runs = 1800 / const_restart_time
         last_run = 1800 % const_restart_time
-        solves_run,_ = get_solve_chances(filenames, timeout=const_restart_time)
-        solves_last_run,_ = get_solve_chances(filenames, timeout=last_run)
+        solves_run = get_solve_chances(solve_times, timeout=const_restart_time)
+        solves_last_run = get_solve_chances(solve_times, timeout=last_run)
         solve_chances = defaultdict(dict)
         for domain, domainsolves in solves_run.iteritems():
             for problem, chance_to_solve_in_run in domainsolves.iteritems():
@@ -926,14 +931,14 @@ def print_restart_calculation(filenames):
                 # all available runs
                 solve_chances[domain][problem] = 1-( ((1 - chance_to_solve_in_run) ** runs) * (1- chance_to_solve_in_last_run) )
                 # one run only
-                # solve_chances[domain][problem] = chance_to_solve_in_run
+                # solve_chances[domain][problem] = chance_to_solve_in_run        
         print "%d," % const_restart_time,
         print_percentiles(solve_chances)
     # geometric increase 
     inv_solve_chances = defaultdict(lambda: defaultdict(lambda: 1))
     runs = [2 ** x for x in xrange(10)] + [777]
     for restart_time in runs:
-        solves_run,_ = get_solve_chances(filenames, timeout=restart_time)
+        solves_run = get_solve_chances(solve_times, timeout=restart_time)
         for domain, domainsolves in solves_run.iteritems():
             for problem, chance_to_solve_in_run in domainsolves.iteritems():
                 inv_solve_chances[domain][problem] *= (1 - chance_to_solve_in_run)
@@ -948,11 +953,25 @@ def print_restart_calculation(filenames):
     inv_solve_chances = defaultdict(lambda: defaultdict(lambda: 1))
     runs = [(20,1), (2,30), (2,60), (1,1600)]
     for repeats, restart_time in runs:
-        solves_run,_ = get_solve_chances(filenames, timeout=restart_time)
+        solves_run = get_solve_chances(solve_times, timeout=restart_time)
         for domain, domainsolves in solves_run.iteritems():
             for problem, chance_to_solve_in_run in domainsolves.iteritems():
                 inv_solve_chances[domain][problem] *= (1 - chance_to_solve_in_run) ** repeats
-    print "manually adjusted increase"
+    print "manually adjusted increase (20*1, 2*30, 2*60, 1*1600)"
+    solve_chances = defaultdict(lambda: defaultdict(float))
+    for domain, inv_domainsolves in inv_solve_chances.iteritems():
+        for problem, inv_chance_to_solve in inv_domainsolves.iteritems():
+            solve_chances[domain][problem] = 1 - inv_chance_to_solve
+    print_percentiles(solve_chances)
+    # 10*1, 1*30, 1*60, 1*1700
+    inv_solve_chances = defaultdict(lambda: defaultdict(lambda: 1))
+    runs = [(10,1), (1,30), (1,60), (1,1700)]
+    for repeats, restart_time in runs:
+        solves_run = get_solve_chances(solve_times, timeout=restart_time)
+        for domain, domainsolves in solves_run.iteritems():
+            for problem, chance_to_solve_in_run in domainsolves.iteritems():
+                inv_solve_chances[domain][problem] *= (1 - chance_to_solve_in_run) ** repeats
+    print "manually adjusted increase (10*1, 1*30, 1*60, 1*1700)"
     solve_chances = defaultdict(lambda: defaultdict(float))
     for domain, inv_domainsolves in inv_solve_chances.iteritems():
         for problem, inv_chance_to_solve in inv_domainsolves.iteritems():
@@ -961,20 +980,23 @@ def print_restart_calculation(filenames):
 
 
 def print_restart_analysis(filenames):
-    solve_chances, times = get_solve_chances(filenames)
+    solve_times = get_solve_times(filenames)
+    solve_chances = get_solve_chances(solve_times)
     print "Problems that are solved only in some of the runs"
     for domain, domainsolves in sorted(solve_chances.iteritems()):
         for problem, solve_chance in domainsolves.iteritems():
             if solve_chance > 0 and solve_chance < 1:
-                print domain, problem, solve_chance, times[domain][problem]
+                print domain, problem, solve_chance
+                print "    ", sorted([int(t) for t in solve_times[domain][problem] if t is not None])
     print
-    print_restart_calculation(filenames)
+    print_restart_calculation(solve_times)
 
 
 def do_custom_stuff(filenames):
     """
     temporary stuff, for test that are only useful once or twice
     """
+    # print_initial_node_statistics(filenames)
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)

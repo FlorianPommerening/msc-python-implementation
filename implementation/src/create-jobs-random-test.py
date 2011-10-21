@@ -13,7 +13,7 @@ queue = "athlon_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '0:01:0'
+timeout = '1:00:0'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -34,12 +34,15 @@ configurations = {
 # for this benchmark.
 benchmarks = {}
 dirs = set()
-for (domainname, paths) in LMCUT_MEDIUM:
+for (domainname, paths) in problem_subset(problems={
+'logistics98': ['prob26'],
+'pipesworld-notankage': ['p37-net4-b20-g5'],
+}):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
         dirs.add("results/%s" % (domainname))
         dirs.add("results/%s/%s" % (domainname, problemname))
-        for x in xrange(100, 500):
+        for x in xrange(0, 50):
             benchmarks["%s_%s_%d" % (domainname, problemname, x)] = "%s %s results/%s/%s/%s_%s_%d.result" % (p, d, domainname, problemname, domainname, problemname, x)
 
 # the create_tasks functions generates a file containing all possible
