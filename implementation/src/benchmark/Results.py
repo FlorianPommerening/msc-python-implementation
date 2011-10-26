@@ -1002,7 +1002,35 @@ def do_custom_stuff(filenames):
     # generate_expansion_histogram(filenames)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
-    print_restart_analysis(filenames)
+    # print_restart_analysis(filenames)
+    times_1 = []
+    times_2 = []
+    times_3 = []
+    times_sum12 = []
+    times_sum123 = []
+    for filename in filenames:
+        for domainresult in parse_results(filename):
+            for p in domainresult.problemresults:
+                times_1.append((p.get("parse_time"), "%s - %s" % (domainresult.name, p.name)))
+                times_2.append((p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
+                times_3.append((p.get("relevance_analysis_time"), "%s - %s" % (domainresult.name, p.name)))
+                times_sum12.append((p.get("parse_time") + p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
+                times_sum123.append((p.get("relevance_analysis_time") + p.get("parse_time") + p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
+    print "Parse"
+    for t, p in sorted(times_1)[-10:]:
+        print "   ", t, p
+    print "Relaxation"
+    for t, p in sorted(times_2)[-10:]:
+        print "   ", t, p
+    print "Relevance"
+    for t, p in sorted(times_3)[-10:]:
+        print "   ", t, p
+    print "parse + relax"
+    for t, p in sorted(times_sum12)[-10:]:
+        print "   ", t, p
+    print "all"
+    for t, p in sorted(times_sum123)[-10:]:
+        print "   ", t, p
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
