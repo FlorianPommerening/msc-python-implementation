@@ -50,7 +50,7 @@ class ProblemResults:
         self.values[key] = value
     def __str__(self):
         result = "problem: %s\n" % self.name
-        for (key, value) in self.values.items():
+        for (key, value) in sorted(self.values.items()):
             result += "%s %s\n" % (str(key), str(value))
         return result
 
@@ -991,6 +991,76 @@ def print_restart_analysis(filenames):
     print
     print_restart_calculation(solve_times)
 
+def filter_test(filenames):
+    max_filters = (0, '', '', [], [], [], [])
+    times = defaultdict(list)
+    iterations = []
+    useless_first_achiever_in_len_2 = 0
+    useless_first_achiever_in_len_3 = 0
+    for filename in filenames:
+        for domainresult in parse_results(filename):
+            for p in domainresult.problemresults:
+                times["parse"].append((p.get("parse_time"), domainresult.name, p.name))
+                times["relax"].append((p.get("relaxation_time"), domainresult.name, p.name))
+                times["filter"].append((p.get("relevance_analysis_time"), domainresult.name, p.name))
+                times["parse + relax"].append((p.get("parse_time") + p.get("relaxation_time"), domainresult.name, p.name))
+                times["preprocess"].append((p.get("relevance_analysis_time") + p.get("parse_time") + p.get("relaxation_time"), domainresult.name, p.name))
+
+                i = 0
+                it = 0
+                relevance_time = 0
+                first_achiever_time = 0
+                removed_operators_relev = []
+                removed_variables_relev = []
+                removed_operators_first = []
+                removed_variables_first = []
+                while True:
+                    i += 1
+                    time = p.get("filter_%d_time" % i)
+                    if time is None:
+                        break
+                    if p.get("filter_%d_name" % i) == "relevance":
+                        relevance_time += float(time)
+                        removed_operators_relev.append(int(p.get("filter_%d_filtered_operators" % i)))
+                        removed_variables_relev.append(int(p.get("filter_%d_filtered_variables" % i)))
+                    elif p.get("filter_%d_name" % i) == "first achiever":
+                        it += 1
+                        first_achiever_time += float(time)
+                        removed_operators_first.append(int(p.get("filter_%d_filtered_operators" % i)))
+                        removed_variables_first.append(int(p.get("filter_%d_filtered_variables" % i)))
+                        if i == 4 and p.get("filter_%d_name" % (i+1)) is None:
+                            useless_first_achiever_in_len_2 += 1
+                        if i == 6 and p.get("filter_%d_name" % (i+1)) is None:
+                            useless_first_achiever_in_len_3 += 1
+                    else:
+                        print "SHOULD NOT HAPPEN"
+                    if i > max_filters[0]:
+                        max_filters = (i, domainresult.name, p.name, removed_operators_relev, removed_variables_relev, removed_operators_first, removed_variables_first)
+                iterations.append((it, domainresult.name, p.name))
+                times["relevance"].append((relevance_time, domainresult.name, p.name))
+                times["first achiever"].append((first_achiever_time, domainresult.name, p.name))
+    for key, value in times.iteritems():
+        print key
+        for t, d, p in sorted(value)[-10:]:
+            print "   ", t, d, p
+    print
+    print max_filters
+
+    worst = [e for e in times["preprocess"] if e[0] > 10]
+    print "worst preprocess (%d over 10 seconds, %d over 60 seconds)" % (len(worst), len([e for e in worst if e[0] > 60]))
+    for t, d, p in sorted(worst):
+        print "   ", t, d, p
+    print
+
+    print "%d tasks with 0 iterations" % sum([1 for e in iterations if e[0] == 0])
+    print "%d tasks with 1 iterations" % sum([1 for e in iterations if e[0] == 1])
+    print "%d tasks with 2 iterations (%d of that not necessary)" % (sum([1 for e in iterations if e[0] == 2]), useless_first_achiever_in_len_2)
+    print "%d tasks with 3 iterations (%d of that not necessary)" % (sum([1 for e in iterations if e[0] == 3]), useless_first_achiever_in_len_3)
+    print "%d tasks with >3 iterations:" % sum([1 for e in iterations if e[0] > 3])
+    for i, d, p in sorted(iterations):
+        if i > 3:
+            print "    ", i, d, p
+
 
 def do_custom_stuff(filenames):
     """
@@ -1003,34 +1073,7 @@ def do_custom_stuff(filenames):
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames)
-    times_1 = []
-    times_2 = []
-    times_3 = []
-    times_sum12 = []
-    times_sum123 = []
-    for filename in filenames:
-        for domainresult in parse_results(filename):
-            for p in domainresult.problemresults:
-                times_1.append((p.get("parse_time"), "%s - %s" % (domainresult.name, p.name)))
-                times_2.append((p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
-                times_3.append((p.get("relevance_analysis_time"), "%s - %s" % (domainresult.name, p.name)))
-                times_sum12.append((p.get("parse_time") + p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
-                times_sum123.append((p.get("relevance_analysis_time") + p.get("parse_time") + p.get("relaxation_time"), "%s - %s" % (domainresult.name, p.name)))
-    print "Parse"
-    for t, p in sorted(times_1)[-10:]:
-        print "   ", t, p
-    print "Relaxation"
-    for t, p in sorted(times_2)[-10:]:
-        print "   ", t, p
-    print "Relevance"
-    for t, p in sorted(times_3)[-10:]:
-        print "   ", t, p
-    print "parse + relax"
-    for t, p in sorted(times_sum12)[-10:]:
-        print "   ", t, p
-    print "all"
-    for t, p in sorted(times_sum123)[-10:]:
-        print "   ", t, p
+    filter_test(filenames)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
