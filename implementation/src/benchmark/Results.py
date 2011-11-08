@@ -209,10 +209,10 @@ def loginterpolate(x, min_x, max_x, min_score, max_score):
                               (log(min_x) - log(max_x)) 
                              ) + min_score
     
-def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False):
+def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False, timeout=1800):
     """
     evaluation by scoring function:
-      time: sum of all 'times' logarithmically scaled between 1 second or below (100 points) and 1800 seconds or above (0 points)
+      time: sum of all 'times' logarithmically scaled between 1 second or below (100 points) and timeout seconds or above (0 points)
       coverage: unsolved (0 points) or solved (100 points)
       expansions: number of expansions logarithmically scaled between 100 or below (100 points) and 1000000 or above (0 points)
     """
@@ -223,7 +223,21 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
     warnings = set()
     for i in range(len(names), len(filenames)):
         dirname = os.path.basename(os.path.dirname(filenames[i]))
-        names.append(dirname)
+        if len(dirname) == 1 or dirname == "results":
+            dirname = os.path.basename(os.path.dirname(os.path.dirname(filenames[i])))
+        names.append(" ".join(dirname.split(" - ")))
+
+    # avoid duplicate names
+    uniquenames = []
+    for name in names:
+        if name not in uniquenames:
+            uniquenames.append(name)
+        else:
+            for i in xrange(len(names)):
+                if name + str(i) not in uniquenames:
+                    uniquenames.append(name + str(i))
+                    break
+    names = uniquenames
 
     # domainname -> problemname -> (h, discovered_by)
     new_hplus_values = defaultdict(dict)
@@ -287,6 +301,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                         warnings.add("%s is missing %s_time" % (name, time))
                         continue
                     time_sum += p.get("%s_time" % time, 0)
+                if time_sum >= timeout:
+                    continue
                 expansions = 1000000
                 if p.has("bnb_expansions"):
                     expansions = p.get("bnb_expansions")
@@ -298,7 +314,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                     expansions = p.get("evaluations")
                 else:
                     warnings.add("%s is missing bnb_expansions" % name)
-                problem_time_score = loginterpolate(time_sum, 1, 1800, 0, 100)
+                problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
                 problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
                 time_score_sum += problem_time_score
                 coverage_score_sum += 100
@@ -340,8 +356,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             header = r""
             domainheader = "\n%s (%d tasks)"
             nodomainheader = r""
-            columnheader = r"%-20s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
-            line = r"%-20s    %10.3f    %15.3f    %15.3f"
+            columnheader = r"%-40s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
+            line = r"%-40s    %10.3f    %15.3f    %15.3f"
             footer = r""
         if format == 'textable':
             header = r"""\documentclass{article}
@@ -349,11 +365,11 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
 
 \begin{document}
 \begin{tabular}{lrrr} \toprule
-    %-20s &  %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Coverage score", "Expansion score")
+    %-40s &  %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Coverage score", "Expansion score")
             domainheader = r"    \midrule \multicolumn{4}{l}{%s domain (%d tasks)} \\ \midrule"
             nodomainheader = r"\midrule"
             columnheader = ""
-            line = r"    %-20s &  %10.3f &  %15.3f &  %15.3f \\"
+            line = r"    %-40s &  %10.3f &  %15.3f &  %15.3f \\"
             footer = "    \\bottomrule\n\\end{tabular}\n\\end{document}"
         if header:
             print header
@@ -365,7 +381,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             if columnheader:
                 print columnheader
             for name in names:
-                print line % (name[:20], time_scores[domainname][name], 
+                print line % (name[:40], time_scores[domainname][name], 
                                          coverage_scores[domainname][name],
                                          expansion_scores[domainname][name])
         if footer:
@@ -917,11 +933,11 @@ def print_percentiles(solve_chances):
         print "%f," % (coverage / float(20)),
     print
 
-def print_restart_calculation(solve_times):
+def print_restart_calculation(solve_times, timeout=1800):
     # constant increase
     for const_restart_time in xrange(10, 1801, 10):
-        runs = 1800 / const_restart_time
-        last_run = 1800 % const_restart_time
+        runs = timeout / const_restart_time
+        last_run = timeout % const_restart_time
         solves_run = get_solve_chances(solve_times, timeout=const_restart_time)
         solves_last_run = get_solve_chances(solve_times, timeout=last_run)
         solve_chances = defaultdict(dict)
@@ -1062,7 +1078,18 @@ def filter_test(filenames):
             print "    ", i, d, p
 
 
-def do_custom_stuff(filenames):
+def print_over_timeout(filenames, timeout):
+    for filename in filenames:
+        cut = 0
+        for domainresult in parse_results(filename):
+            for p in domainresult.problemresults:
+                if p.get("h_plus") is not None and p.get("h_plus_time") + p.get("relevance_analysis_time") > timeout:
+                    cut += 1
+        print cut, filename
+
+
+
+def do_custom_stuff(filenames, timeout):
     """
     temporary stuff, for test that are only useful once or twice
     """
@@ -1073,7 +1100,8 @@ def do_custom_stuff(filenames):
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames)
-    filter_test(filenames)
+    # filter_test(filenames)
+    print_over_timeout(filenames, timeout)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
@@ -1083,6 +1111,7 @@ if __name__ == '__main__':
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
     group.add_argument('-pm', '--printmissing')
+    parser.add_argument('-to', '--timeout', type=int, default=1800)
     parser.add_argument('-n', '--names', nargs="+")
     parser.add_argument('-t', '--times', nargs="+")
     parser.add_argument('-d', '--domains', nargs="*")
@@ -1093,11 +1122,11 @@ if __name__ == '__main__':
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
     elif args.compare:
-        compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose)
+        compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose, timeout=float(args.timeout))
     elif args.printstatstics:
         print_averaged_statistics(args.printstatstics, domains=args.domains)
     elif args.custom:
-        do_custom_stuff(args.custom)
+        do_custom_stuff(args.custom, float(args.timeout))
     else:
         printmissingresults(args.printmissing)
 
