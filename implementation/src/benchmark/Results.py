@@ -1022,6 +1022,14 @@ def filter_test(filenames):
                 times["parse + relax"].append((p.get("parse_time") + p.get("relaxation_time"), domainresult.name, p.name))
                 times["preprocess"].append((p.get("relevance_analysis_time") + p.get("parse_time") + p.get("relaxation_time"), domainresult.name, p.name))
 
+
+                assert (p.get("filter_1_name") == "relevance"), str(p.get("filter_1_name"))
+                times["once relevance"].append((float(p.get("filter_1_time")), domainresult.name, p.name))
+                if p.get("filter_2_name") is not None:
+                    assert (p.get("filter_2_name") == "first achiever"), str(p.get("filter_2_name"))
+                    times["once first achiever"].append((float(p.get("filter_2_time")), domainresult.name, p.name))
+
+
                 i = 0
                 it = 0
                 relevance_time = 0
@@ -1059,14 +1067,14 @@ def filter_test(filenames):
         print key
         for t, d, p in sorted(value)[-10:]:
             print "   ", t, d, p
-    print
-    print max_filters
+#    print
+#    print max_filters
 
-    worst = [e for e in times["preprocess"] if e[0] > 10]
-    print "worst preprocess (%d over 10 seconds, %d over 60 seconds)" % (len(worst), len([e for e in worst if e[0] > 60]))
-    for t, d, p in sorted(worst):
-        print "   ", t, d, p
-    print
+#    worst = [e for e in times["preprocess"] if e[0] > 10]
+#    print "worst preprocess (%d over 10 seconds, %d over 60 seconds)" % (len(worst), len([e for e in worst if e[0] > 60]))
+#    for t, d, p in sorted(worst):
+#        print "   ", t, d, p
+#    print
 
     print "%d tasks with 0 iterations" % sum([1 for e in iterations if e[0] == 0])
     print "%d tasks with 1 iterations" % sum([1 for e in iterations if e[0] == 1])
@@ -1100,8 +1108,8 @@ def do_custom_stuff(filenames, timeout):
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames)
-    # filter_test(filenames)
-    print_over_timeout(filenames, timeout)
+    filter_test(filenames)
+    # print_over_timeout(filenames, timeout)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
