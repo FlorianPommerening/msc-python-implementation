@@ -295,29 +295,45 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                         warnings.add("!!! Invalid h+ value for %s - %s: %s said %s but %s said %s" % (
                                      domainname, p.name, old_name, str(old_h), name, str(h)))
                     new_hplus_values[domainname][p.name] = (h, name)
-                time_sum = 0
-                for time in times:
-                    if not p.has("%s_time" % time) and h < float("inf"):
-                        warnings.add("%s is missing %s_time" % (name, time))
+                problem_time_score = None
+                if p.get("time_averaged_over") is not None:
+                    time_averaged_over = set(p.get("time_averaged_over").split())
+                    if time_averaged_over != set(times):
+                        warnings.add("trying to get time score for averaged times [%s] but file has times for [%s]" % (" ".join(times), " ".join(time_averaged_over)))
+                    elif float(p.get("time_averaged_timeout")) != timeout:
+                        warnings.add("trying to get time score for averaged times with timeout %s but file used timeout %s" % (timeout, p.get("time_averaged_timeout")))
+                    problem_time_score = float(p.get("averaged_time_score"))
+                if problem_time_score is None:
+                    time_sum = 0
+                    for time in times:
+                        if not p.has("%s_time" % time) and h < float("inf"):
+                            warnings.add("%s is missing %s_time" % (name, time))
+                            continue
+                        time_sum += p.get("%s_time" % time, 0)
+                    if time_sum >= timeout:
                         continue
-                    time_sum += p.get("%s_time" % time, 0)
-                if time_sum >= timeout:
-                    continue
-                expansions = 1000000
-                if p.has("bnb_expansions"):
-                    expansions = p.get("bnb_expansions")
-                elif h == float("inf"):
-                    expansions = 0
-                elif p.has("expanded"):
-                    expansions = p.get("expanded")
-                elif p.has("evaluations"):
-                    expansions = p.get("evaluations")
+                    problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
+
+                if p.get("averaged_expansion_score") is not None:
+                    problem_expansion_score = float(p.get("averaged_expansion_score"))
                 else:
-                    warnings.add("%s is missing bnb_expansions" % name)
-                problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
-                problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
+                    expansions = 1000000
+                    if p.get("averaged_expansions"):
+                        expansions = float(p.get("averaged_expansions"))
+                    elif p.has("bnb_expansions"):
+                        expansions = p.get("bnb_expansions")
+                    elif h == float("inf"):
+                        expansions = 0
+                    elif p.has("expanded"):
+                        expansions = p.get("expanded")
+                    elif p.has("evaluations"):
+                        expansions = p.get("evaluations")
+                    else:
+                        warnings.add("%s is missing bnb_expansions" % name)
+                    problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
+
                 time_score_sum += problem_time_score
-                coverage_score_sum += 100
+                coverage_score_sum += 100 * float(p.get("solve_chance", 1))
                 expansion_score_sum += problem_expansion_score
                 
                 time_score_plot[domainname][p.name][i] = problem_time_score
@@ -504,6 +520,83 @@ def printmissingresults(filename):
     for domain in sorted(missing.keys()):
         problems = ", ".join(map(str, sorted(missing[domain])))
         print '        "%s":[%s],' % (domain, problems)
+
+
+def average_runs(filenames, times=None, timeout=1800):
+    averaged_results = defaultdict(lambda : defaultdict(lambda: defaultdict(list)))
+    warnings = set()
+    for filename in filenames[:-1]:
+        results = parse_results(filename)
+        for domainresult in results:
+            domainname = domainresult.name
+            for p in domainresult.problemresults:
+                h = p.get("h_plus")
+                if h is None:
+                    time_sum = timeout
+                    problem_time_score = 0
+                    expansions = 1000000
+                    problem_expansion_score = 0
+                else:
+                    time_sum = 0
+                    for time in times:
+                        if not p.has("%s_time" % time) and h != float("inf"):
+                            warnings.add("%s is missing %s_time" % (filename, time))
+                            continue
+                        time_sum += p.get("%s_time" % time, 0)
+                    time_sum = min(time_sum,timeout)
+                    problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
+    
+                    expansions = 1000000
+                    if p.has("bnb_expansions"):
+                        expansions = p.get("bnb_expansions")
+                    elif h == float("inf"):
+                        expansions = 0
+                    elif p.has("expanded"):
+                        expansions = p.get("expanded")
+                    elif p.has("evaluations"):
+                        expansions = p.get("evaluations")
+                    else:
+                        warnings.add("%s is missing bnb_expansions" % filename)
+                    expansions = min(expansions, 1000000)
+                    problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
+                averaged_results[domainname][p.name]["time"].append(problem_time_score)
+                averaged_results[domainname][p.name]["expansions"].append(problem_expansion_score)
+                averaged_results[domainname][p.name]["tries"].append(1)
+                if h is not None and time_sum < timeout:
+                    averaged_results[domainname][p.name]["h_plus"] = h
+                    averaged_results[domainname][p.name]["solves"].append(1)
+    for w in warnings:
+        print w
+
+    outfile = open(filenames[-1], "w")
+    for d, domaindict in sorted(averaged_results.items()):
+        domainresult = DomainResults(d)
+        for p, problemdict in sorted(domaindict.items()):
+            problemresult = ProblemResults(p)
+            domainresult.problemresults.append(problemresult)
+            if problemdict['h_plus']:
+                problemresult.set('h_plus', problemdict['h_plus'])            
+            problemresult.set('averaged_time_score', sum(problemdict['time']) / float(len(problemdict['time'])))
+            problemresult.set('averaged_expansion_score', sum(problemdict['expansions']) / float(len(problemdict['expansions'])))
+            problemresult.set('time_averaged_over', " ".join(times))
+            problemresult.set('time_averaged_timeout', timeout)
+            problemresult.set('solve_chance', len(problemdict['solves']) / float(len(problemdict['tries'])))
+        outfile.write(str(domainresult))
+    outfile.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def add_hplus_to_statistics(filename):
     results = parse_results(filename)
@@ -1119,6 +1212,7 @@ if __name__ == '__main__':
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
     group.add_argument('-pm', '--printmissing')
+    group.add_argument('-a', '--averageruns', nargs="*")
     parser.add_argument('-to', '--timeout', type=int, default=1800)
     parser.add_argument('-n', '--names', nargs="+")
     parser.add_argument('-t', '--times', nargs="+")
@@ -1133,6 +1227,8 @@ if __name__ == '__main__':
         compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose, timeout=float(args.timeout))
     elif args.printstatstics:
         print_averaged_statistics(args.printstatstics, domains=args.domains)
+    elif args.averageruns:
+        average_runs(args.averageruns, args.times, float(args.timeout))
     elif args.custom:
         do_custom_stuff(args.custom, float(args.timeout))
     else:
