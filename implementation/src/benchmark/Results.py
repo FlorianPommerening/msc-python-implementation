@@ -227,31 +227,24 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             dirname = os.path.basename(os.path.dirname(os.path.dirname(filenames[i])))
         names.append(" ".join(dirname.split(" - ")))
 
-    # avoid duplicate names
-    uniquenames = []
-    for name in names:
-        if name not in uniquenames:
-            uniquenames.append(name)
-        else:
-            for i in xrange(len(names)):
-                if name + str(i) not in uniquenames:
-                    uniquenames.append(name + str(i))
-                    break
-    names = uniquenames
+    # name -> [filename run1, filename run2, ...]
+    experiments = defaultdict(list)
+    for name, filename in zip(names, filenames):
+        experiments[name].append(filename)
 
     # domainname -> problemname -> (h, discovered_by)
     new_hplus_values = defaultdict(dict)
     # domainname -> problemname -> (best discovered lower bound, best discovered upper bound) 
     new_hplus_bounds = defaultdict(dict)
-    # domainname -> name -> score
+    # domainname -> filename -> score
     time_scores = defaultdict(dict)
     coverage_scores = defaultdict(dict)
     expansion_scores = defaultdict(dict)
-    # domainname -> problemname -> [score_1, score_2, ..., score_n]
-    time_score_plot = defaultdict(lambda : defaultdict(lambda : [0 for i in xrange(len(filenames))]))
-    expansion_score_plot = defaultdict(lambda : defaultdict(lambda : [0 for i in xrange(len(filenames))]))
+    # domainname -> problemname -> filename -> score
+    time_score_plot_by_filename = defaultdict(lambda : defaultdict(dict))
+    expansion_score_plot_by_filename = defaultdict(lambda : defaultdict(dict))
 
-    for i, (filename, name) in enumerate(zip(filenames, names)): 
+    for i, filename in enumerate(filenames):
         time_score = 0
         coverage_score = 0
         expansion_score = 0
@@ -277,24 +270,24 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                         (old_lower_bound, old_upper_bound) = (0, float("inf"))
                     if new_lower_bound > old_lower_bound or new_upper_bound < old_upper_bound:
                         new_hplus_bounds[domainname][p.name] = (max(old_lower_bound, new_lower_bound), min(old_upper_bound, new_upper_bound))
-                    time_score_plot[domainname][p.name][i] = 0
-                    expansion_score_plot[domainname][p.name][i] = 0
+                    time_score_plot_by_filename[domainname][p.name][filename] = 0
+                    expansion_score_plot_by_filename[domainname][p.name][filename] = 0
                     continue
                 if KNOWN_HPLUS[domainname].has_key(p.name):
                     if KNOWN_HPLUS[domainname][p.name] != h:
                         warnings.add("!!! Invalid h+ value for %s - %s: DB said %s but %s said %s" % (
-                                     domainname, p.name, str(KNOWN_HPLUS[domainname][p.name]), name, str(h)))
+                                     domainname, p.name, str(KNOWN_HPLUS[domainname][p.name]), filename, str(h)))
                 else: # h+ not known yet
                     if UNKNOWN_HPLUS[domainname].has_key(p.name):
                         (best_lower_bound, best_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
                         if h < best_lower_bound or h > best_upper_bound:
                             warnings.add("!!! Invalid h+ value for %s - %s: DB said (%s, %s) but %s said %s" % (
-                                         domainname, p.name, str(best_lower_bound), str(best_upper_bound), name, str(h)))
+                                         domainname, p.name, str(best_lower_bound), str(best_upper_bound), filename, str(h)))
                     if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
                         old_h, old_name = new_hplus_values[domainname][p.name]
                         warnings.add("!!! Invalid h+ value for %s - %s: %s said %s but %s said %s" % (
-                                     domainname, p.name, old_name, str(old_h), name, str(h)))
-                    new_hplus_values[domainname][p.name] = (h, name)
+                                     domainname, p.name, old_name, str(old_h), filename, str(h)))
+                    new_hplus_values[domainname][p.name] = (h, filename)
                 problem_time_score = None
                 if p.get("time_averaged_over") is not None:
                     time_averaged_over = set(p.get("time_averaged_over").split())
@@ -307,10 +300,12 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                     time_sum = 0
                     for time in times:
                         if not p.has("%s_time" % time) and h < float("inf"):
-                            warnings.add("%s is missing %s_time" % (name, time))
+                            warnings.add("%s is missing %s_time" % (filename, time))
                             continue
                         time_sum += p.get("%s_time" % time, 0)
                     if time_sum >= timeout:
+                        time_score_plot_by_filename[domainname][p.name][filename] = 0
+                        expansion_score_plot_by_filename[domainname][p.name][filename] = 0
                         continue
                     problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
 
@@ -329,31 +324,31 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                     elif p.has("evaluations"):
                         expansions = p.get("evaluations")
                     else:
-                        warnings.add("%s is missing bnb_expansions" % name)
+                        warnings.add("%s is missing bnb_expansions" % filename)
                     problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
 
                 time_score_sum += problem_time_score
                 coverage_score_sum += 100 * float(p.get("solve_chance", 1))
                 expansion_score_sum += problem_expansion_score
                 
-                time_score_plot[domainname][p.name][i] = problem_time_score
-                expansion_score_plot[domainname][p.name][i] = problem_expansion_score
+                time_score_plot_by_filename[domainname][p.name][filename] = problem_time_score
+                expansion_score_plot_by_filename[domainname][p.name][filename] = problem_expansion_score
             domainsize = domain_size(domainname) 
             time_score += time_score_sum / float(domainsize)    
             coverage_score += coverage_score_sum / float(domainsize)
             expansion_score += expansion_score_sum / float(domainsize)    
             if domains is not None:
-                time_scores[domainname][name] = time_score
-                coverage_scores[domainname][name] = coverage_score
-                expansion_scores[domainname][name] = expansion_score
+                time_scores[domainname][filename] = time_score
+                coverage_scores[domainname][filename] = coverage_score
+                expansion_scores[domainname][filename] = expansion_score
                 time_score = 0
                 coverage_score = 0
                 expansion_score = 0
         if domains is None:
             nDomains = len(results)
-            time_scores["all"][name] = time_score / float(nDomains)
-            coverage_scores["all"][name] = coverage_score / float(nDomains)
-            expansion_scores["all"][name] = expansion_score / float(nDomains)
+            time_scores["all"][filename] = time_score / float(nDomains)
+            coverage_scores["all"][filename] = coverage_score / float(nDomains)
+            expansion_scores["all"][filename] = expansion_score / float(nDomains)
     for warning in sorted(warnings):
         print warning
     for domainname, problems in sorted(new_hplus_values.items()):
@@ -367,49 +362,136 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         print "New h+ bounds in '%s':" % domainname
         for problem, (lower, upper) in sorted(unknown_problems.items()):
             print "            '%s':(%s,%s)," % (problem, str(int(lower)), 'float("inf")' if upper == float("inf") else str(int(upper)))
+
+    # domainname -> experimentname -> score
+    averaged_time_scores = defaultdict(dict)
+    averaged_coverage_scores = defaultdict(dict)
+    averaged_expansion_scores = defaultdict(dict)
+    variance_time_scores = defaultdict(dict)
+    variance_coverage_scores = defaultdict(dict)
+    variance_expansion_scores = defaultdict(dict)
+    has_variances = False
+    for domainname in time_scores.keys():
+        for name, runs in experiments.items():
+            run_time_scores = [time_scores[domainname][filename] for filename in runs]
+            time_average = sum(run_time_scores) / float(len(runs))
+            averaged_time_scores[domainname][name] = time_average
+            run_coverage_scores = [coverage_scores[domainname][filename] for filename in runs]
+            coverage_average = sum(run_coverage_scores) / float(len(runs))
+            averaged_coverage_scores[domainname][name] = coverage_average
+            run_expansion_scores = [expansion_scores[domainname][filename] for filename in runs]
+            expansion_average = sum(run_expansion_scores) / float(len(runs))
+            averaged_expansion_scores[domainname][name] = expansion_average
+
+            if len(runs) == 1:
+                variance_time_scores[domainname][name] = "-"
+                variance_coverage_scores[domainname][name] = "-"
+                variance_expansion_scores[domainname][name] = "-"
+            else: # (x_i - mu)^2 / (n-1)
+                has_variances = True
+                variance_time_scores[domainname][name] = "%5.3f" % ((sum([(t - time_average) **2 for t in run_time_scores])) / float(len(runs) -1))
+                variance_coverage_scores[domainname][name] = "%5.3f" % ((sum([(t - coverage_average) **2 for t in run_coverage_scores])) / float(len(runs) -1))
+                variance_expansion_scores[domainname][name] = "%5.3f" % ((sum([(t - expansion_average) **2 for t in run_expansion_scores])) / float(len(runs) -1))
+
+    first_exp_name = names[0]
+    for name in names:
+        if name != first_exp_name:
+            second_exp_name = name
+            break
+    else:
+        second_exp_name = first_exp_name
+        print "only one experiment, nothing to compare"
+
+    # domainname -> problemname -> [averaged score exp1, averaged score exp2]
+    time_score_plot_averaged = defaultdict(lambda : defaultdict(list))
+    for d, domain_scores_filename in time_score_plot_by_filename.items():
+        for p, problem_scores_filename in domain_scores_filename.items():
+            for name in (first_exp_name, second_exp_name):
+                run_scores = [time_score_plot_by_filename[d][p][f] for f in experiments[name]]
+                time_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+    expansion_score_plot_averaged = defaultdict(lambda : defaultdict(list))
+    for d, domain_scores_filename in expansion_score_plot_by_filename.items():
+        for p, problem_scores_filename in domain_scores_filename.items():
+            for name in (first_exp_name, second_exp_name):
+                run_scores = [expansion_score_plot_by_filename[d][p][f] for f in experiments[name]]
+                expansion_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+
+
+
     if format == 'console' or format == 'textable':
         if format == 'console':
             header = r""
             domainheader = "\n%s (%d tasks)"
             nodomainheader = r""
-            columnheader = r"%-40s    %10s    %15s    %15s" % ("Name", "Time score", "Coverage score", "Expansion score")
-            line = r"%-40s    %10.3f    %15.3f    %15.3f"
+            if has_variances:
+                columnheader = "%-40s %13s     %13s  %13s\n%-40s   %-6s %6s   %-6s %6s    %-6s %6s" % ("", "Time score", "Expansion score", "Coverage score", "Name", "mu", "sigma", "mu", "sigma", "mu", "sigma")
+                line = r"%-40.40s   %5.3f %6s   %5.3f %6s    %5.3f %6s"
+            else:
+                columnheader = r"%-40s    %10s    %15s    %15s" % ("Name", "Time score", "Expansion score", "Coverage score")
+                line = r"%-40.40s    %10.3f    %15.3f    %15.3f"
             footer = r""
         if format == 'textable':
-            header = r"""\documentclass{article}
+            if has_variances:
+                header = r"""\documentclass{article}
 \usepackage{booktabs}
 
 \begin{document}
-\begin{tabular}{lrrr} \toprule
-    %-40s &  %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Coverage score", "Expansion score")
-            domainheader = r"    \midrule \multicolumn{4}{l}{%s domain (%d tasks)} \\ \midrule"
+\begin{tabular}{@{}p{0.3\textwidth}rrrrrr@{}} \toprule
+    &  \multicolumn{2}{c}{%13s}
+    &  \multicolumn{2}{c}{%13s}
+    &  \multicolumn{2}{c}{%13s} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}
+    %s &
+        %-6s  & %-6s  & %-6s  & %-6s  & %-6s  & %-6s  \\""" % ("Time score", "Expansion score", "Coverage score", "Name", "$\\mu$", "$\\sigma$", "$\\mu$", "$\\sigma$", "$\\mu$", "$\\sigma$")
+                domainheader = r"    \midrule \multicolumn{7}{l}{%s domain (%d tasks)} \\ \midrule"
+                line   = r"""    %s & 
+        %5.3f  & %6s    & %5.3f  & %6s    & %5.3f  & %6s    \\"""
+            else:
+                header = r"""\documentclass{article}
+\usepackage{booktabs}
+
+\begin{document}
+\begin{tabular}{@{}p{0.5\textwidth}rrr@{}} \toprule
+    %s &
+        %10s &  %15s &  %15s \\""" % ("Name", "Time score", "Expansion score", "Coverage score")
+                domainheader = r"    \midrule \multicolumn{4}{l}{%s domain (%d tasks)} \\ \midrule"
+                line   = r"""    %s &
+        %10.3f &  %10.3f &  %15.3f \\"""
+
+
             nodomainheader = r"\midrule"
             columnheader = ""
-            line = r"    %-40s &  %10.3f &  %15.3f &  %15.3f \\"
             footer = "    \\bottomrule\n\\end{tabular}\n\\end{document}"
         if header:
             print header
-        for domainname in sorted(time_scores.iterkeys()):
+        for domainname in sorted(averaged_time_scores.iterkeys()):
             if domainname != "all":
                 print domainheader % (domainname, domain_size(domainname))
             elif nodomainheader:
                 print nodomainheader
             if columnheader:
                 print columnheader
-            for name in names:
-                print line % (name[:40], time_scores[domainname][name], 
-                                         coverage_scores[domainname][name],
-                                         expansion_scores[domainname][name])
+            for name in sorted(experiments.keys()):
+                if has_variances:
+                    print line % (name, averaged_time_scores[domainname][name], variance_time_scores[domainname][name],
+                                        averaged_expansion_scores[domainname][name], variance_expansion_scores[domainname][name],
+                                        averaged_coverage_scores[domainname][name], variance_coverage_scores[domainname][name])
+                else:
+                    print line % (name, averaged_time_scores[domainname][name], 
+                                        averaged_expansion_scores[domainname][name],
+                                        averaged_coverage_scores[domainname][name])
         if footer:
             print footer
 
     elif format == 'texplottime' or format == 'texplotexpansions':
+        if len(experiments.keys()) > 2:
+            print "more than 2 experiments, plotting %s and %s" % (first_exp_name, second_exp_name)
         if format == 'texplottime':
             heading = "Time score"
-            data = time_score_plot
+            data = time_score_plot_averaged
         elif format == 'texplotexpansions':
             heading = "Expansion score"
-            data = expansion_score_plot
+            data = expansion_score_plot_averaged
 
         # bining of data
         binsize = [[0 for _ in xrange(101)] for _ in xrange(101)]
@@ -447,7 +529,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
   \end{axis}
 \end{tikzpicture}
 \end{document}
-""" % ('Time scores' if format == 'texplottime' else 'Expansion scores', names[0], names[1]))
+""" % ('Time scores' if format == 'texplottime' else 'Expansion scores', first_exp_name, second_exp_name))
         tex_file.close()
         shutil.copy('plot.data', tmpdir + '/plot.data')
         owd = os.getcwd()
@@ -455,7 +537,7 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         print "Compiling scatter plot"
         subprocess.call(['pdflatex', 'scatterplot.tex'], stdout=fnull, stderr=fnull)
         plotname = 'time' if format == 'texplottime' else 'expansions'
-        plotname += '_%s_%s_' % (names[0].split()[0], names[1].split()[0])
+        plotname += '_%s_%s_' % (first_exp_name.split()[0], second_exp_name.split()[0])
         if len(data) == 20:
             plotname += "_ALL"
         else:
@@ -520,83 +602,6 @@ def printmissingresults(filename):
     for domain in sorted(missing.keys()):
         problems = ", ".join(map(str, sorted(missing[domain])))
         print '        "%s":[%s],' % (domain, problems)
-
-
-def average_runs(filenames, times=None, timeout=1800):
-    averaged_results = defaultdict(lambda : defaultdict(lambda: defaultdict(list)))
-    warnings = set()
-    for filename in filenames[:-1]:
-        results = parse_results(filename)
-        for domainresult in results:
-            domainname = domainresult.name
-            for p in domainresult.problemresults:
-                h = p.get("h_plus")
-                if h is None:
-                    time_sum = timeout
-                    problem_time_score = 0
-                    expansions = 1000000
-                    problem_expansion_score = 0
-                else:
-                    time_sum = 0
-                    for time in times:
-                        if not p.has("%s_time" % time) and h != float("inf"):
-                            warnings.add("%s is missing %s_time" % (filename, time))
-                            continue
-                        time_sum += p.get("%s_time" % time, 0)
-                    time_sum = min(time_sum,timeout)
-                    problem_time_score = loginterpolate(time_sum, 1, timeout, 0, 100)
-    
-                    expansions = 1000000
-                    if p.has("bnb_expansions"):
-                        expansions = p.get("bnb_expansions")
-                    elif h == float("inf"):
-                        expansions = 0
-                    elif p.has("expanded"):
-                        expansions = p.get("expanded")
-                    elif p.has("evaluations"):
-                        expansions = p.get("evaluations")
-                    else:
-                        warnings.add("%s is missing bnb_expansions" % filename)
-                    expansions = min(expansions, 1000000)
-                    problem_expansion_score = loginterpolate(expansions, 100, 1000000, 0, 100)
-                averaged_results[domainname][p.name]["time"].append(problem_time_score)
-                averaged_results[domainname][p.name]["expansions"].append(problem_expansion_score)
-                averaged_results[domainname][p.name]["tries"].append(1)
-                if h is not None and time_sum < timeout:
-                    averaged_results[domainname][p.name]["h_plus"] = h
-                    averaged_results[domainname][p.name]["solves"].append(1)
-    for w in warnings:
-        print w
-
-    outfile = open(filenames[-1], "w")
-    for d, domaindict in sorted(averaged_results.items()):
-        domainresult = DomainResults(d)
-        for p, problemdict in sorted(domaindict.items()):
-            problemresult = ProblemResults(p)
-            domainresult.problemresults.append(problemresult)
-            if problemdict['h_plus']:
-                problemresult.set('h_plus', problemdict['h_plus'])            
-            problemresult.set('averaged_time_score', sum(problemdict['time']) / float(len(problemdict['time'])))
-            problemresult.set('averaged_expansion_score', sum(problemdict['expansions']) / float(len(problemdict['expansions'])))
-            problemresult.set('time_averaged_over', " ".join(times))
-            problemresult.set('time_averaged_timeout', timeout)
-            problemresult.set('solve_chance', len(problemdict['solves']) / float(len(problemdict['tries'])))
-        outfile.write(str(domainresult))
-    outfile.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def add_hplus_to_statistics(filename):
     results = parse_results(filename)
