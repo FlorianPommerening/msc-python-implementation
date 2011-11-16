@@ -4,7 +4,7 @@ from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
 
 import sys, argparse, os, tempfile, shutil, subprocess, re
-from math import log, exp
+from math import log, exp, sqrt
 from random import random
 
 class DomainResults:
@@ -367,9 +367,9 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
     averaged_time_scores = defaultdict(dict)
     averaged_coverage_scores = defaultdict(dict)
     averaged_expansion_scores = defaultdict(dict)
-    variance_time_scores = defaultdict(dict)
-    variance_coverage_scores = defaultdict(dict)
-    variance_expansion_scores = defaultdict(dict)
+    std_dev_time_scores = defaultdict(dict)
+    std_dev_coverage_scores = defaultdict(dict)
+    std_dev_expansion_scores = defaultdict(dict)
     has_variances = False
     for domainname in time_scores.keys():
         for name, runs in experiments.items():
@@ -384,14 +384,14 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
             averaged_expansion_scores[domainname][name] = expansion_average
 
             if len(runs) == 1:
-                variance_time_scores[domainname][name] = "-"
-                variance_coverage_scores[domainname][name] = "-"
-                variance_expansion_scores[domainname][name] = "-"
+                std_dev_time_scores[domainname][name] = "-"
+                std_dev_coverage_scores[domainname][name] = "-"
+                std_dev_expansion_scores[domainname][name] = "-"
             else: # (x_i - mu)^2 / (n-1)
                 has_variances = True
-                variance_time_scores[domainname][name] = "%5.3f" % ((sum([(t - time_average) **2 for t in run_time_scores])) / float(len(runs) -1))
-                variance_coverage_scores[domainname][name] = "%5.3f" % ((sum([(t - coverage_average) **2 for t in run_coverage_scores])) / float(len(runs) -1))
-                variance_expansion_scores[domainname][name] = "%5.3f" % ((sum([(t - expansion_average) **2 for t in run_expansion_scores])) / float(len(runs) -1))
+                std_dev_time_scores[domainname][name] = "%5.3f" % sqrt((sum([(t - time_average) **2 for t in run_time_scores])) / float(len(runs) -1))
+                std_dev_coverage_scores[domainname][name] = "%5.3f" % sqrt((sum([(t - coverage_average) **2 for t in run_coverage_scores])) / float(len(runs) -1))
+                std_dev_expansion_scores[domainname][name] = "%5.3f" % sqrt((sum([(t - expansion_average) **2 for t in run_expansion_scores])) / float(len(runs) -1))
 
     first_exp_name = names[0]
     for name in names:
@@ -473,9 +473,9 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 print columnheader
             for name in sorted(experiments.keys()):
                 if has_variances:
-                    print line % (name, averaged_time_scores[domainname][name], variance_time_scores[domainname][name],
-                                        averaged_expansion_scores[domainname][name], variance_expansion_scores[domainname][name],
-                                        averaged_coverage_scores[domainname][name], variance_coverage_scores[domainname][name])
+                    print line % (name, averaged_time_scores[domainname][name], std_dev_time_scores[domainname][name],
+                                        averaged_expansion_scores[domainname][name], std_dev_expansion_scores[domainname][name],
+                                        averaged_coverage_scores[domainname][name], std_dev_coverage_scores[domainname][name])
                 else:
                     print line % (name, averaged_time_scores[domainname][name], 
                                         averaged_expansion_scores[domainname][name],
