@@ -353,15 +353,19 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         print warning
     for domainname, problems in sorted(new_hplus_values.items()):
         print "New h+ values in '%s':" % domainname
-        for problem, (h, _) in sorted(problems.items()):
+        sortable_problems = [(re.findall("probfreecell", p), map(int, re.findall(r"\d+", p)), p, h) for (p, (h, _)) in problems.items()]
+        for _, _, problem, h in sorted(sortable_problems):
             print "            '%s':%s," % (problem, h)
     for domainname, problems in sorted(new_hplus_bounds.items()):
         unknown_problems = {pname:bound for (pname,bound) in problems.items() if not KNOWN_HPLUS[domainname].has_key(pname)}
         if not unknown_problems:
             continue
         print "New h+ bounds in '%s':" % domainname
-        for problem, (lower, upper) in sorted(unknown_problems.items()):
+        print "        '%s':{" % domainname
+        sortable_problems = [(re.findall("probfreecell", p), map(int, re.findall(r"\d+", p)), p, l, u) for (p, (l, u)) in unknown_problems.items()]
+        for _, _, problem, lower, upper in sorted(sortable_problems):
             print "            '%s':(%s,%s)," % (problem, str(int(lower)), 'float("inf")' if upper == float("inf") else str(int(upper)))
+        print "        },"
 
     # domainname -> experimentname -> score
     averaged_time_scores = defaultdict(dict)
