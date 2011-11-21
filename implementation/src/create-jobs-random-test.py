@@ -13,7 +13,7 @@ queue = "athlon_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '1:00:0'
+timeout = '0:30:0'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -35,8 +35,12 @@ configurations = {
 benchmarks = {}
 dirs = set()
 for (domainname, paths) in problem_subset(problems={
-'logistics98': ['prob26'],
-'pipesworld-notankage': ['p37-net4-b20-g5'],
+      'driverlog': ['pfile15'],
+      'logistics98': ['prob13', 'prob26'],
+      'mprime': ['prob10'],
+      'mystery': ['prob13'],
+      'pipesworld-tankage': ['p06-net1-b10-g6-t50','p17-net2-b16-g5-t20'],
+      'tpp': ['p23', 'p24'],
 }):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]

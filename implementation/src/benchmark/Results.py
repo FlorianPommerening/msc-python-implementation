@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-from problem_suites import LMCUT_SUITE, domain_size
+from problem_suites import LMCUT_SUITE, domain_size, ZERO_COST_SUITE
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
 from collections import defaultdict
 
@@ -232,6 +232,15 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
     for name, filename in zip(names, filenames):
         experiments[name].append(filename)
 
+    first_exp_name = names[0]
+    for name in names:
+        if name != first_exp_name:
+            second_exp_name = name
+            break
+    else:
+        second_exp_name = first_exp_name
+        print "only one experiment, nothing to compare"
+
     # domainname -> problemname -> (h, discovered_by)
     new_hplus_values = defaultdict(dict)
     # domainname -> problemname -> (best discovered lower bound, best discovered upper bound) 
@@ -397,25 +406,31 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 std_dev_coverage_scores[domainname][name] = "%5.3f" % sqrt((sum([(t - coverage_average) **2 for t in run_coverage_scores])) / float(len(runs) -1))
                 std_dev_expansion_scores[domainname][name] = "%5.3f" % sqrt((sum([(t - expansion_average) **2 for t in run_expansion_scores])) / float(len(runs) -1))
 
-    first_exp_name = names[0]
-    for name in names:
-        if name != first_exp_name:
-            second_exp_name = name
-            break
-    else:
-        second_exp_name = first_exp_name
-        print "only one experiment, nothing to compare"
-
     # domainname -> problemname -> [averaged score exp1, averaged score exp2]
     time_score_plot_averaged = defaultdict(lambda : defaultdict(list))
+    compare_domains = defaultdict(set)
+    compatible = True
     for d, domain_scores_filename in time_score_plot_by_filename.items():
         for p, problem_scores_filename in domain_scores_filename.items():
+            if time_score_plot_by_filename[d][p].has_key(experiments[first_exp_name][0]):
+                compare_domains[d].add(p)
+                for name in (first_exp_name, second_exp_name):
+                    for f in experiments[name]:
+                        if not time_score_plot_by_filename[d][p].has_key(f):
+                            compatible = False
+    if not compatible:
+        print "Experiments use different domains and may not be comparable."
+    for d, compare_tasks in compare_domains.items():
+        for p in compare_tasks:
             for name in (first_exp_name, second_exp_name):
-                run_scores = [time_score_plot_by_filename[d][p][f] for f in experiments[name]]
+                run_scores = []
+                for f in experiments[name]:
+                    if time_score_plot_by_filename[d][p].has_key(f):
+                        run_scores.append(time_score_plot_by_filename[d][p][f])
                 time_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
     expansion_score_plot_averaged = defaultdict(lambda : defaultdict(list))
-    for d, domain_scores_filename in expansion_score_plot_by_filename.items():
-        for p, problem_scores_filename in domain_scores_filename.items():
+    for d, compare_tasks in compare_domains.items():
+        for p in compare_tasks:
             for name in (first_exp_name, second_exp_name):
                 run_scores = [expansion_score_plot_by_filename[d][p][f] for f in experiments[name]]
                 expansion_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
@@ -816,6 +831,9 @@ def print_ida_layer_evaluation(filenames):
     outfile.close()
 
 def sort_expansion_limit_files(filenames):
+    for directory in ("limit", "no-search", "done", "error"):
+        if not os.path.exists(directory):
+            os.mkdir(directory)
     times_per_expansions = defaultdict(list)
     for filename in filenames:        
         results = parse_results(filename)
@@ -826,16 +844,16 @@ def sort_expansion_limit_files(filenames):
         if float(p.get("bnb_expansions",0)) > 1:
             times_per_expansions[results[0].name].append(time_spent / float(p.get("bnb_expansions")))
         if p.get("error") == "Exceeded expansion limit of 10000":
-            shutil.copy(filename, "limit")
+            shutil.move(filename, "limit")
         elif p.get("error") is None:
             if p.get("bnb_expansions") == 0:
-                shutil.copy(filename, "no-search")
+                shutil.move(filename, "no-search")
             else:
-                shutil.copy(filename, "done")
+                shutil.move(filename, "done")
         else:
-            shutil.copy(filename, "error")
+            shutil.move(filename, "error")
     for d in sorted(times_per_expansions.keys()):
-        print d, " ".join(map(str,times_per_expansions[d]))
+        print d, "%.3f" % (sum(times_per_expansions[d]) / float(len(times_per_expansions[d]))), "%.3f" % max(times_per_expansions[d])
 
 
 def generate_expansion_histogram(filenames):
@@ -918,10 +936,10 @@ def lost_gained_problems(filenames):
     for d in sorted(lost.keys()):
         for p in sorted(lost[d]):
             print "  %s %s" % (d, p)
-    print "Unsolved but known h^+ value:"
-    for d in sorted(unsolved_known.keys()):
-        for p in sorted(unsolved_known[d]):
-            print "  %s %s" % (d, p)
+#    print "Unsolved but known h^+ value:"
+#    for d in sorted(unsolved_known.keys()):
+#        for p in sorted(unsolved_known[d]):
+#            print "  %s %s" % (d, p)
         
 def list_nontrivial_problems(filenames):
     trivial = defaultdict(list)
@@ -998,6 +1016,31 @@ def list_nontrivial_problems(filenames):
     print "unsolved", sum([len(e) for e in unsolved_numbers.values()]), 835 - sum([len(e) for e in KNOWN_HPLUS.values()]), unsolved_numbers
     print
     print "Best case coverage without unsolved", coverage_score
+
+def get_not_always_solved_or_unsolved(filenames, timeout):
+    always_solved = set()
+    never_solved = set()
+    sometimes_solved = set()
+    for filename in filenames:
+        results = parse_results(filename)
+        for domainresults in results:
+            domainname = domainresults.name
+            for p in domainresults.problemresults:
+                problemname = p.name
+                if p.get("h_plus") and p.get("h_plus_time") + p.get("relevance_analysis_time") < timeout:
+                    if (domainname, problemname) in never_solved:
+                        never_solved.remove((domainname, problemname))
+                        sometimes_solved.add((domainname, problemname))
+                    else:
+                        always_solved.add((domainname, problemname))
+                else:
+                    if (domainname, problemname) in always_solved:
+                        always_solved.remove((domainname, problemname))
+                        sometimes_solved.add((domainname, problemname))
+                    else:
+                        never_solved.add((domainname, problemname))
+    for (d,p) in sorted(sometimes_solved):
+        print d,p
 
 def get_solve_times(filenames):
     solve_times = defaultdict(lambda : defaultdict(list))
@@ -1207,10 +1250,11 @@ def do_custom_stuff(filenames, timeout):
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
+    get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames)
-    filter_test(filenames)
+    # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
     
 if __name__ == '__main__':

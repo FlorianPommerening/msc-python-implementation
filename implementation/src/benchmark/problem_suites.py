@@ -38,9 +38,14 @@ LMCUT_SUITE = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))
                  'psr-small', 'rovers', 'tpp', 'trucks-strips', 'zenotravel']
               ]
 
+ZERO_COST_SUITE = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
+                    for domainname in
+                    ['sokoban-opt08-strips', 'pegsol-08-strips', 'openstacks-opt08-strips']
+                  ]
+
 def domain_size(domainname, problem_suite=None):
     if problem_suite is None:
-        problem_suite = LMCUT_SUITE
+        return domain_size(domainname, LMCUT_SUITE) or domain_size(domainname, ZERO_COST_SUITE)
     for (d, problems) in problem_suite:
         if (d == domainname):
             return len(problems)
