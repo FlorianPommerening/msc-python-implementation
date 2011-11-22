@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 from problem_suites import LMCUT_SUITE, domain_size, ZERO_COST_SUITE
-from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS
+from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS, KNOWN_HPLUS_FLO, UNKNOWN_HPLUS_FLO
 from collections import defaultdict
 
 import sys, argparse, os, tempfile, shutil, subprocess, re
@@ -1250,13 +1250,52 @@ def do_custom_stuff(filenames, timeout):
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
-    get_not_always_solved_or_unsolved(filenames, timeout)
+    # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
-    
+    nNoSearch = 0
+    nPerfect = 0
+    nAlmostPerfect = 0
+    nLMcutPerfect = 0
+    nLMcutAlmostPerfect = 0
+    initial_upper_bound = defaultdict(dict)
+    for domainresult in parse_results(filenames[0]):
+        for p in domainresult.problemresults:
+            initial_plan_cost = float(p.get("initial_plan_cost", "inf"))
+            optimized_initial_plan_cost = float(p.get("optimized_initial_plan_cost", initial_plan_cost))
+            lmcut = p.get("lmcut", 0)
+            if p.get("h_plus") == float("inf"):
+                initial_plan_cost = float("inf")
+                optimized_initial_plan_cost = float("inf")
+            initial_upper_bound[domainresult.name][p.name] = optimized_initial_plan_cost
+    for domainresult in parse_results(filenames[1]):
+        for p in domainresult.problemresults:
+            optimized_initial_plan_cost = initial_upper_bound[domainresult.name][p.name]
+            lmcut = p.get("h_lmcut", 0)
+            assert lmcut > 0, (domainresult.name, p.name)
+            if p.get("h_plus") == float("inf"):
+                lmcut = float("inf")
+            hplus = KNOWN_HPLUS[domainresult.name].get(p.name, "UNKOWN")
+            if lmcut == optimized_initial_plan_cost:
+                nNoSearch += 1
+            if hplus == optimized_initial_plan_cost:
+                nPerfect += 1
+            if hplus == optimized_initial_plan_cost -1:
+                nAlmostPerfect += 1
+            if lmcut == hplus:
+                nLMcutPerfect += 1
+            if lmcut+1 == hplus:
+                nLMcutAlmostPerfect += 1
+    print "both perfect", nNoSearch
+    print "upper bound perfect", nPerfect
+    print "upper bound almost perfect", nAlmostPerfect
+    print "lower bound perfect", nLMcutPerfect
+    print "lower bound almost perfect", nLMcutAlmostPerfect
+    print "unknown h^+", sum([len(bounds) for (_, bounds) in UNKNOWN_HPLUS.items()])
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
