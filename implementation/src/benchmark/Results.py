@@ -523,13 +523,13 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         plotfile.write("# %s\n" % heading)
         for (domainname, domain_scores) in sorted(data.iteritems()):
             plotfile.write("# %s domain\n" % domainname)
-            for (_, scores) in sorted(domain_scores.iteritems()):
+            for (problemname, scores) in sorted(domain_scores.iteritems()):
                 neighbors = binsize[int(scores[0])][int(scores[1])]
                 if neighbors > 1:
                     print_scores = [max(0, min(100, int(scores[0]) + random() -0.5)), max(0, min(100, int(scores[1]) + random() -0.5))]
                 else:
                     print_scores = [int(scores[0]), int(scores[1])]
-                plotfile.write(" ".join(map(str, print_scores + [neighbors])) + '\n')
+                plotfile.write('#%s\n' % problemname + " ".join(map(str, print_scores + [neighbors])) + '\n')
         fnull = open(os.devnull, 'w')
         plotfile.close()
         tmpdir = tempfile.mkdtemp()
