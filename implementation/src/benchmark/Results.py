@@ -767,67 +767,97 @@ def print_initial_node_statistics(filenames):
     outfile.close()
 
 def print_ida_layer_evaluation(filenames):
-    results = parse_results(filenames[0])
-    outfile = open(filenames[1], 'w')
+    
+    # domain -> problem -> (all_expansions_list, last_layer_percentage_list, second_to_last_layer_percentage_list, other_layers_percentage_list)
+    expansions = defaultdict(lambda : defaultdict(lambda : ([], [], [], [])))
+
+    for filename in filenames[:-1]:
+        for domainresults in parse_results(filename):
+            domainname = domainresults.name
+            for p in domainresults.problemresults:
+                problemname = p.name
+                if p.get("error") is not None or p.get("h_plus") == float("inf"):
+                    continue
+                all_expansions = float(p.get("bnb_expansions"))
+                last_layer_expansions = float(p.get("bnb_expansions_last_layer"))
+                second_to_last_layer_expansions = float(p.get("bnb_expansions_second_to_last_layer"))
+                other_expansions = all_expansions - (last_layer_expansions + second_to_last_layer_expansions)
+                if all_expansions is None:
+                    print domainname, problemname
+                if all_expansions <= 100 or other_expansions == 0:
+                    continue
+                print domainname, problemname
+                print int(last_layer_expansions), int(second_to_last_layer_expansions), int(other_expansions)
+                expansions[domainname][problemname][0].append(all_expansions)
+                expansions[domainname][problemname][1].append(last_layer_expansions / all_expansions)
+                expansions[domainname][problemname][2].append(second_to_last_layer_expansions / all_expansions)
+                expansions[domainname][problemname][3].append(other_expansions / all_expansions)
+
+    outfile = open(filenames[-1], 'w')
     outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
 \usepackage{tikz}
+\usetikzlibrary{calc}
 \usepackage{pgfplots}
 
 \begin{document}
+  \begin{tikzpicture}
+  \matrix{
 """)
-    # outfile.write("domain, problem, lmcut, initial_plan, optimized_initial_plan, hplus, hplus_lower_bound, hplus_upper_bound\n")
-    for domainresults in results:
-        domainname = domainresults.name
+    for i,(d, domainexpansions) in enumerate(sorted(expansions.items())):
         last_layer_percentages = []
         second_to_last_layer_percentages = []
         other_layers_percentages = []
         all_layers_scores = []
-        errors = []
-        for p in domainresults.problemresults:
-            problemname = p.name
-            if p.get("error") is not None or p.get("h_plus") == float("inf"):
-                last_layer_percentages.append(0)
-                second_to_last_layer_percentages.append(0)
-                other_layers_percentages.append(0)
-                all_layers_scores.append(1)
-                errors.append(1)
-                continue
-            all_expansions = p.get("bnb_expansions")
-            if all_expansions is None:
-                print domainname, problemname
-            last_layer_percentages.append(float(p.get("bnb_expansions_last_layer")) / float(all_expansions))
-            second_to_last_layer_percentages.append(float(p.get("bnb_expansions_second_to_last_layer")) / float(all_expansions))
-            other_layers_percentages.append((float(all_expansions) - (float(p.get("bnb_expansions_last_layer")) + float(p.get("bnb_expansions_second_to_last_layer")))) / float(all_expansions))
+        for p, (all_expansions_list, last_layer_percentage_list, second_to_last_layer_percentage_list, other_layers_percentage_list) in sorted(domainexpansions.items()):
+            all_expansions = sum(all_expansions_list) / float(len(all_expansions_list))
+            last_layer_percentage = sum(last_layer_percentage_list) / float(len(last_layer_percentage_list))
+            second_to_last_layer_percentage = sum(second_to_last_layer_percentage_list) / float(len(second_to_last_layer_percentage_list))
+            other_layers_percentage = sum(other_layers_percentage_list) / float(len(other_layers_percentage_list))
+
+            last_layer_percentages.append(last_layer_percentage)
+            second_to_last_layer_percentages.append(second_to_last_layer_percentage)
+            other_layers_percentages.append(other_layers_percentage)
             all_layers_scores.append(100 - loginterpolate(float(all_expansions), 100, 1000000, 0, 100))
-            errors.append(0)
 
+        if i == 0:
+            plotheight = (len(all_layers_scores)+2)*3 + 50
+            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, xticklabel pos=right"
+        elif i == len(expansions.items()) -1:
+            plotheight = (len(all_layers_scores)+2)*3 + 50
+            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, "
+        else:
+            plotheight = (len(all_layers_scores)+2)*3 + 50
+            xticks = "xticklabels=\empty, x tick label style={above}"
         outfile.write(r"""
-  Domain: %s\\
-  \begin{tabular}{llll}
-    Average \%% & last layer & second to last layer & other layers  \\ \hline
-                & %s         & %s                   & %s
-  \end{tabular}
-
-  \noindent
-  \begin{tikzpicture}
-    \begin{axis}[width=\textwidth,ybar stacked,ymin=-1,ymax=100]
+  \node[anchor=north west] {%s}; &
+    \begin{axis}[anchor=north west,width=0.8\textwidth,height=%spt,xbar stacked,bar width=2, xmin=0,xmax=100, ymin=0,ymax=%s, ytick=\empty,%s]
       \addplot[color=black, fill=black] coordinates { %s };
       \addplot[color=green, fill=green] coordinates { %s };
       \addplot[color=blue, fill=blue] coordinates { %s };
-      \addplot[color=red, fill=red] coordinates { %s };
-    \end{axis}
-  \end{tikzpicture}
-  \newpage
-""" % (domainname,
-       100 * sum(last_layer_percentages) / float(len(last_layer_percentages)),
-       100 * sum(second_to_last_layer_percentages) / float(len(second_to_last_layer_percentages)),
-       100 * sum(other_layers_percentages) / float(len(other_layers_percentages)),
-       " ".join(["(%s,%s)" % (i+1, int(o * a)) for i,(o,a) in enumerate(zip(other_layers_percentages,all_layers_scores))]),
-       " ".join(["(%s,%s)" % (i+1, int(s * a)) for i,(s,a) in enumerate(zip(second_to_last_layer_percentages,all_layers_scores))]),
-       " ".join(["(%s,%s)" % (i+1, int(l * a)) for i,(l,a) in enumerate(zip(last_layer_percentages,all_layers_scores))]),
-       " ".join(["(%s,%s)" % (i+1,-int(e)) for i,e in enumerate(errors)]),
+    \end{axis} \\
+""" % (d,
+       plotheight,
+       len(all_layers_scores)+1,
+       xticks,
+       " ".join(["(%s,%s)" % (int(o * a), i+1) for i,(o,a) in enumerate(zip(other_layers_percentages,all_layers_scores))]),
+       " ".join(["(%s,%s)" % (int(s * a), i+1) for i,(s,a) in enumerate(zip(second_to_last_layer_percentages,all_layers_scores))]),
+       " ".join(["(%s,%s)" % (int(l * a), i+1) for i,(l,a) in enumerate(zip(last_layer_percentages,all_layers_scores))]),
       ))
-    outfile.write("\\end{document}\n")
+#  \begin{tabular}{llll}
+#    Average \%% & last layer & second to last layer & other layers  \\ \hline
+#                & %s         & %s                   & %s
+#  \end{tabular}
+#
+#  \noindent
+#       100 * sum(last_layer_percentages) / float(len(last_layer_percentages)),
+#       100 * sum(second_to_last_layer_percentages) / float(len(second_to_last_layer_percentages)),
+#       100 * sum(other_layers_percentages) / float(len(other_layers_percentages)),
+
+
+    outfile.write(r"""  };
+  \end{tikzpicture}
+\end{document}
+""")
     outfile.close()
 
 def sort_expansion_limit_files(filenames):
@@ -1016,6 +1046,48 @@ def list_nontrivial_problems(filenames):
     print "unsolved", sum([len(e) for e in unsolved_numbers.values()]), 835 - sum([len(e) for e in KNOWN_HPLUS.values()]), unsolved_numbers
     print
     print "Best case coverage without unsolved", coverage_score
+
+def evaluate_bound_quality(filenames, timeout):
+    nNoSearch = 0
+    nPerfect = 0
+    nAlmostPerfect = 0
+    nLMcutPerfect = 0
+    nLMcutAlmostPerfect = 0
+    initial_upper_bound = defaultdict(dict)
+    for domainresult in parse_results(filenames[0]):
+        for p in domainresult.problemresults:
+            initial_plan_cost = float(p.get("initial_plan_cost", "inf"))
+            optimized_initial_plan_cost = float(p.get("optimized_initial_plan_cost", initial_plan_cost))
+            lmcut = p.get("lmcut", 0)
+            if p.get("h_plus") == float("inf"):
+                initial_plan_cost = float("inf")
+                optimized_initial_plan_cost = float("inf")
+            initial_upper_bound[domainresult.name][p.name] = optimized_initial_plan_cost
+    for domainresult in parse_results(filenames[1]):
+        for p in domainresult.problemresults:
+            optimized_initial_plan_cost = initial_upper_bound[domainresult.name][p.name]
+            lmcut = p.get("h_lmcut", 0)
+            assert lmcut > 0, (domainresult.name, p.name)
+            if p.get("h_plus") == float("inf"):
+                lmcut = float("inf")
+            hplus = KNOWN_HPLUS[domainresult.name].get(p.name, "UNKOWN")
+            if lmcut == optimized_initial_plan_cost:
+                nNoSearch += 1
+            if hplus == optimized_initial_plan_cost:
+                nPerfect += 1
+            if hplus == optimized_initial_plan_cost -1:
+                nAlmostPerfect += 1
+            if lmcut == hplus:
+                nLMcutPerfect += 1
+            if lmcut+1 == hplus:
+                nLMcutAlmostPerfect += 1
+    print "both perfect", nNoSearch
+    print "upper bound perfect", nPerfect
+    print "upper bound almost perfect", nAlmostPerfect
+    print "lower bound perfect", nLMcutPerfect
+    print "lower bound almost perfect", nLMcutAlmostPerfect
+    print "unknown h^+", sum([len(bounds) for (_, bounds) in UNKNOWN_HPLUS.items()])
+
 
 def get_not_always_solved_or_unsolved(filenames, timeout):
     always_solved = set()
@@ -1248,7 +1320,7 @@ def do_custom_stuff(filenames, timeout):
     """
     # print_initial_node_statistics(filenames)
     # sort_expansion_limit_files(filenames)
-    # print_ida_layer_evaluation(filenames)
+    print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
@@ -1256,45 +1328,7 @@ def do_custom_stuff(filenames, timeout):
     # print_restart_analysis(filenames)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
-    nNoSearch = 0
-    nPerfect = 0
-    nAlmostPerfect = 0
-    nLMcutPerfect = 0
-    nLMcutAlmostPerfect = 0
-    initial_upper_bound = defaultdict(dict)
-    for domainresult in parse_results(filenames[0]):
-        for p in domainresult.problemresults:
-            initial_plan_cost = float(p.get("initial_plan_cost", "inf"))
-            optimized_initial_plan_cost = float(p.get("optimized_initial_plan_cost", initial_plan_cost))
-            lmcut = p.get("lmcut", 0)
-            if p.get("h_plus") == float("inf"):
-                initial_plan_cost = float("inf")
-                optimized_initial_plan_cost = float("inf")
-            initial_upper_bound[domainresult.name][p.name] = optimized_initial_plan_cost
-    for domainresult in parse_results(filenames[1]):
-        for p in domainresult.problemresults:
-            optimized_initial_plan_cost = initial_upper_bound[domainresult.name][p.name]
-            lmcut = p.get("h_lmcut", 0)
-            assert lmcut > 0, (domainresult.name, p.name)
-            if p.get("h_plus") == float("inf"):
-                lmcut = float("inf")
-            hplus = KNOWN_HPLUS[domainresult.name].get(p.name, "UNKOWN")
-            if lmcut == optimized_initial_plan_cost:
-                nNoSearch += 1
-            if hplus == optimized_initial_plan_cost:
-                nPerfect += 1
-            if hplus == optimized_initial_plan_cost -1:
-                nAlmostPerfect += 1
-            if lmcut == hplus:
-                nLMcutPerfect += 1
-            if lmcut+1 == hplus:
-                nLMcutAlmostPerfect += 1
-    print "both perfect", nNoSearch
-    print "upper bound perfect", nPerfect
-    print "upper bound almost perfect", nAlmostPerfect
-    print "lower bound perfect", nLMcutPerfect
-    print "lower bound almost perfect", nLMcutAlmostPerfect
-    print "unknown h^+", sum([len(bounds) for (_, bounds) in UNKNOWN_HPLUS.items()])
+    # evaluate_bound_quality(filenames, timeout)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
