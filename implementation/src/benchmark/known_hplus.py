@@ -1,4 +1,6 @@
 from collections import defaultdict
+from itertools import izip_longest
+import re
 
 KNOWN_HPLUS_FLO = {
         'airport':{
@@ -1015,6 +1017,9 @@ UNKNOWN_HPLUS_FLO = {
             'pfile19':(57,61),
             'pfile20':(67,68),
         },
+        'openstacks-opt08-strips':{},
+        'sokoban-opt08-strips':{},
+        'pegsol-08-strips':{},
     }
 
 KNOWN_HPLUS_PATRIK = {
@@ -1816,17 +1821,59 @@ for d in domains:
             UNKNOWN_HPLUS[d][p] = (max(plb, flb), min(pub, fub))
 
 if __name__ == '__main__':
-    print ",".join(['domain', 'problem', 'lower bound', 'is exact', 'upper bound'])
+#    print ",".join(['domain', 'problem', 'lower bound', 'is exact', 'upper bound'])
     for domain in sorted(KNOWN_HPLUS_FLO.keys()):
         problems = set(KNOWN_HPLUS_FLO[domain].keys())
         problems |= set(UNKNOWN_HPLUS_FLO[domain].keys())
-        for problem in sorted(problems):
-            if KNOWN_HPLUS_FLO[domain].has_key(problem):
-                exact_value = True
-                lower_bound = KNOWN_HPLUS_FLO[domain][problem]
-                upper_bound = KNOWN_HPLUS_FLO[domain][problem]
-            else:
-                exact_value = False
-                lower_bound, upper_bound = UNKNOWN_HPLUS_FLO[domain][problem]
-            print ",".join(map(str, [domain, problem, lower_bound, exact_value, upper_bound]))
+        sortable_problems = [((p.startswith("pfile"), map(int, re.findall(r"\d+", p))), p) for p in problems]
+        problem_lines = []
+        for _,problem in sorted(sortable_problems):
+             if KNOWN_HPLUS[domain].has_key(problem):
+                 patriks_bound = not (KNOWN_HPLUS_FLO[domain].has_key(problem))
+                 bound = "%.0f" % KNOWN_HPLUS[domain][problem]
+             else:
+                 patriks_bound = (not UNKNOWN_HPLUS_FLO[domain].has_key(problem)) or (LOWER_BOUND_PATRIK.get(domain, {}).has_key(problem) and UNKNOWN_HPLUS_FLO[domain][problem][0] < LOWER_BOUND_PATRIK[domain][problem])
+                 bound = "[%.0f, %.0f]" % UNKNOWN_HPLUS[domain][problem]
+             footnote = "$^{\hplusplus}$" if patriks_bound else ""
+
+             if bound == "inf":
+                 bound = r"$\infty$"
+             if domain == "airport" or domain.startswith("pipesworld") or domain.startswith("psr") :
+                 problemname = problem[0:3]
+             elif problem.startswith("probBLOCKS-") or problem.startswith("probfreecell-") or problem.startswith("probLOGISTICS-"):
+                 problemname = "\\#" + "-".join(problem.split('-')[1:])
+             else:
+                 problemname = problem
+
+             problem_lines.append(r" \task{%s} & %s%s" % (problemname, bound, footnote))
+        
+        double_page_split = 99
+        for lines, caption in ((problem_lines[:double_page_split], r"\domain{%s}" % domain), (problem_lines[double_page_split:], r"\domain{%s} (ctd.)" % domain)):
+            if not lines:
+                continue
+            onethird = len(lines) / 3
+            if len(lines) % 3 != 0:
+                onethird += 1
+            twothird = onethird *2
+            print r"""
+\noindent
+\begin{tabular}{@{}p{0.1\textwidth}p{0.15\textwidth}p{0.02\textwidth}p{0.1\textwidth}p{0.15\textwidth}p{0.02\textwidth}p{0.1\textwidth}p{0.15\textwidth}@{}}
+  \toprule
+  \multicolumn{8}{c}{%s} \\
+  \midrule
+  Task & \hplus && Task & \hplus && Task & \hplus \\
+  \cmidrule{1-2} \cmidrule{4-5} \cmidrule{7-8}""" % caption
+            for first, (second, third) in izip_longest(lines[:onethird], izip_longest(lines[onethird:twothird], lines[twothird:], fillvalue=' & '), fillvalue=(' & ', ' & ')):
+                print r"  %s \\" % (" && ".join([first, second, third]))
+            print r"""  \bottomrule
+\end{tabular}
+"""
+#            if KNOWN_HPLUS_FLO[domain].has_key(problem):
+#                exact_value = True
+#                lower_bound = KNOWN_HPLUS_FLO[domain][problem]
+#                upper_bound = KNOWN_HPLUS_FLO[domain][problem]
+#            else:
+#                exact_value = False
+#                lower_bound, upper_bound = UNKNOWN_HPLUS_FLO[domain][problem]
+#            print ",".join(map(str, [domain, problem, lower_bound, exact_value, upper_bound]))
             
