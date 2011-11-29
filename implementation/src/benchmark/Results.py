@@ -784,10 +784,8 @@ def print_ida_layer_evaluation(filenames):
                 other_expansions = all_expansions - (last_layer_expansions + second_to_last_layer_expansions)
                 if all_expansions is None:
                     print domainname, problemname
-                if all_expansions <= 100 or other_expansions == 0:
+                if all_expansions <= 100 or second_to_last_layer_expansions == 0:
                     continue
-                print domainname, problemname
-                print int(last_layer_expansions), int(second_to_last_layer_expansions), int(other_expansions)
                 expansions[domainname][problemname][0].append(all_expansions)
                 expansions[domainname][problemname][1].append(last_layer_expansions / all_expansions)
                 expansions[domainname][problemname][2].append(second_to_last_layer_expansions / all_expansions)
@@ -803,6 +801,9 @@ def print_ida_layer_evaluation(filenames):
   \begin{tikzpicture}
   \matrix{
 """)
+    all_last_layer_percentages = []
+    all_second_to_last_layer_percentages = []
+    all_other_layers_percentages = []
     for i,(d, domainexpansions) in enumerate(sorted(expansions.items())):
         last_layer_percentages = []
         second_to_last_layer_percentages = []
@@ -815,8 +816,11 @@ def print_ida_layer_evaluation(filenames):
             other_layers_percentage = sum(other_layers_percentage_list) / float(len(other_layers_percentage_list))
 
             last_layer_percentages.append(last_layer_percentage)
+            all_last_layer_percentages.append(last_layer_percentage)
             second_to_last_layer_percentages.append(second_to_last_layer_percentage)
+            all_second_to_last_layer_percentages.append(second_to_last_layer_percentage)
             other_layers_percentages.append(other_layers_percentage)
+            all_other_layers_percentages.append(other_layers_percentage)
             all_layers_scores.append(100 - loginterpolate(float(all_expansions), 100, 1000000, 0, 100))
 
         if i == 0:
@@ -859,6 +863,10 @@ def print_ida_layer_evaluation(filenames):
 \end{document}
 """)
     outfile.close()
+    print "Included %d bars" % (sum([len(tasks) for tasks in expansions.values()]))
+    print "Average percentage of expansions in last layer", (sum(all_last_layer_percentages) / float(len(all_last_layer_percentages)))
+    print "Average percentage of expansions in second to last layer", (sum(all_second_to_last_layer_percentages) / float(len(all_second_to_last_layer_percentages)))
+    print "Average percentage of expansions in other layers", (sum(all_other_layers_percentages) / float(len(all_other_layers_percentages)))
 
 def sort_expansion_limit_files(filenames):
     for directory in ("limit", "no-search", "done", "error"):
@@ -1334,12 +1342,12 @@ def do_custom_stuff(filenames, timeout):
     """
     # print_initial_node_statistics(filenames)
     # sort_expansion_limit_files(filenames)
-    # print_ida_layer_evaluation(filenames)
+    print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
-    print_restart_analysis(filenames, timeout)
+    # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
     # evaluate_bound_quality(filenames, timeout)
