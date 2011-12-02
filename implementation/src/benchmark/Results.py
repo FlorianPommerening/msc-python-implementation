@@ -770,6 +770,8 @@ def print_ida_layer_evaluation(filenames):
     
     # domain -> problem -> (all_expansions_list, last_layer_percentage_list, second_to_last_layer_percentage_list, other_layers_percentage_list)
     expansions = defaultdict(lambda : defaultdict(lambda : ([], [], [], [])))
+    # domain -> problem -> reason
+    exclude_reason = defaultdict(dict)
 
     for filename in filenames[:-1]:
         for domainresults in parse_results(filename):
@@ -777,6 +779,8 @@ def print_ida_layer_evaluation(filenames):
             for p in domainresults.problemresults:
                 problemname = p.name
                 if p.get("error") is not None or p.get("h_plus") == float("inf"):
+                    if not exclude_reason[domainname].has_key(problemname):
+                        exclude_reason[domainname][problemname] = "unsolved"
                     continue
                 all_expansions = float(p.get("bnb_expansions"))
                 last_layer_expansions = float(p.get("bnb_expansions_last_layer"))
@@ -784,12 +788,26 @@ def print_ida_layer_evaluation(filenames):
                 other_expansions = all_expansions - (last_layer_expansions + second_to_last_layer_expansions)
                 if all_expansions is None:
                     print domainname, problemname
-                if all_expansions <= 100 or second_to_last_layer_expansions == 0:
+                if all_expansions <= 100:
+                    if not exclude_reason[domainname].has_key(problemname):
+                        exclude_reason[domainname][problemname] = "perfect score"
                     continue
+                if second_to_last_layer_expansions == 0:
+                    if not exclude_reason[domainname].has_key(problemname):
+                        exclude_reason[domainname][problemname] = "only one layer"
+                    continue
+                exclude_reason[domainname][problemname] = None
                 expansions[domainname][problemname][0].append(all_expansions)
                 expansions[domainname][problemname][1].append(last_layer_expansions / all_expansions)
                 expansions[domainname][problemname][2].append(second_to_last_layer_expansions / all_expansions)
                 expansions[domainname][problemname][3].append(other_expansions / all_expansions)
+
+    # domain -> reason -> count
+    excluded = defaultdict(lambda:defaultdict(int))
+    for d, prob_reasons in exclude_reason.items():
+       for p,pr in prob_reasons.items():
+          if pr is not None:
+              excluded[d][pr] += 1
 
     outfile = open(filenames[-1], 'w')
     outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
@@ -797,9 +815,13 @@ def print_ida_layer_evaluation(filenames):
 \usetikzlibrary{calc}
 \usepackage{pgfplots}
 
+\newcommand{\domain}[1]{\textsc{#1}}
+\newcommand{\IDA}{IDA$^*$}
+
 \begin{document}
-  \begin{tikzpicture}
-  \matrix{
+  \begin{figure}
+    \centering
+    \begin{tabular}{@{}p{0.25\textwidth}p{0.7\textwidth}@{}}
 """)
     all_last_layer_percentages = []
     all_second_to_last_layer_percentages = []
@@ -809,7 +831,8 @@ def print_ida_layer_evaluation(filenames):
         second_to_last_layer_percentages = []
         other_layers_percentages = []
         all_layers_scores = []
-        for p, (all_expansions_list, last_layer_percentage_list, second_to_last_layer_percentage_list, other_layers_percentage_list) in sorted(domainexpansions.items()):
+        sortable_domainexpansions = [(sum(exp[0]) / float(len(exp[0])), p, exp) for (p,exp) in domainexpansions.items()]
+        for _,p,(all_expansions_list, last_layer_percentage_list, second_to_last_layer_percentage_list, other_layers_percentage_list) in sorted(sortable_domainexpansions):
             all_expansions = sum(all_expansions_list) / float(len(all_expansions_list))
             last_layer_percentage = sum(last_layer_percentage_list) / float(len(last_layer_percentage_list))
             second_to_last_layer_percentage = sum(second_to_last_layer_percentage_list) / float(len(second_to_last_layer_percentage_list))
@@ -823,29 +846,52 @@ def print_ida_layer_evaluation(filenames):
             all_other_layers_percentages.append(other_layers_percentage)
             all_layers_scores.append(100 - loginterpolate(float(all_expansions), 100, 1000000, 0, 100))
 
+#        excluded_text = ""
+#        if excluded[d]["unsolved"]:
+#            excluded_text += r"{\footnotesize %d unsolved}" % excluded[d]["unsolved"]
+#        if excluded[d]["perfect score"]:
+#            if excluded_text:
+#                excluded_text += ", "
+#            excluded_text += r"{\footnotesize %d perfect}" % excluded[d]["perfect score"]
+#        if excluded[d]["only one layer"]:
+#            if excluded_text:
+#                excluded_text += ", "
+#            if len(excluded_text) > 40:
+#                excluded_text += r"\\"
+#            excluded_text += r"{\footnotesize %d one layer}" % excluded[d]["only one layer"]
+#        if excluded_text:
+#            excluded_text = r"\\%s" % excluded_text
+        excluded_text = r"\newline{\footnotesize (%d/%d/%d)}" % (excluded[d]["unsolved"], excluded[d]["perfect score"], excluded[d]["only one layer"])
         if i == 0:
-            plotheight = (len(all_layers_scores)+2)*3 + 50
-            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, xticklabel pos=right"
+            excluded_text += r"\vspace{4ex}"
+
+        plotheight = (len(all_layers_scores)+2)*3 + 50
+        legend = ""
+        if i == 0:
+            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, xticklabel pos=upper, xlabel={Expansion score},xlabel near ticks"
         elif i == len(expansions.items()) -1:
-            plotheight = (len(all_layers_scores)+2)*3 + 50
-            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, "
+            xticks = "xticklabels={,1,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0}, legend style={at={( 0.5,-1)}, anchor=north}, legend columns=3, reverse legend"
+            legend = "          \\legend{other layers,second to last layer,last layer};\n"
         else:
-            plotheight = (len(all_layers_scores)+2)*3 + 50
-            xticks = "xticklabels=\empty, x tick label style={above}"
+            xticks = "xticklabels=\empty, x tick label style={font=\\tiny}"
         outfile.write(r"""
-  \node[anchor=north west] {%s}; &
-    \begin{axis}[anchor=north west,width=0.8\textwidth,height=%spt,xbar stacked,bar width=2, xmin=0,xmax=100, ymin=0,ymax=%s, ytick=\empty,%s]
-      \addplot[color=black, fill=black] coordinates { %s };
-      \addplot[color=green, fill=green] coordinates { %s };
-      \addplot[color=blue, fill=blue] coordinates { %s };
-    \end{axis} \\
+      \domain{%s}%s &
+      \begin{tikzpicture}[baseline={($(current axis.north)+(0,-2ex)$)},trim axis left,trim axis right]
+        \begin{axis}[anchor=north west,width=0.7\textwidth,height=%spt,xbar stacked,bar width=2, xmin=0,xmax=100, ymin=0,ymax=%s, ytick=\empty,%s]
+          \addplot[color=black, fill=black] coordinates { %s };
+          \addplot[color=green, fill=green] coordinates { %s };
+          \addplot[color=blue, fill=blue] coordinates { %s };%s
+        \end{axis}
+      \end{tikzpicture} \\
 """ % (d,
+       excluded_text,
        plotheight,
        len(all_layers_scores)+1,
        xticks,
        " ".join(["(%s,%s)" % (int(o * a), i+1) for i,(o,a) in enumerate(zip(other_layers_percentages,all_layers_scores))]),
        " ".join(["(%s,%s)" % (int(s * a), i+1) for i,(s,a) in enumerate(zip(second_to_last_layer_percentages,all_layers_scores))]),
        " ".join(["(%s,%s)" % (int(l * a), i+1) for i,(l,a) in enumerate(zip(last_layer_percentages,all_layers_scores))]),
+       legend
       ))
 #  \begin{tabular}{llll}
 #    Average \%% & last layer & second to last layer & other layers  \\ \hline
@@ -858,8 +904,11 @@ def print_ida_layer_evaluation(filenames):
 #       100 * sum(other_layers_percentages) / float(len(other_layers_percentages)),
 
 
-    outfile.write(r"""  };
-  \end{tikzpicture}
+    outfile.write(r"""
+    \end{tabular}
+    \caption{Relative size of \IDA layers ordered by expansion score. The numbers under the domain name are the numbers of tasks that are not contained in the figure for being (unsolved / solved with perfect score / solved in only one layer). }
+    \label{fig:idalayers}
+  \end{figure}
 \end{document}
 """)
     outfile.close()
@@ -903,7 +952,7 @@ def generate_expansion_histogram(filenames):
         p = results[0].problemresults[0]
         domain_name, problem_name = (results[0].name, p.name)
         expansions = p.get("bnb_expansions")
-        time = p.get("h_plus_time")
+        time = p.get("h_plus_time") + p.get("relevance_analysis_time")
         if expansions is None or time is None:
             print filename
             continue
@@ -911,9 +960,9 @@ def generate_expansion_histogram(filenames):
         time_list.append(time)
     min_exp = min(expansion_list)
     max_exp = max(expansion_list)
-    min_time = min(time_list)
-    max_time = max(time_list)
-    nBuckets = 100
+    min_time = 0 # min(time_list)
+    max_time = 1800 # max(time_list)
+    nBuckets = 18 # 100
     bucketSize_exp = (max_exp - min_exp) / float(nBuckets)
     if bucketSize_exp == 0:
         bucketSize_exp = 1
@@ -926,34 +975,35 @@ def generate_expansion_histogram(filenames):
         counts_exp[min(nBuckets-1, int((e - min_exp) / bucketSize_exp))] += 1
     for e in time_list:
         counts_time[min(nBuckets-1, int((e - min_time) / bucketSize_time))] += 1
-    data_exp =  [(i*bucketSize_exp  + min_exp,c)  for (i,c) in enumerate(counts_exp)]
-    data_time = [(i*bucketSize_time + min_time,c) for (i,c) in enumerate(counts_time)]
+    data_exp =  [((i+1)*bucketSize_exp  + min_exp,c)  for (i,c) in enumerate(counts_exp)]
+    data_time = [((i+1)*bucketSize_time + min_time,c) for (i,c) in enumerate(counts_time)]
     outfile = open(filenames[-1], 'w')
     outfile.write(r"""\documentclass[11pt,a4paper]{scrartcl}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+
+\newcommand{\domain}[1]{\textsc{#1}}
+\newcommand{\task}[1]{\textsc{#1}}
 
 \begin{document}
   \begin{tikzpicture}
-    \begin{axis}[height=0.48\textheight,ybar,bar width=2pt,xlabel=expansions,title=%s]
-      \addplot coordinates { %s };
-      \addplot[color=red] coordinates { %s };
-    \end{axis}
-  \end{tikzpicture}
-
-  \begin{tikzpicture}
-    \begin{axis}[height=0.48\textheight,ybar,bar width=2pt,xlabel=time,title=%s]
-      \addplot coordinates { %s };
-      \addplot[color=red] coordinates { %s };
-    \end{axis}
+    \begin{groupplot}[group style={group size=1 by 2,vertical sep= 1.7cm},height=0.48\textheight, ybar]
+      \nextgroupplot[title=\domain{%s} - \task{%s},bar width=2pt,xlabel=expansions]
+        \addplot coordinates { %s };
+        \addplot[color=red] coordinates { %s };
+      \nextgroupplot[title=\domain{%s} - \task{%s},bar width=2pt,xlabel=time]
+        \addplot coordinates { %s };
+        \addplot[color=red] coordinates { %s };
+    \end{groupplot}
   \end{tikzpicture}
 \end{document}
-""" % ("%s - %s" % (domain_name, problem_name),
+""" % (domain_name, problem_name,
        " ".join(["(%f, %d)" % d for d in data_exp]),
-       "(%f, %d)" % (len(counts_exp)*bucketSize_exp + min_exp, 500-sum(counts_exp)),
-       "%s - %s" % (domain_name, problem_name),
+       "(%f, %d)" % (max_exp+bucketSize_exp, 50-sum(counts_exp)),
+       domain_name, problem_name,
        " ".join(["(%f, %d)" % d for d in data_time]),
-       "(%f, %d)" % (len(counts_time)*bucketSize_time + min_time, 500-sum(counts_time))))
+       "(%f, %d)" % (max_time+bucketSize_time, 50-sum(counts_time))))
 
 def lost_gained_problems(filenames):
     results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
@@ -1101,6 +1151,7 @@ def get_not_always_solved_or_unsolved(filenames, timeout):
     always_solved = set()
     never_solved = set()
     sometimes_solved = set()
+    solve_times = defaultdict(lambda: defaultdict(list))
     for filename in filenames:
         results = parse_results(filename)
         for domainresults in results:
@@ -1108,19 +1159,21 @@ def get_not_always_solved_or_unsolved(filenames, timeout):
             for p in domainresults.problemresults:
                 problemname = p.name
                 if p.get("h_plus") and p.get("h_plus_time") + p.get("relevance_analysis_time") < timeout:
+                    solve_times[domainname][problemname].append("%.0f" % (p.get("h_plus_time") + p.get("relevance_analysis_time")))
                     if (domainname, problemname) in never_solved:
                         never_solved.remove((domainname, problemname))
                         sometimes_solved.add((domainname, problemname))
                     else:
                         always_solved.add((domainname, problemname))
                 else:
+                    solve_times[domainname][problemname].append("-")
                     if (domainname, problemname) in always_solved:
                         always_solved.remove((domainname, problemname))
                         sometimes_solved.add((domainname, problemname))
                     else:
                         never_solved.add((domainname, problemname))
     for (d,p) in sorted(sometimes_solved):
-        print d,p
+        print d,p, " & ".join(solve_times[d][p])
 
 def get_solve_times(filenames):
     solve_times = defaultdict(lambda : defaultdict(list))
@@ -1342,8 +1395,8 @@ def do_custom_stuff(filenames, timeout):
     """
     # print_initial_node_statistics(filenames)
     # sort_expansion_limit_files(filenames)
-    print_ida_layer_evaluation(filenames)
-    # generate_expansion_histogram(filenames)
+    # print_ida_layer_evaluation(filenames)
+    generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
