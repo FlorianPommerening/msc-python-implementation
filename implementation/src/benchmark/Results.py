@@ -6,6 +6,7 @@ from collections import defaultdict
 import sys, argparse, os, tempfile, shutil, subprocess, re
 from math import log, exp, sqrt
 from random import random
+import glob
 
 class DomainResults:
     def __init__(self, name):
@@ -925,10 +926,10 @@ def sort_expansion_limit_files(filenames):
     for filename in filenames:        
         results = parse_results(filename)
         p = results[0].problemresults[0]
-        time_spent = p.get("h_plus_time")
-        if time_spent is None:
-            time_spent = float(p.get("h_plus_guess_time"))
         if float(p.get("bnb_expansions",0)) > 1:
+            time_spent = p.get("h_plus_time")
+            if time_spent is None:
+                time_spent = float(p.get("h_plus_guess_time"))
             times_per_expansions[results[0].name].append(time_spent / float(p.get("bnb_expansions")))
         if p.get("error") == "Exceeded expansion limit of 10000":
             shutil.move(filename, "limit")
@@ -941,6 +942,9 @@ def sort_expansion_limit_files(filenames):
             shutil.move(filename, "error")
     for d in sorted(times_per_expansions.keys()):
         print d, "%.3f" % (sum(times_per_expansions[d]) / float(len(times_per_expansions[d]))), "%.3f" % max(times_per_expansions[d])
+    nonerrorfiles = glob.glob("limit/*.result") + glob.glob("no-search/*.result") + glob.glob("done/*.result")
+    mergeresultfiles("all.result", *nonerrorfiles)
+    printmissingresults("all.result")
 
 
 def generate_expansion_histogram(filenames):
@@ -1394,9 +1398,9 @@ def do_custom_stuff(filenames, timeout):
     temporary stuff, for test that are only useful once or twice
     """
     # print_initial_node_statistics(filenames)
-    # sort_expansion_limit_files(filenames)
+    sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    generate_expansion_histogram(filenames)
+    # generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
