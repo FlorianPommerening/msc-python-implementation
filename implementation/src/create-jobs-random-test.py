@@ -26,7 +26,7 @@ memout = "2G"
 # value gives the name of the executable (here mcta), and the
 # arguments.
 configurations = {
-        './logs' : './hplusbnb ',
+        './logs' : '../hplusbnb ',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
@@ -35,18 +35,19 @@ configurations = {
 benchmarks = {}
 dirs = set()
 for (domainname, paths) in problem_subset(problems={
-      'driverlog': ['pfile15'],
-      'logistics98': ['prob13', 'prob26'],
-      'mprime': ['prob10'],
-      'mystery': ['prob13'],
-      'pipesworld-tankage': ['p06-net1-b10-g6-t50','p17-net2-b16-g5-t20'],
-      'tpp': ['p23', 'p24'],
+       'rovers':['p09'],
+#      'driverlog': ['pfile15'],
+#      'logistics98': ['prob13', 'prob26'],
+#      'mprime': ['prob10'],
+#      'mystery': ['prob13'],
+#      'pipesworld-tankage': ['p06-net1-b10-g6-t50','p17-net2-b16-g5-t20'],
+#      'tpp': ['p23', 'p24'],
 }):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
         dirs.add("results/%s" % (domainname))
         dirs.add("results/%s/%s" % (domainname, problemname))
-        for x in xrange(0, 50):
+        for x in xrange(50, 500):
             benchmarks["%s_%s_%d" % (domainname, problemname, x)] = "%s %s results/%s/%s/%s_%s_%d.result" % (p, d, domainname, problemname, domainname, problemname, x)
 
 # the create_tasks functions generates a file containing all possible
