@@ -230,8 +230,11 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
 
     # name -> [filename run1, filename run2, ...]
     experiments = defaultdict(list)
+    sorted_experiment_names = []
     for name, filename in zip(names, filenames):
         experiments[name].append(filename)
+        if name not in sorted_experiment_names:
+            sorted_experiment_names.append(name)
 
     first_exp_name = names[0]
     for name in names:
@@ -253,6 +256,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
     # domainname -> problemname -> filename -> score
     time_score_plot_by_filename = defaultdict(lambda : defaultdict(dict))
     expansion_score_plot_by_filename = defaultdict(lambda : defaultdict(dict))
+    # domainname -> problemname -> filename -> solved
+    solved_by_filename = defaultdict(lambda : defaultdict(dict))
 
     for i, filename in enumerate(filenames):
         time_score = 0
@@ -282,7 +287,9 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                         new_hplus_bounds[domainname][p.name] = (max(old_lower_bound, new_lower_bound), min(old_upper_bound, new_upper_bound))
                     time_score_plot_by_filename[domainname][p.name][filename] = 0
                     expansion_score_plot_by_filename[domainname][p.name][filename] = 0
+                    solved_by_filename[domainname][p.name][filename] = False
                     continue
+                solved_by_filename[domainname][p.name][filename] = True
                 if KNOWN_HPLUS[domainname].has_key(p.name):
                     if KNOWN_HPLUS[domainname][p.name] != h:
                         warnings.add("!!! Invalid h+ value for %s - %s: DB said %s but %s said %s" % (
@@ -436,7 +443,13 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 run_scores = [expansion_score_plot_by_filename[d][p][f] for f in experiments[name]]
                 expansion_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
 
-
+    # domainname -> experiment name -> number of solved
+    solved_by_experiment = defaultdict(lambda : defaultdict(int))
+    for d, compare_tasks in compare_domains.items():
+        for p in compare_tasks:
+            for name,exp_filenames in experiments.items():
+                if sum([1 for f in exp_filenames if solved_by_filename[d][p][f]]) > len(exp_filenames) / 2.0:
+                    solved_by_experiment[d][name] += 1
 
     if format == 'console' or format == 'textable':
         if format == 'console':
@@ -568,6 +581,14 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         subprocess.Popen(['eog', plotname], stdout=fnull, stderr=fnull)
         shutil.rmtree(tmpdir)
         fnull.close()
+    elif format == "coveragetable":
+        print "Domain    & #Tasks   " + "& ".join(["%8s " % n for n in sorted_experiment_names])
+        for d, solved_by_domain in sorted(solved_by_experiment.items()):
+            line = "% 8s & %d " % (d,domain_size(d))
+            for n in sorted_experiment_names:
+                line += "& %d " % solved_by_domain[n]
+            print line
+        
 
 def zipresults(results1, results2):
     map1 = {result.name:result for result in results1}
@@ -965,8 +986,8 @@ def generate_expansion_histogram(filenames):
     min_exp = min(expansion_list)
     max_exp = max(expansion_list)
     min_time = 0 # min(time_list)
-    max_time = 1800 # max(time_list)
-    nBuckets = 18 # 100
+    max_time = max(time_list) # 1800
+    nBuckets = 50 # 18 # 100
     bucketSize_exp = (max_exp - min_exp) / float(nBuckets)
     if bucketSize_exp == 0:
         bucketSize_exp = 1
@@ -1004,10 +1025,10 @@ def generate_expansion_histogram(filenames):
 \end{document}
 """ % (domain_name, problem_name,
        " ".join(["(%f, %d)" % d for d in data_exp]),
-       "(%f, %d)" % (max_exp+bucketSize_exp, 50-sum(counts_exp)),
+       "(%f, %d)" % (max_exp+bucketSize_exp, 500-sum(counts_exp)),
        domain_name, problem_name,
        " ".join(["(%f, %d)" % d for d in data_time]),
-       "(%f, %d)" % (max_time+bucketSize_time, 50-sum(counts_time))))
+       "(%f, %d)" % (max_time+bucketSize_time, 500-sum(counts_time))))
 
 def lost_gained_problems(filenames):
     results0, results1 = parse_results(filenames[0]), parse_results(filenames[1])
@@ -1398,9 +1419,9 @@ def do_custom_stuff(filenames, timeout):
     temporary stuff, for test that are only useful once or twice
     """
     # print_initial_node_statistics(filenames)
-    sort_expansion_limit_files(filenames)
+    # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    # generate_expansion_histogram(filenames)
+    generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
@@ -1423,7 +1444,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--times', nargs="+")
     parser.add_argument('-d', '--domains', nargs="*")
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('-f', '--format', choices=['console', 'textable', 'texplottime', 'texplotexpansions'], default='console')
+    parser.add_argument('-f', '--format', choices=['console', 'textable', 'texplottime', 'texplotexpansions','coveragetable'], default='console')
 
     args = parser.parse_args()
     if args.merge:
