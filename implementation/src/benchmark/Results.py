@@ -1141,7 +1141,6 @@ def evaluate_bound_quality(filenames, timeout):
         for p in domainresult.problemresults:
             initial_plan_cost = float(p.get("initial_plan_cost", "inf"))
             optimized_initial_plan_cost = float(p.get("optimized_initial_plan_cost", initial_plan_cost))
-            lmcut = p.get("lmcut", 0)
             if p.get("h_plus") == float("inf"):
                 initial_plan_cost = float("inf")
                 optimized_initial_plan_cost = float("inf")
@@ -1421,14 +1420,14 @@ def do_custom_stuff(filenames, timeout):
     # print_initial_node_statistics(filenames)
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
-    generate_expansion_histogram(filenames)
+    # generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
-    # evaluate_bound_quality(filenames, timeout)
+    evaluate_bound_quality(filenames, timeout)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
