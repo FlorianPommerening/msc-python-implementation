@@ -1130,12 +1130,14 @@ def list_nontrivial_problems(filenames):
     print
     print "Best case coverage without unsolved", coverage_score
 
-def evaluate_bound_quality(filenames, timeout):
+def evaluate_bound_quality(filenames, timeout, domains=None):
     nNoSearch = 0
     nPerfect = 0
     nAlmostPerfect = 0
     nLMcutPerfect = 0
     nLMcutAlmostPerfect = 0
+    # domain -> (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect)
+    quality_by_domain = {}
     initial_upper_bound = defaultdict(dict)
     for domainresult in parse_results(filenames[0]):
         for p in domainresult.problemresults:
@@ -1146,6 +1148,9 @@ def evaluate_bound_quality(filenames, timeout):
                 optimized_initial_plan_cost = float("inf")
             initial_upper_bound[domainresult.name][p.name] = optimized_initial_plan_cost
     for domainresult in parse_results(filenames[1]):
+        if domains is not None:
+            if len(domains) > 0 and domainresult.name not in domains:
+                continue
         for p in domainresult.problemresults:
             optimized_initial_plan_cost = initial_upper_bound[domainresult.name][p.name]
             lmcut = p.get("h_lmcut", 0)
@@ -1163,6 +1168,25 @@ def evaluate_bound_quality(filenames, timeout):
                 nLMcutPerfect += 1
             if lmcut+1 == hplus:
                 nLMcutAlmostPerfect += 1
+        if domains is not None:
+            quality_by_domain[domainresult.name] = (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect)
+            (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect) = (0,0,0,0,0)
+    if domains is not None:
+        for e in quality_by_domain.values():
+            (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect) = (nNoSearch+e[0],nPerfect+e[1], nAlmostPerfect+e[2], nLMcutPerfect+e[3], nLMcutAlmostPerfect+e[4]) 
+
+    for (d,e) in sorted(quality_by_domain.items()):
+        print d
+        print "  both perfect", e[0]
+        print "  upper bound perfect", e[1]
+        print "  upper bound almost perfect", e[2]
+        print "  lower bound perfect", e[3]
+        print "  lower bound almost perfect", e[4]
+        print "  unknown h^+", len(UNKNOWN_HPLUS[d])
+        print
+        print "(%s/%s/%s)" % (e[3],e[1],e[0])
+        print
+    print "Total:"
     print "both perfect", nNoSearch
     print "upper bound perfect", nPerfect
     print "upper bound almost perfect", nAlmostPerfect
@@ -1413,7 +1437,7 @@ def print_over_timeout(filenames, timeout):
 
 
 
-def do_custom_stuff(filenames, timeout):
+def do_custom_stuff(filenames, timeout, domains):
     """
     temporary stuff, for test that are only useful once or twice
     """
@@ -1427,7 +1451,7 @@ def do_custom_stuff(filenames, timeout):
     # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
-    evaluate_bound_quality(filenames, timeout)
+    evaluate_bound_quality(filenames, timeout, domains)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
@@ -1455,7 +1479,7 @@ if __name__ == '__main__':
     elif args.averageruns:
         average_runs(args.averageruns, args.times, float(args.timeout))
     elif args.custom:
-        do_custom_stuff(args.custom, float(args.timeout))
+        do_custom_stuff(args.custom, float(args.timeout), args.domains)
     else:
         printmissingresults(args.printmissing)
 
