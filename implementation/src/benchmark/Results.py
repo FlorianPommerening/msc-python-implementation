@@ -582,12 +582,20 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         shutil.rmtree(tmpdir)
         fnull.close()
     elif format == "coveragetable":
+        total_solved_by_experiment = defaultdict(int)
+        total_tasks = 0
         print "Domain    & #Tasks   " + "& ".join(["%8s " % n for n in sorted_experiment_names])
         for d, solved_by_domain in sorted(solved_by_experiment.items()):
             line = "% 8s & %d " % (d,domain_size(d))
+            total_tasks += domain_size(d)
             for n in sorted_experiment_names:
                 line += "& %d " % solved_by_domain[n]
+                total_solved_by_experiment[n] += solved_by_domain[n]
             print line
+        line = "% 8s & %d " % ("Total", total_tasks)
+        for n in sorted_experiment_names:
+            line += "& %d " % total_solved_by_experiment[n]
+        print line
         
 
 def zipresults(results1, results2):
@@ -1162,11 +1170,11 @@ def evaluate_bound_quality(filenames, timeout, domains=None):
                 nNoSearch += 1
             if hplus == optimized_initial_plan_cost:
                 nPerfect += 1
-            if hplus == optimized_initial_plan_cost -1:
+            if hplus == optimized_initial_plan_cost -1  and hplus != float("inf"):
                 nAlmostPerfect += 1
             if lmcut == hplus:
                 nLMcutPerfect += 1
-            if lmcut+1 == hplus:
+            if lmcut+1 == hplus and hplus != float("inf"):
                 nLMcutAlmostPerfect += 1
         if domains is not None:
             quality_by_domain[domainresult.name] = (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect)
@@ -1176,16 +1184,18 @@ def evaluate_bound_quality(filenames, timeout, domains=None):
             (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect) = (nNoSearch+e[0],nPerfect+e[1], nAlmostPerfect+e[2], nLMcutPerfect+e[3], nLMcutAlmostPerfect+e[4]) 
 
     for (d,e) in sorted(quality_by_domain.items()):
-        print d
-        print "  both perfect", e[0]
-        print "  upper bound perfect", e[1]
-        print "  upper bound almost perfect", e[2]
-        print "  lower bound perfect", e[3]
-        print "  lower bound almost perfect", e[4]
-        print "  unknown h^+", len(UNKNOWN_HPLUS[d])
-        print
-        print "(%s/%s/%s)" % (e[3],e[1],e[0])
-        print
+#        print d
+#        print "  both perfect", e[0]
+#        print "  upper bound perfect", e[1]
+#        print "  upper bound almost perfect", e[2]
+#        print "  lower bound perfect", e[3]
+#        print "  lower bound almost perfect", e[4]
+#        print "  unknown h^+", len(UNKNOWN_HPLUS[d])
+#        print
+#        print "%s %.2f %.2f" % (d, e[1] / float(domain_size(d)), (e[1] + e[2]) / float(domain_size(d)))
+        print "%s %s" % (d, e[1] - e[3])
+#        print "%s (%s) & %s & %s & %s & %s & %s & %s \\\\" % (d, domain_size(d), e[3], e[1], e[0], e[4], e[2], len(UNKNOWN_HPLUS[d]))
+#        print
     print "Total:"
     print "both perfect", nNoSearch
     print "upper bound perfect", nPerfect
