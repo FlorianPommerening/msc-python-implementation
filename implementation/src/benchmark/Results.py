@@ -1252,7 +1252,12 @@ def get_solve_chances(solve_times, timeout=1800):
             for problemsolvetime in problemsolvetimes:
                 if problemsolvetime  is not None and problemsolvetime < timeout:
                     solves += 1
-            solve_chances[domainname][problemname] = solves / float(len(problemsolvetimes))
+            # HACK 
+            if len(problemsolvetimes) > 5:
+                count = 55
+            else:
+                count = 5
+            solve_chances[domainname][problemname] = solves / float(count)
     return solve_chances
 
 def print_percentiles(solve_chances):
@@ -1270,13 +1275,22 @@ def print_percentiles(solve_chances):
 #    print
 
 def print_coverage_guess(solve_chances):
+    # HACK
+    def hacked_domain_size(domain):
+        return domain_size(domain)
+#        return {'driverlog':1, 'logistics98':2, 'mprime':1, 'mystery':1, 'pipesworld-tankage':2, 'tpp':2}[domain]
+    def number_of_domains():
+        return 20
+#        return 6
     coverage = 0
     for domain, domainsolves in solve_chances.iteritems():
         domaincoverage = 0
         for problem, problemsolves in domainsolves.iteritems():
             domaincoverage += problemsolves
-        coverage += domaincoverage / float(domain_size(domain))
-    print "%f," % (coverage / float(20))
+        # HACK
+        coverage += domaincoverage / float(hacked_domain_size(domain))  # domain_size(domain)
+    # HACK
+    print "%f," % (coverage / float(number_of_domains()))
 
 def print_restart_calculation(solve_times, timeout=1800):
     # constant increase
@@ -1458,10 +1472,10 @@ def do_custom_stuff(filenames, timeout, domains):
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
-    # print_restart_analysis(filenames, timeout)
+    print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
-    evaluate_bound_quality(filenames, timeout, domains)
+    # evaluate_bound_quality(filenames, timeout, domains)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
