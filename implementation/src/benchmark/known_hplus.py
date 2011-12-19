@@ -2861,9 +2861,9 @@ if __name__ == '__main__':
     patrik_source = 0
     christoph_source = 0
     malte_source = 0
-    double_page_split = 24
+    double_page_split = 42
     maxlines_per_page = 114
-    for domain in ['miconic']: # sorted(KNOWN_HPLUS_FLO.keys()): #
+    for domain in ['psr-small']: # sorted(KNOWN_HPLUS_FLO.keys()): #
         problems = set(KNOWN_HPLUS_FLO[domain].keys())
         problems |= set(UNKNOWN_HPLUS_FLO[domain].keys())
         sortable_problems = [((p.startswith("pfile"), map(int, re.findall(r"\d+", p))), p) for p in problems]
@@ -2915,7 +2915,7 @@ if __name__ == '__main__':
 
              problem_lines.append(r" \task{%s} & %s%s" % (problemname, bound, footnote))
         
-        for lines, caption in ((problem_lines[:double_page_split], r"\domain{%s}" % domain), (problem_lines[double_page_split:double_page_split+maxlines_per_page], r"\domain{%s} (ctd.)" % domain), (problem_lines[double_page_split+maxlines_per_page:], r"\domain{%s} (ctd.)" % domain)):
+        for lines, caption in ((problem_lines[:double_page_split], r"\domain{%s}" % domain), (problem_lines[double_page_split:double_page_split+maxlines_per_page], r"\domain{%s} (cont.)" % domain), (problem_lines[double_page_split+maxlines_per_page:], r"\domain{%s} (cont.)" % domain)):
             if not lines:
                 continue
             onethird = len(lines) / 3
@@ -2923,7 +2923,7 @@ if __name__ == '__main__':
                 onethird += 1
             twothird = onethird *2
             print r"""
-\vspace{2mm}
+\vfill
 \noindent
 \begin{tabular}{@{}p{0.11\textwidth}p{0.165\textwidth}p{0.11\textwidth}p{0.165\textwidth}p{0.11\textwidth}p{0.165\textwidth}@{}}  \toprule
   \multicolumn{6}{c}{%s} \\
