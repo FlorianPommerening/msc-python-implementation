@@ -2862,7 +2862,7 @@ if __name__ == '__main__':
     christoph_source = 0
     malte_source = 0
     double_page_split = 24
-    maxlines_per_page = 102
+    maxlines_per_page = 114
     for domain in ['miconic']: # sorted(KNOWN_HPLUS_FLO.keys()): #
         problems = set(KNOWN_HPLUS_FLO[domain].keys())
         problems |= set(UNKNOWN_HPLUS_FLO[domain].keys())
