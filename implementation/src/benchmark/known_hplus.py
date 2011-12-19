@@ -2861,8 +2861,9 @@ if __name__ == '__main__':
     patrik_source = 0
     christoph_source = 0
     malte_source = 0
-    double_page_split = 15
-    for domain in ['pipesworld-tankage']: # sorted(KNOWN_HPLUS_FLO.keys()): #
+    double_page_split = 24
+    maxlines_per_page = 102
+    for domain in ['miconic']: # sorted(KNOWN_HPLUS_FLO.keys()): #
         problems = set(KNOWN_HPLUS_FLO[domain].keys())
         problems |= set(UNKNOWN_HPLUS_FLO[domain].keys())
         sortable_problems = [((p.startswith("pfile"), map(int, re.findall(r"\d+", p))), p) for p in problems]
@@ -2914,7 +2915,7 @@ if __name__ == '__main__':
 
              problem_lines.append(r" \task{%s} & %s%s" % (problemname, bound, footnote))
         
-        for lines, caption in ((problem_lines[:double_page_split], r"\domain{%s}" % domain), (problem_lines[double_page_split:], r"\domain{%s} (ctd.)" % domain)):
+        for lines, caption in ((problem_lines[:double_page_split], r"\domain{%s}" % domain), (problem_lines[double_page_split:double_page_split+maxlines_per_page], r"\domain{%s} (ctd.)" % domain), (problem_lines[double_page_split+maxlines_per_page:], r"\domain{%s} (ctd.)" % domain)):
             if not lines:
                 continue
             onethird = len(lines) / 3
@@ -2924,13 +2925,13 @@ if __name__ == '__main__':
             print r"""
 \vspace{2mm}
 \noindent
-\begin{tabular}{@{}p{0.11\textwidth}p{0.155\textwidth}p{0.0001\textwidth}p{0.11\textwidth}p{0.155\textwidth}p{0.0001\textwidth}p{0.11\textwidth}p{0.155\textwidth}@{}}  \toprule
-  \multicolumn{8}{c}{%s} \\
+\begin{tabular}{@{}p{0.11\textwidth}p{0.165\textwidth}p{0.11\textwidth}p{0.165\textwidth}p{0.11\textwidth}p{0.165\textwidth}@{}}  \toprule
+  \multicolumn{6}{c}{%s} \\
   \midrule
-  Task & $\hplus(I)$ && Task & $\hplus(I)$ && Task & $\hplus(I)$ \\
-  \cmidrule{1-2} \cmidrule{4-5} \cmidrule{7-8}""" % caption
+  Task & $\hplus(I)$ & Task & $\hplus(I)$ & Task & $\hplus(I)$ \\
+  \cmidrule(r){1-2} \cmidrule(lr){3-4} \cmidrule(l){5-6}""" % caption
             for first, (second, third) in izip_longest(lines[:onethird], izip_longest(lines[onethird:twothird], lines[twothird:], fillvalue=' & '), fillvalue=(' & ', ' & ')):
-                print r"  %s \\" % (" && ".join([first, second, third]))
+                print r"  %s \\" % (" & ".join([first, second, third]))
             print r"""  \bottomrule
 \end{tabular}
 """
