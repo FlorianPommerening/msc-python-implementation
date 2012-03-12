@@ -702,7 +702,23 @@ KNOWN_HPLUS_FLO = {
             'p28':18.0,
             'p29':15.0,
             'p30':12.0,
-        }
+        },
+        'grid':{
+            'prob01':10.0,
+            'prob02':20.0,
+            'prob03':26.0,
+        },
+        'satellite':{
+            'p01-pfile1':8.0,
+            'p02-pfile2':12.0,
+            'p03-pfile3':10.0,
+            'p04-pfile4':17.0,
+            'p05-pfile5':14.0,
+            'p06-pfile6':18.0,
+            'p07-pfile7':20.0,
+            'p12-pfile12':42.0,
+            'p18-pfile18':31.0,
+        },
     }
 
 UNKNOWN_HPLUS_FLO = {
@@ -1021,6 +1037,41 @@ UNKNOWN_HPLUS_FLO = {
         'openstacks-opt08-strips':{},
         'sokoban-opt08-strips':{},
         'pegsol-08-strips':{},
+        'grid':{
+            'prob04':(20,25),
+            'prob05':(45,53),
+        },
+        'satellite':{
+            'p08-pfile8':(22,24),
+            'p09-pfile9':(24,26),
+            'p10-pfile10':(28,29),
+            'p11-pfile11':(30,31),
+            'p12-pfile12':(42,44),
+            'p13-pfile13':(53,55),
+            'p14-pfile14':(37,42),
+            'p15-pfile15':(40,44),
+            'p16-pfile16':(42,51),
+            'p17-pfile17':(40,47),
+            'p18-pfile18':(30,33),
+            'p19-pfile19':(53,66),
+            'p20-pfile20':(70,79),
+            'p21-HC-pfile1':(70,74),
+            'p22-HC-pfile2':(88,90),
+            'p23-HC-pfile3':(97,102),
+            'p24-HC-pfile4':(133,140),
+            'p25-HC-pfile5':(121,131),
+            'p26-HC-pfile6':(130,142),
+            'p27-HC-pfile7':(130,135),
+            'p28-HC-pfile8':(183,196),
+            'p29-HC-pfile9':(177,192),
+            'p30-HC-pfile10':(217,231),
+            'p31-HC-pfile11':(260,275),
+            'p32-HC-pfile12':(360,371),
+            'p33-HC-pfile13':(449, float("inf")),
+            'p34-HC-pfile14':(282,285),
+            'p35-HC-pfile15':(370,381),
+            'p36-HC-pfile16':(348,365),
+        },
     }
 
 KNOWN_HPLUS_PATRIK = {

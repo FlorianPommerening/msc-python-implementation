@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE
+from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE, ADDITIONAL_ICAPS_SUITE
 from Cheetah.Template import Template
 import os
 
@@ -13,7 +13,7 @@ queue = "athlon_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '0:05:0'
+timeout = '0:05:30'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -27,14 +27,15 @@ memout = "2G"
 # arguments.
 configurations = {
 #        '/home/pommeren/masterthesis/implementation/results/fastdownward/lmcut' : '/home/pommeren/downward/src/search/downward --search "astar(lmcut())" <',
-        '/home/pommeren/masterthesis/implementation/final\\ experiments/fastdownward/lmcutflo' : '/home/pommeren/downwardflo/src/search/downward --search "astar(lmcutflo())" <',
+#        '/home/pommeren/masterthesis/implementation/final\\ experiments/fastdownward/lmcutflo' : '/home/pommeren/downwardflo/src/search/downward --search "astar(lmcutflo())" <',
+        '/home/pommeren/masterthesis/implementation/additional\\ icaps\\ experiments/ICAPS-E01\\ -\\ Fast\\ Downward' : '/home/pommeren/downward/src/search/downward --search "astar(lmcut())" <',
         }
 
 # defines the benchmark instances. Each entry consists of a name for
 # this benchmark (eg. 'C1'), and a string containing the input file(s)
 # for this benchmark.
 benchmarks = {}
-for (domainname, paths) in problem_subset():
+for (domainname, paths) in problem_subset(problem_suite=ADDITIONAL_ICAPS_SUITE):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
         benchmarks["%s_%s" % (domainname, problemname)] = "/home/pommeren/masterthesis/implementation/translations/%s/%s/output" % (domainname, problemname)

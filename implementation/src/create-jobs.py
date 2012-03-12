@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE, ZERO_COST_SUITE
+from benchmark.problem_suites import problem_subset, LMCUT_EASY, LMCUT_MEDIUM, LMCUT_HARD, LMCUT_SUITE, ZERO_COST_SUITE, ADDITIONAL_ICAPS_SUITE
 from Cheetah.Template import Template
 import os
 
@@ -13,7 +13,7 @@ queue = "athlon_core.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '0:05:0'
+timeout = '0:05:30'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -33,7 +33,7 @@ configurations = {
 # this benchmark (eg. 'C1'), and a string containing the input file(s)
 # for this benchmark.
 benchmarks = {}
-for (domainname, paths) in problem_subset(problem_suite=ZERO_COST_SUITE):
+for (domainname, paths) in problem_subset(problem_suite=ADDITIONAL_ICAPS_SUITE):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
         benchmarks["%s_%s" % (domainname, problemname)] = "%s %s" % (p, d)

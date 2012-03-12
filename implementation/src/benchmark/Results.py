@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-from problem_suites import LMCUT_SUITE, domain_size, ZERO_COST_SUITE
+from problem_suites import LMCUT_SUITE, domain_size, ZERO_COST_SUITE, ADDITIONAL_ICAPS_SUITE
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS, KNOWN_HPLUS_FLO, UNKNOWN_HPLUS_FLO
 from collections import defaultdict
 
@@ -1216,8 +1216,8 @@ def get_not_always_solved_or_unsolved(filenames, timeout):
             domainname = domainresults.name
             for p in domainresults.problemresults:
                 problemname = p.name
-                if p.get("h_plus") and p.get("h_plus_time") + p.get("relevance_analysis_time") < timeout:
-                    solve_times[domainname][problemname].append("%.0f" % (p.get("h_plus_time") + p.get("relevance_analysis_time")))
+                if p.get("h_plus") and p.get("h_plus_time") + float(p.get("additional_time", 0)) + p.get("relevance_analysis_time", 0) < timeout:
+                    solve_times[domainname][problemname].append("%.0f" % (p.get("h_plus_time") + float(p.get("additional_time", 0)) + p.get("relevance_analysis_time", 0)))
                     if (domainname, problemname) in never_solved:
                         never_solved.remove((domainname, problemname))
                         sometimes_solved.add((domainname, problemname))
@@ -1230,6 +1230,10 @@ def get_not_always_solved_or_unsolved(filenames, timeout):
                         sometimes_solved.add((domainname, problemname))
                     else:
                         never_solved.add((domainname, problemname))
+    print "Always solved"
+    for (d,p) in sorted(always_solved):
+        print d,p
+    print "Sometimes solved"
     for (d,p) in sorted(sometimes_solved):
         print d,p, " & ".join(solve_times[d][p])
 
@@ -1469,9 +1473,9 @@ def do_custom_stuff(filenames, timeout, domains):
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
-    # get_not_always_solved_or_unsolved(filenames, timeout)
+    get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
-    lost_gained_problems(filenames)
+    # lost_gained_problems(filenames)
     # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
