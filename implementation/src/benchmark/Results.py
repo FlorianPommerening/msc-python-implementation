@@ -1463,6 +1463,31 @@ def print_over_timeout(filenames, timeout):
                     cut += 1
         print cut, filename
 
+def number_of_filtered_objects(filenames, timeout, domains):
+    print "# domain\ttask\toperator_count_original\tirrelevent_operators\trelevant_operators\tvariable_count_original\tirrelevent_variables\trelevant_variables\titerations"
+    for domainresult in parse_results(filenames[0]):
+        for p in domainresult.problemresults:
+            relevant_operators, operator_count_original, irrelevent_operators = (0,0,0)
+            relevant_variables, variable_count_original, irrelevent_variables = (0,0,0)
+            iterations = 0
+            for i in xrange(1000):
+                if p.get("filter_%d_name" % (i+1)) == "first achiever":
+                    iterations += 1
+                if p.get("filter_%d_filtered_operators" % (i+1)) is not None:
+                    irrelevent_variables += int(p.get("filter_%d_filtered_variables" % (i+1)))
+                    irrelevent_operators += int(p.get("filter_%d_filtered_operators" % (i+1)))
+                else:
+                    break
+            operator_count_original = int(p.get("operator_count_original"))
+            relevant_operators = int(p.get("operator_count_relevant"))
+            variable_count_original = int(p.get("variable_count_original"))
+            relevant_variables = int(p.get("variable_count_relevant"))
+            if i == 0:
+                irrelevent_variables = variable_count_original - relevant_variables
+                irrelevent_operators = operator_count_original - relevant_operators
+            assert p.get("h_plus") == float("inf") or relevant_operators == operator_count_original - irrelevent_operators, (domainresult.name, p.name, relevant_operators, operator_count_original, irrelevent_operators)
+            assert p.get("h_plus") == float("inf") or relevant_variables == variable_count_original - irrelevent_variables, (domainresult.name, p.name, relevant_variables, variable_count_original, irrelevent_variables)
+            print "\t".join(map(str, [domainresult.name, p.name, operator_count_original, irrelevent_operators, relevant_operators, variable_count_original, irrelevent_variables, relevant_variables, (i / 2)]))
 
 
 def do_custom_stuff(filenames, timeout, domains):
@@ -1473,13 +1498,14 @@ def do_custom_stuff(filenames, timeout, domains):
     # sort_expansion_limit_files(filenames)
     # print_ida_layer_evaluation(filenames)
     # generate_expansion_histogram(filenames)
-    get_not_always_solved_or_unsolved(filenames, timeout)
+    # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
     # lost_gained_problems(filenames)
     # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
     # evaluate_bound_quality(filenames, timeout, domains)
+    number_of_filtered_objects(filenames, timeout, domains)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')

@@ -1,0 +1,10 @@
+#! /bin/bash
+
+#for task_id,task in zip(range(1, len($tasks)+1),$tasks) 
+#set $group_id = $task_id % 4
+#set $task_in_group = $task_id / 4
+if [ \$1 -eq $group_id ]; then
+    echo ${task_in_group}
+    ${task}
+fi
+#end for 
