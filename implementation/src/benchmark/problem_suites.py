@@ -1,6 +1,6 @@
 import os, re, glob
 
-BENCHMARKS_DIR = '/home/flogo/downward/benchmarks/'
+BENCHMARKS_DIR = '/home/pommerening/projects/fastdownward/benchmarks/'
 
 def guessDomainFile(problemFile):
     basedir = os.path.dirname(problemFile) + '/'
