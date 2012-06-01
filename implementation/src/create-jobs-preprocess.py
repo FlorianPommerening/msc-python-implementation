@@ -13,7 +13,7 @@ queue = "all.q"
 # defines the timeout for one taks. The time format is
 # "hours:minutes:seconds", eg, a value of "0:30:0" sets the timeout to
 # 30 minutes. If timout is set to None, then there is no timeout.
-timeout = '00:05:30'
+timeout = '00:30:00'
 
 # defines the maximum amount of available memory for one task. The
 # value's format is either "<mem>M" or "<mem>G", where <mem> is an
@@ -25,7 +25,7 @@ tasks = []
 for (domainname, paths) in problem_subset(problem_suite=ACTION_COST_SUITE_ALL):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
-        tasks.append('mkdir %s_%s\n    cd %s_%s\n    /home/ifi/pommeren/downward/src/search/downward --search "astar(lmcut())" < /home/ifi/pommeren/relaxeddelete/translations/%s/%s/output &> ../logs/%s_%s' % (domainname, problemname, domainname, problemname, domainname, problemname, domainname, problemname))
+        tasks.append('cd %s/%s\n    /usr/bin/time --format "%%U\\n%%S\\n" ../../../../downward/src/preprocess/preprocess < output.sas 1>| preprocess.log 2>| preprocess.time' % (domainname, problemname))
 
 
 def create_tasks(filename, tasks):
@@ -39,5 +39,5 @@ def create_tasks(filename, tasks):
     f.close()
 
 if __name__ == '__main__':
-    create_tasks("job-lmcut.q", tasks)
+    create_tasks("job-preprocess.q", tasks)
 

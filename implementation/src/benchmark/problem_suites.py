@@ -54,7 +54,7 @@ ACTION_COST_SUITE_08_OPT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR,
                   ]
 ACTION_COST_SUITE_08_SAT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
                     for domainname in
-                    ['elevators-sat08-strips', 'transport-sat08-strips']
+                    ['elevators-sat08-strips', 'transport-sat08-strips', 'woodworking-sat08-strips']
                   ]
 ACTION_COST_SUITE_11_OPT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
                     for domainname in
