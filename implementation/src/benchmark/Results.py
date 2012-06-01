@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-from problem_suites import LMCUT_SUITE, domain_size, ZERO_COST_SUITE, ADDITIONAL_ICAPS_SUITE
+from problem_suites import *
 from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS, KNOWN_HPLUS_FLO, UNKNOWN_HPLUS_FLO
 from collections import defaultdict
 
@@ -435,20 +435,31 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 for f in experiments[name]:
                     if time_score_plot_by_filename[d][p].has_key(f):
                         run_scores.append(time_score_plot_by_filename[d][p][f])
-                time_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+                if run_scores:
+                    time_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+                else:
+                    print "Missing time entries for", d, p
+                    time_score_plot_averaged[d][p].append(0)
     expansion_score_plot_averaged = defaultdict(lambda : defaultdict(list))
     for d, compare_tasks in compare_domains.items():
         for p in compare_tasks:
             for name in (first_exp_name, second_exp_name):
-                run_scores = [expansion_score_plot_by_filename[d][p][f] for f in experiments[name]]
-                expansion_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+                run_scores = []
+                for f in experiments[name]:
+                    if expansion_score_plot_by_filename[d][p].has_key(f):
+                        run_scores.append(expansion_score_plot_by_filename[d][p][f])
+                if run_scores:
+                    expansion_score_plot_averaged[d][p].append(sum(run_scores) / float(len(run_scores)))
+                else:
+                    print "Missing expansion entries for", d, p
+                    expansion_score_plot_averaged[d][p].append(0)
 
     # domainname -> experiment name -> number of solved
     solved_by_experiment = defaultdict(lambda : defaultdict(int))
     for d, compare_tasks in compare_domains.items():
         for p in compare_tasks:
             for name,exp_filenames in experiments.items():
-                if sum([1 for f in exp_filenames if solved_by_filename[d][p][f]]) > len(exp_filenames) / 2.0:
+                if sum([1 for f in exp_filenames if solved_by_filename[d][p].has_key(f) and solved_by_filename[d][p][f]]) > len(exp_filenames) / 2.0:
                     solved_by_experiment[d][name] += 1
 
     if format == 'console' or format == 'textable':
@@ -1506,6 +1517,8 @@ def do_custom_stuff(filenames, timeout, domains):
     # print_over_timeout(filenames, timeout)
     # evaluate_bound_quality(filenames, timeout, domains)
     number_of_filtered_objects(filenames, timeout, domains)
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate result files')
