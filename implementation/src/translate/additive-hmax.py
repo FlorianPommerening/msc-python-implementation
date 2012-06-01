@@ -1,4 +1,8 @@
-#! /usr/bin/python
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
 import pddl
 import random
 import relaxed_tasks
@@ -22,7 +26,7 @@ def crossreference_task(task):
             eff.effect_of.append(action)
 
 
-def hmax(task, goal_cut_facts=(), debug_values=None):
+def hmax(task, goal_cut_facts=()):
     # hmax costs are pairs of the form (cost, depth), where "depth" is
     # the length (as opposed to cost sum) of the supporting chain. We
     # use the depth for tie-breaking; this is not strictly necessary,
@@ -46,11 +50,6 @@ def hmax(task, goal_cut_facts=(), debug_values=None):
         # out as soon as we've reached the goal because we also need
         # to compute hmax supporters for all actions.
         if hmax == fact.hmax:
-
-            # added by flo for debug:
-            if debug_values is not None:
-                debug_values.hmax_function[str(fact)] = hmax[0]
-
             for action in fact.precondition_of:
                 action.unsatisfied_conditions -= 1
                 if not action.unsatisfied_conditions:
@@ -90,8 +89,8 @@ def hmax(task, goal_cut_facts=(), debug_values=None):
                     if OPTION == 1:
                         # Choose first (in precondition list)
                         # maximizing precondition as supporter.
-                        supporter = (fact for fact in action.preconditions
-                                     if fact.hmax == hmax).next()
+                        supporter = next((fact for fact in action.preconditions
+                                     if fact.hmax == hmax))
                     elif OPTION == 2:
                         # Choose this fact as supporter.
                         supporter = fact
@@ -115,13 +114,10 @@ def hmax(task, goal_cut_facts=(), debug_values=None):
                         elif action_hmax < effect.hmax:
                             effect.hmax = action_hmax
                             heappush(heap, (action_hmax, effect))
-    if debug_values is not None:
-        debug_values.hmax_value = goal.hmax[0]
-        debug_values.pcf = {a:a.hmax_supporter for a in task.actions if hasattr(a, "hmax_supporter")}
     return goal.hmax[0], cut
 
 
-def collect_cut(task, debug_values=None, pcf=None):
+def collect_cut(task):
     goal, = task.goals
     goal_plateau = set()
     def recurse(subgoal):
@@ -129,52 +125,24 @@ def collect_cut(task, debug_values=None, pcf=None):
             goal_plateau.add(subgoal)
             for action in subgoal.effect_of:
                 if action.cost == 0:
-                    # added by flo for debug:
-                    if pcf:
-                        recurse(pcf[action])
-                    else:
-                        recurse(action.hmax_supporter)
+                    recurse(action.hmax_supporter)
     recurse(goal)
-    # added by flo for debug:
-    if debug_values is not None:
-        debug_values.near_goal_area = list(goal_plateau)
-    
-
     cut_hmax, cut = hmax(task, goal_plateau)
-    # added by flo for debug:
-    if debug_values is not None:
-        debug_values.cut = list(cut)
-
     assert cut_hmax == infinity, "did not extract a landmark!"
     return cut
 
 
-def additive_hmax(task, debug_value_list=None, pcfs=None):
+def additive_hmax(task):
     MULTIPLIER = 1
     result = 0
     for action in task.actions:
         action.cost *= MULTIPLIER
     while True:
-        #added by flo for debug
-        if debug_value_list is not None:
-            debug_values = debug_value_list.newEntry()
-
-        cost, _ = hmax(task, debug_values=debug_values)
-        
-        #added by flo to handle unsolvable problems
-        if cost == float("infinity"):
-            return cost
-        
+        cost, _ = hmax(task)
         if cost == 0:
             break
         result += 1
-        #added by flo for debug
-        try:
-            pcf = pcfs.next()
-        except StopIteration:
-            pcf = None
-
-        cut = collect_cut(task, debug_values=debug_values, pcf=pcf)
+        cut = collect_cut(task)
         for action in cut:
             assert action.cost >= 1
             action.cost -= 1
@@ -187,4 +155,4 @@ if __name__ == "__main__":
     relaxed_task.convert_to_canonical_form()
     crossreference_task(relaxed_task)
     # relaxed_task.dump()
-    print additive_hmax(relaxed_task)
+    print(additive_hmax(relaxed_task))

@@ -1,10 +1,12 @@
-# -*- coding: latin-1 -*-
-
-from __future__ import with_statement
+from __future__ import print_function
 
 import invariant_finder
 import pddl
 import timers
+
+
+DEBUG = False
+
 
 def expand_group(group, task, reachable_facts):
     result = []
@@ -44,8 +46,9 @@ class GroupCoverQueue:
             self._update_top()
         else:
             self.max_size = 0
-    def __nonzero__(self):
+    def __bool__(self):
         return self.max_size > 1
+    __nonzero__ = __bool__
     def pop(self):
         result = list(self.top) # Copy; this group will shrink further.
         if self.partial_encoding:
@@ -73,7 +76,7 @@ def choose_groups(groups, reachable_facts, partial_encoding=True):
         group = queue.pop()
         uncovered_facts.difference_update(group)
         result.append(group)
-    print len(uncovered_facts), "uncovered facts"
+    print(len(uncovered_facts), "uncovered facts")
     #for fact in uncovered_facts:
     #  print fact
     result += [[fact] for fact in uncovered_facts]
@@ -113,4 +116,10 @@ def compute_groups(task, atoms, reachable_action_params, partial_encoding=True):
         groups = choose_groups(groups, atoms, partial_encoding=partial_encoding)
     with timers.timing("Building translation key"):
         translation_key = build_translation_key(groups)
+
+    if DEBUG:
+        for group in groups:
+            if len(group) >= 2:
+                print("{%s}" % ", ".join(map(str, group)))
+
     return groups, mutex_groups, translation_key
