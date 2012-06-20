@@ -48,9 +48,32 @@ ADDITIONAL_ICAPS_SUITE = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, d
                     ['grid', 'satellite']
                   ]
 
+ACTION_COST_SUITE_08_OPT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
+                    for domainname in
+                    ['elevators-opt08-strips', 'parcprinter-08-strips', 'scanalyzer-08-strips', 'transport-opt08-strips', 'woodworking-opt08-strips']
+                  ]
+ACTION_COST_SUITE_08_SAT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
+                    for domainname in
+                    ['elevators-sat08-strips', 'transport-sat08-strips', 'woodworking-sat08-strips']
+                  ]
+ACTION_COST_SUITE_11_OPT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
+                    for domainname in
+                    ['barman-opt11-strips', 'elevators-opt11-strips', 'floortile-opt11-strips', 'parcprinter-opt11-strips', 'scanalyzer-opt11-strips', 'transport-opt11-strips', 'woodworking-opt11-strips']
+                  ]
+ACTION_COST_SUITE_11_SAT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
+                    for domainname in
+                    ['barman-sat11-strips', 'elevators-sat11-strips', 'floortile-sat11-strips', 'parcprinter-sat11-strips', 'scanalyzer-sat11-strips', 'transport-sat11-strips']
+                  ]
+
+ACTION_COST_SUITE_08 = ACTION_COST_SUITE_08_OPT + ACTION_COST_SUITE_08_SAT
+ACTION_COST_SUITE_11 = ACTION_COST_SUITE_11_OPT + ACTION_COST_SUITE_11_SAT
+ACTION_COST_SUITE_OPT = ACTION_COST_SUITE_08_OPT + ACTION_COST_SUITE_11_OPT
+ACTION_COST_SUITE_SAT = ACTION_COST_SUITE_08_SAT + ACTION_COST_SUITE_11_SAT
+ACTION_COST_SUITE_ALL = ACTION_COST_SUITE_OPT + ACTION_COST_SUITE_SAT
+
 def domain_size(domainname, problem_suite=None):
     if problem_suite is None:
-        return domain_size(domainname, LMCUT_SUITE) or domain_size(domainname, ZERO_COST_SUITE) or domain_size(domainname, ADDITIONAL_ICAPS_SUITE)
+        return domain_size(domainname, LMCUT_SUITE) or domain_size(domainname, ZERO_COST_SUITE) or domain_size(domainname, ADDITIONAL_ICAPS_SUITE) or domain_size(domainname, ACTION_COST_SUITE_ALL)
     for (d, problems) in problem_suite:
         if (d == domainname):
             return len(problems)

@@ -1,16 +1,18 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import sys
-import StringIO
+import io
 
 import instantiate
 
 
 def explore_silently(task):
-    # Call instatiate.explore, swallowing its output.
+    # Call instantiate.explore, swallowing its output.
     real_stdout = sys.stdout
-    sys.stdout = StringIO.StringIO()
+    sys.stdout = io.StringIO()
     result = instantiate.explore(task)
     sys.stdout = real_stdout
     return result
@@ -36,7 +38,7 @@ def relaxed_task(actions):
 if __name__ == "__main__":
     import pddl
     task = pddl.open()
-    relaxed_reachable, atoms, actions, axioms = explore_silently(task)
+    relaxed_reachable, atoms, actions, axioms, _ = explore_silently(task)
     if not relaxed_reachable:
         raise SystemExit("goal is not relaxed reachable")
     if axioms:
@@ -45,4 +47,4 @@ if __name__ == "__main__":
     # Generate complete output before printing it, to see if errors occur.
     out = list(relaxed_task(actions))
     for line in out:
-        print line
+        print(line)

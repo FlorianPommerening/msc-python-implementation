@@ -1,5 +1,7 @@
 #! /usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
 
 import axiom_rules
 import fact_groups
@@ -22,7 +24,6 @@ import os
 
 ALLOW_CONFLICTING_EFFECTS = False
 USE_PARTIAL_ENCODING = True
-WRITE_ALL_MUTEXES = True
 
 def strips_to_sas_dictionary(groups):
     dictionary = {}
@@ -31,7 +32,7 @@ def strips_to_sas_dictionary(groups):
             dictionary.setdefault(atom, []).append((var_no, val_no))
     if USE_PARTIAL_ENCODING:
         assert all(len(sas_pairs) == 1
-                   for sas_pairs in dictionary.itervalues())
+                   for sas_pairs in dictionary.values())
     return [len(group) + 1 for group in groups], dictionary
 
 def translate_strips_conditions(conditions, dictionary, ranges):
@@ -68,7 +69,7 @@ def translate_strips_operator(operator, dictionary, ranges):
         eff_condition = translate_strips_conditions(conditions, dictionary, ranges)
         if eff_condition is None: # Impossible condition for this effect.
             continue
-        eff_condition = eff_condition.items()
+        eff_condition = list(eff_condition.items())
         for var, val in dictionary[fact]:
             effect_pair = effect.get(var)
             if not effect_pair:
@@ -85,7 +86,7 @@ def translate_strips_operator(operator, dictionary, ranges):
         eff_condition_dict = translate_strips_conditions(conditions, dictionary, ranges)
         if eff_condition_dict is None:
             continue
-        eff_condition = eff_condition_dict.items()
+        eff_condition = list(eff_condition_dict.items())
         for var, val in dictionary[fact]:
             none_of_those = ranges[var] - 1
 
@@ -123,8 +124,8 @@ def translate_strips_operator(operator, dictionary, ranges):
                             # decent check that the precondition is indeed inconsistent
                             # (using *all* mutexes), but that seems tough with this
                             # convoluted code, so we just warn and reject the operator.
-                            print "Warning: %s rejected. Cross your fingers." % (
-                                operator.name)
+                            print("Warning: %s rejected. Cross your fingers." % (
+                                operator.name))
                             return None
                             assert False
 
@@ -141,12 +142,12 @@ def translate_strips_operator(operator, dictionary, ranges):
 #                eff_conditions.append(eff_condition)
 
     if possible_add_conflict:
-        print operator.name
+        print(operator.name)
 
     assert not possible_add_conflict, "Conflicting add effects?"
 
     pre_post = []
-    for var, (post, eff_condition_lists) in effect.iteritems():
+    for var, (post, eff_condition_lists) in effect.items():
         pre = condition.get(var, -1)
         if pre != -1:
             del condition[var]
@@ -165,7 +166,7 @@ def translate_strips_axiom(axiom, dictionary, ranges):
         effect = (var, ranges[var] - 1)
     else:
         [effect] = dictionary[axiom.effect]
-    return sas_tasks.SASAxiom(condition.items(), effect)
+    return sas_tasks.SASAxiom(list(condition.items()), effect)
 
 def translate_strips_operators(actions, strips_to_sas, ranges):
     result = []
@@ -183,7 +184,8 @@ def translate_strips_axioms(axioms, strips_to_sas, ranges):
             result.append(sas_axiom)
     return result
 
-def translate_task(strips_to_sas, ranges, init, goals, actions, axioms, metric):
+def translate_task(strips_to_sas, ranges, translation_key, mutex_key,
+                   init, goals, actions, axioms, metric):
     axioms, axiom_init, axiom_layer_dict = axiom_rules.handle_axioms(
       actions, axioms, goals)
     init = init + axiom_init
@@ -201,32 +203,33 @@ def translate_task(strips_to_sas, ranges, init, goals, actions, axioms, metric):
             init_values[var] = val
     init = sas_tasks.SASInit(init_values)
 
-    goal_pairs = translate_strips_conditions(goals, strips_to_sas, ranges).items()
+    goal_pairs = list(translate_strips_conditions(goals, strips_to_sas, ranges).items())
     goal = sas_tasks.SASGoal(goal_pairs)
 
     operators = translate_strips_operators(actions, strips_to_sas, ranges)
     axioms = translate_strips_axioms(axioms, strips_to_sas, ranges)
 
     axiom_layers = [-1] * len(ranges)
-    for atom, layer in axiom_layer_dict.iteritems():
+    for atom, layer in axiom_layer_dict.items():
         assert layer >= 0
         [(var, val)] = strips_to_sas[atom]
         axiom_layers[var] = layer
-    variables = sas_tasks.SASVariables(ranges, axiom_layers)
-
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms, metric)
+    variables = sas_tasks.SASVariables(ranges, axiom_layers, translation_key)
+    mutexes = [sas_tasks.SASMutexGroup(group) for group in mutex_key]
+    return sas_tasks.SASTask(variables, mutexes, init, goal,
+                             operators, axioms, metric)
 
 def unsolvable_sas_task(msg):
-    print "%s! Generating unsolvable task..." % msg
+    print("%s! Generating unsolvable task..." % msg)
     variables = sas_tasks.SASVariables([2], [-1])
     init = sas_tasks.SASInit([0])
     goal = sas_tasks.SASGoal([(0, 1)])
     operators = []
     axioms = []
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms, 0), [["unsolvable", "<none of those>"]]
+    return sas_tasks.SASTask(variables, init, goal, operators, axioms)
 
 def pddl_to_sas(task):
-    print "Instantiating..."
+    print("Instantiating...")
     relaxed_reachable, atoms, actions, axioms, _ = instantiate.explore(task)
 
     if not relaxed_reachable:
@@ -240,28 +243,29 @@ def pddl_to_sas(task):
     for item in goal_list:
         assert isinstance(item, pddl.Literal)
 
-#    groups, mutex_groups, translation_key = fact_groups.compute_groups(
-#        task, atoms, return_mutex_groups=WRITE_ALL_MUTEXES,
-#        partial_encoding=USE_PARTIAL_ENCODING)
-
     # switched off invariant syntheses -> one group for each fluent fact
     groups = [[fact] for fact in atoms]
+    mutex_groups = []
     translation_key = [[str(fact),str(fact.negate())] for group in groups
                                                       for fact in group]
 
-    print "Building STRIPS to SAS dictionary..."
+    print("Building STRIPS to SAS dictionary...")
     ranges, strips_to_sas = strips_to_sas_dictionary(groups)
-    print "Translating task..."
-    sas_task = translate_task(strips_to_sas, ranges, task.init, goal_list,
-                              actions, axioms, task.use_min_cost_metric)
+
+    print("Building mutex information...")
+    mutex_key = build_mutex_key(strips_to_sas, mutex_groups)
+
+    print("Translating task...")
+    sas_task = translate_task(strips_to_sas, ranges, translation_key,
+                              mutex_key, task.init, goal_list, actions, axioms,
+                              task.use_min_cost_metric)
 
     try:
-        simplify.filter_unreachable_propositions(
-            sas_task, [], translation_key)
+        simplify.filter_unreachable_propositions(sas_task)
     except simplify.Impossible:
         return unsolvable_sas_task("Simplified to trivially false goal")
 
-    return sas_task, translation_key
+    return sas_task
 
 def build_mutex_key(strips_to_sas, groups):
     group_keys = []
@@ -272,48 +276,9 @@ def build_mutex_key(strips_to_sas, groups):
                 for var, val in strips_to_sas[fact]:
                     group_key.append((var, val, str(fact)))
             else:
-                print "not in strips_to_sas, left out:", fact
+                print("not in strips_to_sas, left out:", fact)
         group_keys.append(group_key)
     return group_keys
-
-def write_translation_key(translation_key, dir=''):
-    groups_file = file(os.path.join(dir, "test.groups"), "w")
-    for var_no, var_key in enumerate(translation_key):
-        print >> groups_file, "var%d:" % var_no
-        for value, value_name in enumerate(var_key):
-            print >> groups_file, "  %d: %s" % (value, value_name)
-    groups_file.close()
-
-def write_mutex_key(mutex_key):
-    invariants_file = file("all.groups", "w")
-    print >> invariants_file, "begin_groups"
-    print >> invariants_file, len(mutex_key)
-    for group in mutex_key:
-        #print map(str, group)
-        no_facts = len(group)
-        print >> invariants_file, "group"
-        print >> invariants_file, no_facts
-        for var, val, fact in group:
-            #print fact
-            assert str(fact).startswith("Atom ")
-            predicate = str(fact)[5:].split("(")[0]
-            #print predicate
-            rest = str(fact).split("(")[1]
-            rest = rest.strip(")").strip()
-            if not rest == "":
-                #print "there are args" , rest
-                args = rest.split(",")
-            else:
-                args = []
-            print_line = "%d %d %s %d " % (var, val, predicate, len(args))
-            for arg in args:
-                print_line += str(arg).strip() + " "
-            #print fact
-            #print print_line
-            print >> invariants_file, print_line
-    print >> invariants_file, "end_groups"
-    invariants_file.close()
-
 
 if __name__ == "__main__":
     import pddl
@@ -326,10 +291,10 @@ if __name__ == "__main__":
     elif len(sys.argv) == 4:
         (task_filename, domain_filename, output_dir) = sys.argv[1:]
     else:
-        print "Needs 1-3 arguments: task_filename [, domain_filename [, output_dir]]"
+        print("Needs 1-3 arguments: task_filename [, domain_filename [, output_dir]]")
         sys.exit(1)
 
-    print "Parsing..."
+    print("Parsing...")
     task = pddl.open(task_filename, domain_filename)
     if task.domain_name in ["protocol", "rover"]:
         # This is, of course, a HACK HACK HACK!
@@ -345,13 +310,9 @@ if __name__ == "__main__":
     # import psyco
     # psyco.full()
 
-    sas_task, translation_key = pddl_to_sas(task)
+    sas_task = pddl_to_sas(task)
+    print("Writing output...")
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    print "Writing output..."
     sas_task.output(file(os.path.join(output_dir, "output.sas"), "w"))
-    print "Writing translation key"
-    write_translation_key(translation_key, dir=output_dir)
-    print "Creating dummy output:"
-    file(os.path.join(output_dir, "all.groups"), "w").write("dummy file expected by our scripts\n")
-    print "Done!"
+    print("Done!")
