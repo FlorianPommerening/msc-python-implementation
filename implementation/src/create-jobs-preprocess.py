@@ -25,7 +25,13 @@ tasks = []
 for (domainname, paths) in problem_subset(problem_suite=ACTION_COST_SUITE_ALL):
     for i, (p, d) in enumerate(paths):
         problemname = os.path.splitext(os.path.basename(p))[0]
-        tasks.append('cd %s/%s\n    /usr/bin/time --format "%%U\\n%%S\\n" ../../../../downward/src/preprocess/preprocess < output.sas 1>| preprocess.log 2>| preprocess.time' % (domainname, problemname))
+        p_path_on_grid = p.replace('/home/pommerening/projects/fastdownward/benchmarks/', '/home/ifi/pommeren/benchmarks/')
+        d_path_on_grid = d.replace('/home/pommerening/projects/fastdownward/benchmarks/', '/home/ifi/pommeren/benchmarks/')
+        tasks.append('''
+    mkdirhier %s/%s
+    cd %s/%s
+    /home/ifi/pommeren/downward/src/translate/translate-relaxed.py %s %s
+    /usr/bin/time --format "%%U\\n%%S\\n" /home/ifi/pommeren/downward/src/preprocess/preprocess < output.sas 1>| preprocess.log 2>| preprocess.time''' % (domainname, problemname, domainname, problemname, d_path_on_grid, p_path_on_grid))
 
 
 def create_tasks(filename, tasks):

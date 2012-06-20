@@ -221,12 +221,14 @@ def translate_task(strips_to_sas, ranges, translation_key, mutex_key,
 
 def unsolvable_sas_task(msg):
     print("%s! Generating unsolvable task..." % msg)
-    variables = sas_tasks.SASVariables([2], [-1])
+    variables = sas_tasks.SASVariables([2], [-1], [["False", "True"]])
     init = sas_tasks.SASInit([0])
     goal = sas_tasks.SASGoal([(0, 1)])
     operators = []
     axioms = []
-    return sas_tasks.SASTask(variables, init, goal, operators, axioms)
+    mutexes = []
+    metric = 0
+    return sas_tasks.SASTask(variables, mutexes, init, goal, operators, axioms, metric)
 
 def pddl_to_sas(task):
     print("Instantiating...")

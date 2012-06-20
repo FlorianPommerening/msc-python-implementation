@@ -6,8 +6,9 @@
 #$ -o log
 #$ -l h_cpu=00:05:30
 #$ -l h_vmem=2G
+#$ -l hostname="uni[012][0-9]*|uni3[012]*|ugi[0-9][0-9]*"
 #$ -q all.q
-#$ -t 1-471
+#$ -t 1-521
 
 export PATH=~/bin:$PATH
 
@@ -1893,5 +1894,205 @@ if [ 470 -eq $SGE_TASK_ID ]; then
 fi
 if [ 471 -eq $SGE_TASK_ID ]; then
     ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-opt11-strips/p20.pddl /home/ifi/pommeren/benchmarks/woodworking-opt11-strips/domain.pddl &> ./logs/woodworking-opt11-strips_p20_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 472 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p01.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p01-domain.pddl &> ./logs/woodworking-sat08-strips_p01_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 473 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p02.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p02-domain.pddl &> ./logs/woodworking-sat08-strips_p02_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 474 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p03.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p03-domain.pddl &> ./logs/woodworking-sat08-strips_p03_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 475 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p04.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p04-domain.pddl &> ./logs/woodworking-sat08-strips_p04_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 476 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p05.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p05-domain.pddl &> ./logs/woodworking-sat08-strips_p05_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 477 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p06.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p06-domain.pddl &> ./logs/woodworking-sat08-strips_p06_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 478 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p07.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p07-domain.pddl &> ./logs/woodworking-sat08-strips_p07_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 479 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p08.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p08-domain.pddl &> ./logs/woodworking-sat08-strips_p08_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 480 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p09.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p09-domain.pddl &> ./logs/woodworking-sat08-strips_p09_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 481 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p10.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p10-domain.pddl &> ./logs/woodworking-sat08-strips_p10_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 482 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p11.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p11-domain.pddl &> ./logs/woodworking-sat08-strips_p11_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 483 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p12.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p12-domain.pddl &> ./logs/woodworking-sat08-strips_p12_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 484 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p13.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p13-domain.pddl &> ./logs/woodworking-sat08-strips_p13_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 485 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p14.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p14-domain.pddl &> ./logs/woodworking-sat08-strips_p14_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 486 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p15.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p15-domain.pddl &> ./logs/woodworking-sat08-strips_p15_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 487 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p16.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p16-domain.pddl &> ./logs/woodworking-sat08-strips_p16_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 488 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p17.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p17-domain.pddl &> ./logs/woodworking-sat08-strips_p17_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 489 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p18.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p18-domain.pddl &> ./logs/woodworking-sat08-strips_p18_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 490 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p19.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p19-domain.pddl &> ./logs/woodworking-sat08-strips_p19_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 491 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p20.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p20-domain.pddl &> ./logs/woodworking-sat08-strips_p20_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 492 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p21.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p21-domain.pddl &> ./logs/woodworking-sat08-strips_p21_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 493 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p22.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p22-domain.pddl &> ./logs/woodworking-sat08-strips_p22_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 494 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p23.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p23-domain.pddl &> ./logs/woodworking-sat08-strips_p23_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 495 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p24.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p24-domain.pddl &> ./logs/woodworking-sat08-strips_p24_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 496 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p25.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p25-domain.pddl &> ./logs/woodworking-sat08-strips_p25_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 497 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p26.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p26-domain.pddl &> ./logs/woodworking-sat08-strips_p26_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 498 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p27.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p27-domain.pddl &> ./logs/woodworking-sat08-strips_p27_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 499 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p28.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p28-domain.pddl &> ./logs/woodworking-sat08-strips_p28_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 500 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p29.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p29-domain.pddl &> ./logs/woodworking-sat08-strips_p29_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 501 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p30.pddl /home/ifi/pommeren/benchmarks/woodworking-sat08-strips/p30-domain.pddl &> ./logs/woodworking-sat08-strips_p30_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 502 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p01.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p01_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 503 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p02.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p02_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 504 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p03.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p03_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 505 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p04.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p04_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 506 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p05.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p05_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 507 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p06.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p06_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 508 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p07.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p07_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 509 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p08.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p08_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 510 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p09.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p09_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 511 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p10.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p10_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 512 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p11.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p11_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 513 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p12.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p12_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 514 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p13.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p13_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 515 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p14.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p14_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 516 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p15.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p15_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 517 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p16.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p16_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 518 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p17.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p17_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 519 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p18.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p18_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 520 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p19.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p19_$JOB_ID.$SGE_TASK_ID.log
+    exit $?
+fi
+if [ 521 -eq $SGE_TASK_ID ]; then
+    ../../hplusbnb  /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/p20.pddl /home/ifi/pommeren/benchmarks/woodworking-sat11-strips/domain.pddl &> ./logs/woodworking-sat11-strips_p20_$JOB_ID.$SGE_TASK_ID.log
     exit $?
 fi

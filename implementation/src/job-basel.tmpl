@@ -23,6 +23,7 @@
 #if $memout
 #$ -l h_vmem=$memout
 #end if 
+#$ -l hostname="uni[012][0-9]*|uni3[012]*|ugi[0-9][0-9]*"
 #####################################################################
 ## use this queue. 
 #$ -q $queue

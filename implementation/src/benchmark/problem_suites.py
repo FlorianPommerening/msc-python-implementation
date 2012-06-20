@@ -62,7 +62,7 @@ ACTION_COST_SUITE_11_OPT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR,
                   ]
 ACTION_COST_SUITE_11_SAT = [(domainname, listproblems("%s%s/" % (BENCHMARKS_DIR, domainname))) 
                     for domainname in
-                    ['barman-sat11-strips', 'elevators-sat11-strips', 'floortile-sat11-strips', 'parcprinter-sat11-strips', 'scanalyzer-sat11-strips', 'transport-sat11-strips']
+                    ['barman-sat11-strips', 'elevators-sat11-strips', 'floortile-sat11-strips', 'parcprinter-sat11-strips', 'scanalyzer-sat11-strips', 'transport-sat11-strips', 'woodworking-sat11-strips']
                   ]
 
 ACTION_COST_SUITE_08 = ACTION_COST_SUITE_08_OPT + ACTION_COST_SUITE_08_SAT

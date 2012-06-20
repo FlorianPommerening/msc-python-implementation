@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 from problem_suites import *
-from known_hplus import KNOWN_HPLUS, UNKNOWN_HPLUS, KNOWN_HPLUS_FLO, UNKNOWN_HPLUS_FLO
+from known_values import check_value, get_known_value, count_known_h_plus, root_dir, load_file
 from collections import defaultdict
 
 import sys, argparse, os, tempfile, shutil, subprocess, re
@@ -210,7 +210,7 @@ def loginterpolate(x, min_x, max_x, min_score, max_score):
                               (log(min_x) - log(max_x)) 
                              ) + min_score
     
-def compare_results(filenames, names=None, domains=None, times=None, format='console', verbose=False, timeout=1800):
+def compare_results(filenames, names=None, domains=None, filter_suite=None, times=None, format='console', verbose=False, timeout=1800):
     """
     evaluation by scoring function:
       time: sum of all 'times' logarithmically scaled between 1 second or below (100 points) and timeout seconds or above (0 points)
@@ -245,10 +245,6 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         second_exp_name = first_exp_name
         print "only one experiment, nothing to compare"
 
-    # domainname -> problemname -> (h, discovered_by)
-    new_hplus_values = defaultdict(dict)
-    # domainname -> problemname -> (best discovered lower bound, best discovered upper bound) 
-    new_hplus_bounds = defaultdict(dict)
     # domainname -> filename -> score
     time_scores = defaultdict(dict)
     coverage_scores = defaultdict(dict)
@@ -264,47 +260,28 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         coverage_score = 0
         expansion_score = 0
         results = parse_results(filename)
+        nDomains = 0
         for domainresult in results:
             domainname = domainresult.name
             if domains is not None:
                 if len(domains) > 0 and domainname not in domains:
                     continue
+            if filter_suite is not None:
+                # HACK should check containment instead of size
+                if domain_size(domainname, filter_suite) == 0:
+                    continue
+            nDomains += 1
             time_score_sum = 0
             coverage_score_sum = 0
             expansion_score_sum = 0
             for p in domainresult.problemresults:
                 h = p.get("h_plus")
                 if h is None:
-                    # check if better bounds were found
-                    (new_lower_bound, new_upper_bound) = (p.get("h_plus_lower_bound", 0), p.get("h_plus_upper_bound", float("inf")))
-                    if new_hplus_bounds[domainname].has_key(p.name):
-                        (old_lower_bound, old_upper_bound) = new_hplus_bounds[domainname][p.name]
-                    elif UNKNOWN_HPLUS[domainname].has_key(p.name):
-                        (old_lower_bound, old_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
-                    else:
-                        (old_lower_bound, old_upper_bound) = (0, float("inf"))
-                    if new_lower_bound > old_lower_bound or new_upper_bound < old_upper_bound:
-                        new_hplus_bounds[domainname][p.name] = (max(old_lower_bound, new_lower_bound), min(old_upper_bound, new_upper_bound))
                     time_score_plot_by_filename[domainname][p.name][filename] = 0
                     expansion_score_plot_by_filename[domainname][p.name][filename] = 0
                     solved_by_filename[domainname][p.name][filename] = False
                     continue
                 solved_by_filename[domainname][p.name][filename] = True
-                if KNOWN_HPLUS[domainname].has_key(p.name):
-                    if KNOWN_HPLUS[domainname][p.name] != h:
-                        warnings.add("!!! Invalid h+ value for %s - %s: DB said %s but %s said %s" % (
-                                     domainname, p.name, str(KNOWN_HPLUS[domainname][p.name]), filename, str(h)))
-                else: # h+ not known yet
-                    if UNKNOWN_HPLUS[domainname].has_key(p.name):
-                        (best_lower_bound, best_upper_bound) = UNKNOWN_HPLUS[domainname][p.name]
-                        if h < best_lower_bound or h > best_upper_bound:
-                            warnings.add("!!! Invalid h+ value for %s - %s: DB said (%s, %s) but %s said %s" % (
-                                         domainname, p.name, str(best_lower_bound), str(best_upper_bound), filename, str(h)))
-                    if new_hplus_values[domainname].has_key(p.name) and new_hplus_values[domainname][p.name][0] != h:
-                        old_h, old_name = new_hplus_values[domainname][p.name]
-                        warnings.add("!!! Invalid h+ value for %s - %s: %s said %s but %s said %s" % (
-                                     domainname, p.name, old_name, str(old_h), filename, str(h)))
-                    new_hplus_values[domainname][p.name] = (h, filename)
                 problem_time_score = None
                 if p.get("time_averaged_over") is not None:
                     time_averaged_over = set(p.get("time_averaged_over").split())
@@ -362,27 +339,11 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
                 coverage_score = 0
                 expansion_score = 0
         if domains is None:
-            nDomains = len(results)
             time_scores["all"][filename] = time_score / float(nDomains)
             coverage_scores["all"][filename] = coverage_score / float(nDomains)
             expansion_scores["all"][filename] = expansion_score / float(nDomains)
     for warning in sorted(warnings):
         print warning
-    for domainname, problems in sorted(new_hplus_values.items()):
-        print "New h+ values in '%s':" % domainname
-        sortable_problems = [(re.findall("probfreecell", p), map(int, re.findall(r"\d+", p)), p, h) for (p, (h, _)) in problems.items()]
-        for _, _, problem, h in sorted(sortable_problems):
-            print "            '%s':%s," % (problem, h)
-    for domainname, problems in sorted(new_hplus_bounds.items()):
-        unknown_problems = {pname:bound for (pname,bound) in problems.items() if not KNOWN_HPLUS[domainname].has_key(pname)}
-        if not unknown_problems:
-            continue
-        print "New h+ bounds in '%s':" % domainname
-        print "        '%s':{" % domainname
-        sortable_problems = [(re.findall("probfreecell", p), map(int, re.findall(r"\d+", p)), p, l, u) for (p, (l, u)) in unknown_problems.items()]
-        for _, _, problem, lower, upper in sorted(sortable_problems):
-            print "            '%s':(%s,%s)," % (problem, str(int(lower)), 'float("inf")' if upper == float("inf") else str(int(upper)))
-        print "        },"
 
     # domainname -> experimentname -> score
     averaged_time_scores = defaultdict(dict)
@@ -596,7 +557,8 @@ def compare_results(filenames, names=None, domains=None, times=None, format='con
         total_solved_by_experiment = defaultdict(int)
         total_tasks = 0
         print "Domain    & #Tasks   " + "& ".join(["%8s " % n for n in sorted_experiment_names])
-        for d, solved_by_domain in sorted(solved_by_experiment.items()):
+        for d in sorted(compare_domains.keys()):
+            solved_by_domain = solved_by_experiment[d]
             line = "% 8s & %d " % (d,domain_size(d))
             total_tasks += domain_size(d)
             for n in sorted_experiment_names:
@@ -663,13 +625,33 @@ def printmissingresults(filename):
         problems = ", ".join(map(str, sorted(missing[domain])))
         print '        "%s":[%s],' % (domain, problems)
 
+def save_known_values(filename, target_name):
+    out_file = open(os.path.join(root_dir, target_name), 'w')
+    out_file.write("domain,task,h_plus,h_plus_lower_bound,h_plus_upper_bound,h_opt,h_opt_lower_bound,h_opt_upper_bound\n")
+    for domainresult in parse_results(filename):
+        for p in domainresult.problemresults:
+            out_file.write("%s,%s,%s,%s,%s,%s,%s,%s\n" % (
+                domainresult.name,
+                p.name,
+                p.get("h_plus", "-"),
+                p.get("h_plus_lower_bound", "-"),
+                p.get("h_plus_upper_bound", "-"),
+                p.get("h_opt", "-"),
+                p.get("h_opt_lower_bound", "-"),
+                p.get("h_opt_upper_bound", "-")
+            ))
+    out_file.close()
+    load_file(os.path.join(root_dir, target_name))
+
+
 def add_hplus_to_statistics(filename):
     results = parse_results(filename)
     for domainresult in results:
         domainname = domainresult.name
         for p in domainresult.problemresults:
-            if KNOWN_HPLUS[domainname].has_key(p.name):
-                p.set('h_plus', KNOWN_HPLUS[domainname][p.name])
+            h_plus = get_known_value(domainname, p, 'h_plus')
+            if h_plus is not None:
+                p.set('h_plus', h_plus)
     resultsfile = open(filename, 'w')
     for result in results:
         resultsfile.write(str(result))
@@ -743,12 +725,11 @@ def print_initial_node_statistics(filenames):
             if lmcut == float("inf"):
                 initial_plan_cost = float("inf")
                 optimized_initial_plan_cost = float("inf")
-            hplus, lower_bound, upper_bound = ("UNKNOWN", 0, float("inf"))
-            if KNOWN_HPLUS[domainname].has_key(problemname):
-                hplus = KNOWN_HPLUS[domainname][problemname]
-                lower_bound, upper_bound = (hplus, hplus)
-            else:
-                lower_bound, upper_bound = UNKNOWN_HPLUS[domainname][problemname]
+            hplus, lower_bound, upper_bound = (
+                get_known_value(domain, task, 'h_plus'),
+                get_known_value(domain, task, 'h_plus_lower_bound'),
+                get_known_value(domain, task, 'h_plus_upper_bound'),
+                )
             if lmcut == optimized_initial_plan_cost:
                 nNoSearch += 1
 #            else:
@@ -767,7 +748,7 @@ def print_initial_node_statistics(filenames):
                 lb_markers.append("(%s,%s)" % (i, int(lmcut)))
                 ub_markers.append("(%s,%s)" % (i, int(initial_plan_cost)))
                 ub_markers.append("(%s,%s)" % (i, int(optimized_initial_plan_cost)))
-                if hplus == "UNKNOWN":
+                if hplus is None:
                     lbh_markers.append("(%s,%s)" % (i, int(lower_bound)))
                     ubh_markers.append("(%s,%s)" % (i, int(upper_bound)))
                 else:
@@ -794,7 +775,7 @@ def print_initial_node_statistics(filenames):
   \newpage
 """ % (domainname,
        i,
-       len(KNOWN_HPLUS[domainname]),
+       count_known_h_plus(domainname),
        nPerfect,
        nLMcutPerfect,
        nNoSearch,
@@ -1058,7 +1039,7 @@ def lost_gained_problems(filenames):
                 gained[domainresults[0].name].append(p[0].name)
             elif (p[0].get("h_plus") is not None) and (p[1].get("h_plus") is None):
                 lost[domainresults[1].name].append(p[1].name)
-            if (p[1].get("h_plus") is None) and KNOWN_HPLUS[domainresults[1].name].has_key(p[1].name):
+            if (p[1].get("h_plus") is None) and get_known_value(domainresults[1].name, p[1].name, 'h_plus') is not None:
                 unsolved_known[domainresults[1].name].append(p[1].name)
     print "Gained (solved in %s but not in %s):" % (filenames[1], filenames[0])
     for d in sorted(gained.keys()):
@@ -1145,7 +1126,9 @@ def list_nontrivial_problems(filenames):
     print
     print "hard", sum([len(e) for e in hard_numbers.values()]), hard_numbers
     print
-    print "unsolved", sum([len(e) for e in unsolved_numbers.values()]), 835 - sum([len(e) for e in KNOWN_HPLUS.values()]), unsolved_numbers
+    print "cannot compute unsolved problems (not implemented)"
+# TODO
+#     print "unsolved", sum([len(e) for e in unsolved_numbers.values()]), 835 - sum([len(e) for e in KNOWN_HPLUS.values()]), unsolved_numbers
     print
     print "Best case coverage without unsolved", coverage_score
 
@@ -1155,6 +1138,7 @@ def evaluate_bound_quality(filenames, timeout, domains=None):
     nAlmostPerfect = 0
     nLMcutPerfect = 0
     nLMcutAlmostPerfect = 0
+    nUnknown = 0
     # domain -> (nNoSearch, nPerfect, nAlmostPerfect, nLMcutPerfect, nLMcutAlmostPerfect)
     quality_by_domain = {}
     initial_upper_bound = defaultdict(dict)
@@ -1176,7 +1160,10 @@ def evaluate_bound_quality(filenames, timeout, domains=None):
             assert lmcut > 0, (domainresult.name, p.name)
             if p.get("h_plus") == float("inf"):
                 lmcut = float("inf")
-            hplus = KNOWN_HPLUS[domainresult.name].get(p.name, "UNKOWN")
+            hplus = get_known_value(domainresult.name, p.name, 'h_plus')
+            if hplus is None:
+                nUnknown += 1
+                continue
             if lmcut == optimized_initial_plan_cost:
                 nNoSearch += 1
             if hplus == optimized_initial_plan_cost:
@@ -1213,7 +1200,7 @@ def evaluate_bound_quality(filenames, timeout, domains=None):
     print "upper bound almost perfect", nAlmostPerfect
     print "lower bound perfect", nLMcutPerfect
     print "lower bound almost perfect", nLMcutAlmostPerfect
-    print "unknown h^+", sum([len(bounds) for (_, bounds) in UNKNOWN_HPLUS.items()])
+    print "unknown h^+", nUnknown
 
 
 def get_not_always_solved_or_unsolved(filenames, timeout):
@@ -1511,16 +1498,18 @@ def do_custom_stuff(filenames, timeout, domains):
     # generate_expansion_histogram(filenames)
     # get_not_always_solved_or_unsolved(filenames, timeout)
     # list_nontrivial_problems(filenames)
-    # lost_gained_problems(filenames)
+    lost_gained_problems(filenames)
     # print_restart_analysis(filenames, timeout)
     # filter_test(filenames)
     # print_over_timeout(filenames, timeout)
     # evaluate_bound_quality(filenames, timeout, domains)
-    number_of_filtered_objects(filenames, timeout, domains)
+    # number_of_filtered_objects(filenames, timeout, domains)
 
 
 
 if __name__ == '__main__':
+    def eval_here(string):
+        return eval(string)
     parser = argparse.ArgumentParser(description='Evaluate result files')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-x', '--custom', nargs="*")
@@ -1528,11 +1517,13 @@ if __name__ == '__main__':
     group.add_argument('-c', '--compare', nargs="+")
     group.add_argument('-p', '--printstatstics')
     group.add_argument('-pm', '--printmissing')
+    group.add_argument('-k', '--knownvalues', nargs=2)
     group.add_argument('-a', '--averageruns', nargs="*")
     parser.add_argument('-to', '--timeout', type=int, default=1800)
     parser.add_argument('-n', '--names', nargs="+")
     parser.add_argument('-t', '--times', nargs="+")
     parser.add_argument('-d', '--domains', nargs="*")
+    parser.add_argument('-s', '--suite', type=eval_here, default=None)
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-f', '--format', choices=['console', 'textable', 'texplottime', 'texplotexpansions','coveragetable'], default='console')
 
@@ -1540,11 +1531,13 @@ if __name__ == '__main__':
     if args.merge:
         mergeresultfiles(args.merge[-1], *args.merge[:-1])
     elif args.compare:
-        compare_results(args.compare, args.names, args.domains, args.times, args.format, args.verbose, timeout=float(args.timeout))
+        compare_results(args.compare, args.names, args.domains, args.suite, args.times, args.format, args.verbose, timeout=float(args.timeout))
     elif args.printstatstics:
         print_averaged_statistics(args.printstatstics, domains=args.domains)
     elif args.averageruns:
         average_runs(args.averageruns, args.times, float(args.timeout))
+    elif args.knownvalues:
+        save_known_values(*args.knownvalues)
     elif args.custom:
         do_custom_stuff(args.custom, float(args.timeout), args.domains)
     else:
