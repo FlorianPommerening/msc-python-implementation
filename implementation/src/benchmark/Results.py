@@ -27,9 +27,9 @@ class ProblemResults:
         self.known_types = {'hmax':bool, 'goalzone':bool, 'cut':bool,
                             'valid_relevance_analysis':bool,
                             'valid_pcf':bool, 'valid_cut':bool,
-                            'heuristic':float, 'h_plus':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
+                            'heuristic':float, 'h_plus':float, 'h_opt':float, 'h_max':float, 'solve_time':float, 'h_lmcut':float,
                             'h_plus_lower_bound':float, 'h_plus_upper_bound':float,
-                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float,"parse_time":float,
+                            'translation_time':float, 'relaxation_time':float, 'h_max_time':float, 'h_lmcut_time':float, "h_plus_time":float, "h_opt_time":float,"parse_time":float,
                             'bnb_expansions':int,'bnb_expansions_last_layer':int,'evaluations':int,'expanded':int, 'generated':int,
                             'relevance_analysis_time':float}
         for (k,v) in kwargs.items():
